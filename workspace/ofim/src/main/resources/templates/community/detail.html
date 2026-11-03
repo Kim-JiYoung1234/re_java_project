@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title th:text="${board?.title}">게시글 상세보기</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<link rel="stylesheet" th:href="@{/css/detail.css}">
+</head>
+<body>
+	<header th:replace="~{header :: header}"></header>
+
+	<div class="wrapper" th:if="${board != null}">
+		<div class="detail-card">
+			<div class="p-4 border-bottom">
+				<h1 th:text="${board.title}" class="mb-3">제목</h1>
+				<div class="d-flex align-items-center mb-2">
+					<div class="d-flex align-items-center me-3">
+						<div class="flex-shrink-0" style="margin-right: 10px;">
+							<img
+								th:src="${board.writerProfile != null and board.writerProfile != '' ? '/uploads/' + board.writerProfile : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+								style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+						</div>
+
+						<div class="d-flex flex-column justify-content-center">
+							<div class="d-flex align-items-center" style="margin-bottom: 1px;">
+								<th:block th:if="${board.memberType != null}">
+									<div style="margin-right: 4px; display: flex; align-items: center;">
+										<th:block th:if="${board.memberType == '일반회원'}">
+											<th:block th:switch="${board.gradeId}">
+												<img th:case="2" th:src="@{/images/bronze.png}" style="width: 17px; height: 17px;" title="브론즈">
+												<img th:case="3" th:src="@{/images/silver.png}" style="width: 17px; height: 17px;" title="실버">
+												<img th:case="4" th:src="@{/images/gold.png}" style="width: 17px; height: 17px;" title="골드">
+												<img th:case="5" th:src="@{/images/premium.png}" style="width: 17px; height: 17px;" title="프리미엄">
+											</th:block>
+										</th:block>
+
+										<img th:if="${board.memberType == '관리자'}" th:src="@{/images/admin.png}"
+											style="width: 18px; height: 18px; vertical-align: middle;" title="관리자"> <img
+											th:if="${board.memberType == '전문가회원'}" th:src="@{/images/expert.png}" style="width: 17px; height: 17px;"
+											title="전문가"> <img th:if="${board.memberType == '파트너회원'}" th:src="@{/images/partner.png}"
+											style="width: 17px; height: 17px;" title="파트너">
+									</div>
+								</th:block>
+
+								<strong th:text="${board.writerName}" class="text-dark fs-5"
+									th:classappend="${board.memberType != null and board.memberType == '관리자' ? 'text-admin-premium' : ''}"
+									style="letter-spacing: -0.5px; line-height: 1.1;">닉네임</strong>
+							</div>
+
+							<span class="badge badge-ofim" th:if="${board.memberType != null and board.memberType != '관리자'}"
+								th:with="pts=${board.activityPoint != null ? board.activityPoint : 0}"
+								th:classappend="${pts >= 5000 ? 'bg-underarmor' : (pts >= 2500 ? 'bg-muscle' : (pts >= 1000 ? 'bg-burning' : (pts >= 300 ? 'bg-runner' : 'bg-rookie')))}"
+								style="width: fit-content; padding: 1px 7px; font-size: 0.65rem; margin-top: -1px;"> <span
+								class="emoji-icon" style="margin-right: 2px;"
+								th:text="${pts >= 5000 ? '⛓️' : (pts >= 2500 ? '🏋️‍♂️' : (pts >= 1000 ? '🥊' : (pts >= 300 ? '🏃‍♂️' : '🐣')))}"></span>
+								<span th:text="${board.getDiaterRank()}">등급이름</span>
+							</span>
+						</div>
+					</div>
+					<small class="text-muted"> 조회수: <span th:text="${board.viewCount}">0</span> | 작성일: <span
+						th:if="${board.createdDate != null}" th:text="${#dates.format(board.createdDate, 'yyyy-MM-dd HH:mm')}"></span>
+					</small>
+				</div>
+
+				<div th:if="${board.categoryId == 6}"
+					class="alert alert-light border d-flex align-items-center justify-content-between p-3 mt-3 mb-0 shadow-sm"
+					style="border-radius: 12px;">
+					<div class="d-flex align-items-center">
+						<i class="bi bi-calendar-event text-primary fs-4 me-3"></i>
+						<div>
+							<span class="fw-bold d-block" style="font-size: 0.85rem;">챌린지 참여 기한</span> <small class="text-muted"
+								th:text="${#dates.format(board.endDate, 'yyyy년 MM월 dd일')} + '까지'"></small>
+						</div>
+					</div>
+					<div class="text-end">
+						<span class="badge px-3 py-2 fs-6 shadow-sm" th:with="dDay=${board.getDDayCount()}"
+							th:classappend="${dDay < 0 ? 'bg-secondary' : (dDay <= 3 ? 'bg-danger' : 'bg-primary')}"
+							th:text="${board.getChallengeStatusText()}"> </span>
+					</div>
+				</div>
+			</div>
+
+			<div class="detail-content">
+				<div th:if="${board.videoUrl != null and board.videoUrl != ''}" class="media-container shadow-sm">
+					<div class="ratio ratio-16x9">
+						<iframe th:if="${board.youtubeId != null}" th:src="${'https://www.youtube.com/embed/' + board.youtubeId}"
+							title="YouTube video player" frameborder="0" allowfullscreen></iframe>
+						<div th:unless="${board.youtubeId != null}" class="text-white p-3">유효하지 않은 유튜브 주소입니다.</div>
+					</div>
+				</div>
+				<div th:if="${board.imageName != null and board.imageName != ''}" class="media-container">
+					<img th:src="@{|/uploads/${board.imageName}|}" alt="첨부 이미지" class="attached-image shadow-sm">
+				</div>
+				<div class="mb-2" th:text="${board.content}">내용</div>
+			</div>
+
+			<div class="p-3 bg-light d-flex justify-content-between" style="border-radius: 0 0 12px 12px;">
+				<button class="btn btn-secondary btn-sm"
+					th:onclick="|location.href='@{/community/main(categoryId=${board.categoryId})}'|">목록으로</button>
+
+				<div class="d-flex gap-2"
+					th:if="${session.user != null and (session.user.memberId == board.writerId or session.user.memberType == '관리자')}">
+					<button class="btn btn-warning btn-sm" th:onclick="|location.href='@{/community/update/{id}(id=${board.postId})}'|">수정</button>
+					<button class="btn btn-danger btn-sm" th:onclick="deletePost([[${board.postId}]])">삭제</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="reply-section">
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h5 class="fw-bold mb-0">
+					<i class="bi bi-chat-left-text me-2"></i>댓글 <span class="text-primary"
+						th:text="${replyList != null ? replyList.size() : 0}">0</span>
+				</h5>
+				<div class="d-flex gap-2 align-items-center">
+					<button type="button" id="bookmarkBtn" class="btn btn-bookmark shadow-sm"
+						th:classappend="${isBookmarked} ? 'btn-primary' : 'btn-outline-primary'"
+						th:onclick="toggleBookmark([[${board.postId}]])">
+						<i id="bookmarkIcon" class="bi" th:classappend="${isBookmarked} ? 'bi-bookmark-fill' : 'bi-bookmark'"></i> <span>즐겨찾기</span>
+					</button>
+
+					<button type="button" id="likeBtn" class="btn btn-like shadow-sm"
+						th:classappend="${isLiked} ? 'btn-danger' : 'btn-outline-danger'" th:onclick="toggleLike([[${board.postId}]])">
+						<i id="likeIcon" class="bi" th:classappend="${isLiked} ? 'bi-heart-fill' : 'bi-heart'"></i> <span class="ms-1">좋아요</span>
+						<span id="likeCountText" th:text="${likeCount}">0</span>
+					</button>
+
+					<button th:if="${session.user != null}" type="button" class="btn btn-outline-secondary btn-report shadow-sm"
+						data-bs-toggle="modal" data-bs-target="#reportModal">
+						<i class="bi bi-exclamation-triangle"></i> 신고
+					</button>
+				</div>
+			</div>
+
+			<div th:each="reply : ${replyList}" class="reply-item" th:classappend="${reply.parentId != null} ? 're-reply' : ''">
+				<div class="d-flex justify-content-between align-items-center mb-2">
+					<div class="d-flex align-items-center mb-2" style="line-height: 1.2;">
+						<i th:if="${reply.parentId != null}" class="bi bi-arrow-return-right me-1 text-muted"
+							style="font-size: 0.85rem; vertical-align: middle;"></i>
+
+						<div class="flex-shrink-0" style="margin-right: 7px;">
+							<img
+								th:src="${reply.writerProfile != null and reply.writerProfile != '' ? '/uploads/' + reply.writerProfile : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+								style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #eee;">
+						</div>
+
+						<div class="d-flex align-items-center">
+							<th:block th:if="${reply.memberType != null}">
+								<div class="d-flex align-items-center" style="margin-right: 3px;">
+									<th:block th:if="${reply.memberType == '일반회원'}">
+										<th:block th:switch="${reply.gradeId}">
+											<img th:case="2" th:src="@{/images/bronze.png}" style="width: 14px; height: 14px; vertical-align: middle;">
+											<img th:case="3" th:src="@{/images/silver.png}" style="width: 14px; height: 14px; vertical-align: middle;">
+											<img th:case="4" th:src="@{/images/gold.png}" style="width: 14px; height: 14px; vertical-align: middle;">
+											<img th:case="5" th:src="@{/images/premium.png}" style="width: 14px; height: 14px; vertical-align: middle;">
+										</th:block>
+									</th:block>
+
+									<img th:if="${reply.memberType == '관리자'}" th:src="@{/images/admin.png}"
+										style="width: 15px; height: 15px; vertical-align: middle;"> <img th:if="${reply.memberType == '전문가회원'}"
+										th:src="@{/images/expert.png}" style="width: 14px; height: 14px; vertical-align: middle;"> <img
+										th:if="${reply.memberType == '파트너회원'}" th:src="@{/images/partner.png}"
+										style="width: 14px; height: 14px; vertical-align: middle;">
+								</div>
+							</th:block>
+
+							<span class="fw-bold" th:text="${reply.writerName}"
+								th:classappend="${reply.memberType != null and reply.memberType == '관리자' ? 'text-admin-premium' : ''}"
+								style="font-size: 0.88rem; letter-spacing: -0.4px; margin-right: 5px; line-height: 1;">닉네임</span> <span
+								class="badge badge-ofim me-2" th:if="${reply.memberType != null and reply.memberType != '관리자'}"
+								th:with="pts=${reply.activityPoint != null ? reply.activityPoint : 0}"
+								th:classappend="${pts >= 5000 ? 'bg-underarmor' : (pts >= 2500 ? 'bg-muscle' : (pts >= 1000 ? 'bg-burning' : (pts >= 300 ? 'bg-runner' : 'bg-rookie')))}"
+								style="font-size: 0.55rem; padding: 1px 4px; transform: scale(0.9); transform-origin: left;"> <span
+								th:text="${reply.getDiaterRank()}">등급</span>
+							</span> <small class="text-muted" th:if="${reply.createdDate != null}"
+								th:text="${#dates.format(reply.createdDate, 'MM.dd HH:mm')}" style="font-size: 0.75rem; margin-left: 2px;"></small>
+						</div>
+					</div>
+					<div class="d-flex gap-3 align-items-center">
+						<button type="button" class="btn btn-link btn-sm text-decoration-none p-0 reply-like-btn"
+							th:classappend="${reply.isLiked == 1} ? 'active' : ''" th:onclick="toggleReplyLike([[${reply.replyId}]], this)">
+							<i class="bi" th:classappend="${reply.isLiked == 1} ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-up'"></i> <span
+								class="reply-like-count" th:text="${reply.likeCount}">0</span>
+						</button>
+
+						<button th:if="${session.user != null and reply.parentId == null}"
+							class="btn btn-link btn-sm text-decoration-none p-0 text-muted"
+							th:onclick="toggleReplyForm([[${reply.replyId}]], [[${reply.writerName}]])">답글달기</button>
+
+						<div
+							th:if="${session.user != null and (session.user.memberId == reply.writerId or session.user.memberType == '관리자')}">
+							<button class="btn btn-link btn-sm text-primary text-decoration-none p-0 me-2"
+								th:onclick="|showEditForm(${reply.replyId})|">수정</button>
+							<a th:href="@{/community/reply/delete/{replyId}(replyId=${reply.replyId}, postId=${board.postId})}"
+								class="text-danger small text-decoration-none" onclick="return confirm('댓글을 삭제하시겠습니까?');">삭제</a>
+						</div>
+					</div>
+				</div>
+
+				<div th:id="'reply-content-' + ${reply.replyId}" class="mb-0 text-dark ps-1" style="white-space: pre-wrap;"
+					th:text="${reply.content}">댓글 내용</div>
+
+				<div th:id="'edit-form-' + ${reply.replyId}" class="d-none mt-2">
+					<textarea th:id="'edit-input-' + ${reply.replyId}" class="form-control mb-2" rows="2" th:text="${reply.content}"></textarea>
+					<div class="text-end">
+						<button class="btn btn-sm btn-light rounded-pill me-1" th:onclick="|hideEditForm(${reply.replyId})|">취소</button>
+						<button class="btn btn-sm btn-primary rounded-pill px-3" th:onclick="|updateReply(${reply.replyId})|">수정완료</button>
+					</div>
+				</div>
+
+				<div th:id="'reReplyBox-' + ${reply.replyId}" class="mt-3 d-none">
+					<form th:action="@{/community/reply/write}" method="post">
+						<input type="hidden" name="postId" th:value="${board.postId}"> <input type="hidden" name="parentId"
+							th:value="${reply.replyId}">
+						<div class="d-flex flex-column gap-2">
+							<textarea name="content" class="form-control reply-textarea shadow-sm" placeholder="답글을 남겨주세요." required></textarea>
+							<div class="d-flex justify-content-end gap-2">
+								<button type="button" class="btn btn-light btn-sm rounded-pill"
+									th:onclick="toggleReplyForm([[${reply.replyId}]])">취소</button>
+								<button type="submit" class="btn btn-primary btn-sm px-4 rounded-pill">답글 등록</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<div class="mt-4 pt-4 border-top">
+				<form th:if="${session.user != null}" th:action="@{/community/reply/write}" method="post" id="replyForm">
+					<input type="hidden" name="postId" th:value="${board.postId}">
+					<div class="d-flex flex-column gap-2">
+						<textarea name="content" id="replyContent" class="form-control reply-textarea"
+							placeholder="따뜻한 댓글이나 정성스러운 답변을 남겨주세요." required></textarea>
+						<div class="d-flex justify-content-end">
+							<button type="submit" class="btn btn-primary px-5 py-2 rounded-pill fw-bold">등록</button>
+						</div>
+					</div>
+				</form>
+				<div th:unless="${session.user != null}" class="text-center py-4 bg-light rounded-3">
+					<p class="text-muted mb-0">
+						댓글을 작성하려면 <a href="javascript:void(0);" onclick="openLoginModalWithBackPath()" class="text-primary fw-bold">로그인</a>이
+						필요합니다.
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="reportModal" tabindex="-1" th:if="${session.user != null}">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow">
+				<div class="modal-header bg-light">
+					<h5 class="modal-title fw-bold">
+						<i class="bi bi-megaphone me-2"></i>게시글 신고
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body p-4">
+					<p class="small text-muted mb-3">신고 사유를 선택해주세요.</p>
+					<select id="reportReason" class="form-select border-0 bg-light py-2 mb-3 shadow-sm"
+						onchange="toggleReportContent(this.value)">
+						<option value="1">스팸/홍보물</option>
+						<option value="2">음란물/부적절한 콘텐츠</option>
+						<option value="3">욕설/비방</option>
+						<option value="4">개인정보 노출</option>
+						<option value="5">기타 (직접 입력)</option>
+					</select>
+					<div id="otherReasonBox" style="display: none;" class="mt-3 animate__animated animate__fadeIn">
+						<label for="reportContentInput" class="form-label small fw-bold text-danger"> <i
+							class="bi bi-pencil-square"></i> 상세 사유 입력
+						</label>
+						<textarea id="reportContentInput" class="form-control border-0 bg-light p-3" rows="4" style="resize: none;"
+							placeholder="관리자가 검토할 수 있도록 상세한 사유를 적어주세요."></textarea>
+					</div>
+				</div>
+				<div class="modal-footer border-0">
+					<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">취소</button>
+					<button type="button" class="btn btn-danger btn-sm" onclick="submitReport()">신고 접수</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer th:replace="~{footer :: footer}"></footer>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<script th:inline="javascript">
+		function openLoginModalWithBackPath() {
+			const currentUrl = window.location.href;
+			const redirectInput = document.getElementById('headerRedirectInput');
+			if (redirectInput) { redirectInput.value = currentUrl; }
+			const loginModalElement = document.getElementById('loginModal');
+			if (loginModalElement) {
+				const modal = new bootstrap.Modal(loginModalElement);
+				modal.show();
+			} else {
+				location.href = "/auth/login?redirect=" + encodeURIComponent(currentUrl);
+			}
+		}
+
+        function showEditForm(replyId) {
+            document.getElementById('reply-content-' + replyId).classList.add('d-none');
+            document.getElementById('edit-form-' + replyId).classList.remove('d-none');
+        }
+
+        function hideEditForm(replyId) {
+            document.getElementById('reply-content-' + replyId).classList.remove('d-none');
+            document.getElementById('edit-form-' + replyId).classList.add('d-none');
+        }
+
+        function updateReply(replyId) {
+            const content = document.getElementById('edit-input-' + replyId).value;
+            if (!content.trim()) { alert("내용을 입력해주세요."); return; }
+            
+            fetch('/community/reply/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `replyId=${replyId}&content=${encodeURIComponent(content)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    location.reload();
+                } else {
+                    alert(data.message || "수정 중 오류가 발생했습니다.");
+                }
+            })
+            .catch(error => { console.error('Error:', error); });
+        }
+
+        function toggleBookmark(postId) {
+            fetch('/api/bookmark/' + postId, { method: 'POST' })
+            .then(response => {
+                if (response.status === 401) { openLoginModalWithBackPath(); return; }
+                return response.text();
+            })
+            .then(res => {
+                if(!res) return;
+                const btn = document.getElementById('bookmarkBtn');
+                const icon = document.getElementById('bookmarkIcon');
+                if (res === 'added') {
+                    alert('즐겨찾기에 저장되었습니다!');
+                    btn.classList.replace('btn-outline-primary', 'btn-primary');
+                    icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');
+                } else if (res === 'removed') {
+                    alert('즐겨찾기가 취소되었습니다.');
+                    btn.classList.replace('btn-primary', 'btn-outline-primary');
+                    icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');
+                }
+            })
+        }
+
+        function toggleReplyLike(replyId, btnElement) {
+            fetch('/community/reply/like/' + replyId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.count === -1) { openLoginModalWithBackPath(); return; }
+                const icon = btnElement.querySelector('i');
+                const countText = btnElement.querySelector('.reply-like-count');
+                countText.innerText = data.count;
+                if (data.liked) { btnElement.classList.add('active'); icon.classList.replace('bi-hand-thumbs-up', 'bi-hand-thumbs-up-fill'); }
+                else { btnElement.classList.remove('active'); icon.classList.replace('bi-hand-thumbs-up-fill', 'bi-hand-thumbs-up'); }
+            })
+        }
+
+        function toggleReplyForm(replyId, writerName) {
+            const formBox = document.getElementById('reReplyBox-' + replyId);
+            if (!formBox) return;
+            const textarea = formBox.querySelector('textarea');
+            if (formBox.classList.contains('d-none')) {
+                formBox.classList.remove('d-none');
+                if (writerName) textarea.value = '@' + writerName + ' ';
+                textarea.focus();
+                autoResizeTextarea(textarea);
+            } else {
+                formBox.classList.add('d-none');
+                textarea.value = '';
+            }
+        }
+
+		document.addEventListener('input', function (event) { if (event.target.tagName.toLowerCase() !== 'textarea') return; autoResizeTextarea(event.target); });
+        function autoResizeTextarea(obj) { obj.style.height = 'auto'; obj.style.height = (obj.scrollHeight) + 'px'; }
+		function deletePost(postId) { if (confirm("정말로 이 게시글을 삭제하시겠습니까?")) { location.href = "/community/delete/" + postId; } }
+        
+		function toggleLike(postId) {
+		    fetch('/community/like/' + postId).then(response => response.json()).then(data => {
+		        const count = data.count;
+		        if (count === -1) { openLoginModalWithBackPath(); return; }
+		        const btn = document.getElementById('likeBtn');
+		        const icon = document.getElementById('likeIcon');
+		        const text = document.getElementById('likeCountText');
+		        text.innerText = count;
+		        if (btn.classList.contains('btn-danger')) { btn.classList.replace('btn-danger', 'btn-outline-danger'); icon.classList.replace('bi-heart-fill', 'bi-heart'); }
+		        else { btn.classList.replace('btn-outline-danger', 'btn-danger'); icon.classList.replace('bi-heart', 'bi-heart-fill'); }
+		    })
+		}
+        
+       function toggleReportContent(val) {
+		    const box = document.getElementById('otherReasonBox');
+		    const input = document.getElementById('reportContentInput');
+		    if (val === '5') {
+		        box.style.display = 'block';
+		        input.focus();
+		    } else {
+		        box.style.display = 'none';
+		        input.value = '';
+		    }
+		}
+
+        function submitReport() {
+            const postId = [[${board.postId}]];
+            const code = document.getElementById('reportReason').value;
+            const otherDetail = document.getElementById('reportContentInput').value.trim();
+            let content = "";
+            if (code === '5') {
+                if (!otherDetail) { alert("기타 신고 사유를 입력해주세요."); document.getElementById('reportContentInput').focus(); return; }
+                content = otherDetail;
+            } else {
+                const selectText = document.getElementById('reportReason');
+                content = selectText.options[selectText.selectedIndex].text;
+            }
+            const params = new URLSearchParams();
+            params.append('postId', postId);
+            params.append('code', code); 
+            params.append('content', content);
+            fetch('/community/report', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
+                body: params
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === "success") {
+                    alert("신고가 정상적으로 접수되었습니다.");
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+                    modal.hide();
+                    document.getElementById('reportReason').value = '1';
+                    document.getElementById('otherReasonBox').style.display = 'none';
+                    document.getElementById('reportContentInput').value = '';
+                } else if (data === "already_reported") {
+                    alert("이미 신고하신 게시글입니다.");
+                    bootstrap.Modal.getInstance(document.getElementById('reportModal')).hide();
+                } else if (data === "self_report") {
+                    alert("본인 글은 신고할 수 없습니다.");
+                } else if (data === "login_required") {
+                    openLoginModalWithBackPath();
+                } else {
+                    alert("신고 처리 중 오류가 발생했습니다. (응답: " + data + ")");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("서버 통신 중 오류가 발생했습니다.");
+            });
+        }
+	</script>
+</body>
+</html>

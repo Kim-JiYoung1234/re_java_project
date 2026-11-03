@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 뼈대</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+    /* 기본 초기화 */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: sans-serif; background-color: #f4f7f6; color: #333; }
+a { text-decoration: none; color: #333; }
+ul { list-style: none; }
+
+/* 상단 헤더 */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    padding: 15px 30px;
+    border-bottom: 1px solid #ddd;
+}
+.header .logo { font-weight: bold; font-size: 1.2rem; }
+
+/* 레이아웃 (사이드바 + 메인) */
+.layout-container {
+    display: flex;
+    min-height: calc(100vh - 60px); /* 헤더 높이 제외한 전체 화면 */
+}
+
+/* 사이드바 */
+.sidebar {
+    width: 250px;
+    background-color: #fff;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+}
+.menu-section { margin-bottom: 30px; }
+.menu-section h3 {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 10px;
+}
+.menu-section ul li { margin-bottom: 8px; }
+.menu-section ul li a:hover { color: #007bff; font-weight: bold; }
+
+/* 메인 콘텐츠 */
+.content {
+    flex: 1; /* 남은 공간 모두 차지 */
+    padding: 30px;
+}
+.content h2 { margin-bottom: 20px; }
+.content-box {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+    
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">MyService 마이페이지</div>
+        <div class="user-info">
+            <span id="userName">사용자</span>님 (<span id="userRoleBadge">일반</span>)
+        </div>
+    </header>
+
+    <div class="layout-container">
+        
+        <aside class="sidebar">
+            <div class="menu-section">
+                <h3>공통 메뉴</h3>
+                <ul>
+                    <li><a href="#">내 정보 수정</a></li>
+                    <li><a href="#">비밀번호 변경</a></li>
+                    <li><a href="#">알림 설정</a></li>
+                </ul>
+            </div>
+
+            <div id="dynamicMenuContainer"></div>
+        </aside>
+
+        <main class="content">
+            <h2>대시보드 요약</h2>
+            <div class="content-box">
+                <p>왼쪽 메뉴를 클릭하면 이 영역의 내용이 바뀝니다.</p>
+                <p>현재 접속한 계정의 권한에 맞는 정보가 여기에 표시됩니다.</p>
+            </div>
+        </main>
+
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+ // 1. 임시 사용자 데이터 (실제로는 서버/API에서 받아옵니다)
+ // 테스트 해보기: role 값을 'USER', 'EXPERT', 'PARTNER'로 바꿔보세요!
+ const currentUser = {
+     name: "김코딩",
+     role: "EXPERT" // 현재 전문가로 설정됨
+ };
+
+ // 2. DOM 요소 선택
+ const userNameEl = document.getElementById('userName');
+ const userRoleBadgeEl = document.getElementById('userRoleBadge');
+ const dynamicMenuContainer = document.getElementById('dynamicMenuContainer');
+
+ // 3. 사용자 기본 정보 화면에 표시
+ userNameEl.textContent = currentUser.name;
+
+ // 4. 권한(Role)에 따른 조건부 메뉴 렌더링 함수
+ function renderRoleMenu(role) {
+     let menuHTML = '';
+
+     if (role === 'USER') {
+         userRoleBadgeEl.textContent = '일반회원';
+         menuHTML = `
+             <div class="menu-section">
+                 <h3>일반회원 메뉴</h3>
+                 <ul>
+                     <li><a href="#">결제 관리</a></li>
+                     <li><a href="#">내가 쓴 리뷰 관리</a></li>
+                     <li><a href="#">내가 찜한 글 관리</a></li>
+                     <li><a href="#">찜한 전문가 목록</a></li>
+                 </ul>
+             </div>
+         `;
+     } else if (role === 'EXPERT') {
+         userRoleBadgeEl.textContent = '전문가';
+         menuHTML = `
+             <div class="menu-section">
+                 <h3>전문가 메뉴</h3>
+                 <ul>
+                     <li><a href="#">내 포트폴리오 관리</a></li>
+                     <li><a href="#">상담/예약 일정 관리</a></li>
+                     <li><a href="#">수익 통계</a></li>
+                 </ul>
+             </div>
+         `;
+     } else if (role === 'PARTNER') {
+         userRoleBadgeEl.textContent = '파트너';
+         menuHTML = `
+             <div class="menu-section">
+                 <h3>파트너 메뉴</h3>
+                 <ul>
+                     <li><a href="#">제휴 및 광고 관리</a></li>
+                     <li><a href="#">서비스 등록/수정</a></li>
+                     <li><a href="#">정산 내역</a></li>
+                 </ul>
+             </div>
+         `;
+     }
+
+     // 완성된 HTML을 사이드바 빈 공간에 삽입
+     dynamicMenuContainer.innerHTML = menuHTML;
+ }
+
+ // 5. 함수 실행
+ renderRoleMenu(currentUser.role);
+    </script>
+</body>
+</html>

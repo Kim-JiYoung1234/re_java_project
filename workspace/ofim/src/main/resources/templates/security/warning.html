@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 ACCESS DENIED - 보안 경고</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #ff3333;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .warning-container {
+            border: 2px solid #ff3333;
+            padding: 40px;
+            background-color: rgba(255, 0, 0, 0.05);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 1px solid #ff3333;
+            padding-bottom: 20px;
+            text-transform: uppercase;
+        }
+        .blink {
+            animation: blinker 1.5s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+        .info-box {
+            background-color: #1a1a1a;
+            border: 1px dashed #ff3333;
+            padding: 20px;
+            margin: 20px 0;
+            color: #fff;
+        }
+        .info-label {
+            color: #ff3333;
+            font-weight: bold;
+            display: inline-block;
+            width: 120px;
+        }
+        .legal-notice {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 30px;
+            line-height: 1.5;
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+
+<div class="warning-container">
+    <h1 class="blink">⚠ ACCESS DENIED ⚠</h1>
+    <p style="text-align: center; font-size: 1.2rem;">비정상적인 접근이 감지되어 연결이 강제 종료되었습니다.</p>
+    
+    <div class="info-box">
+        <p><span class="info-label">접속 IP :</span> <span th:text="${ip}">192.168.0.1</span></p>
+        <p><span class="info-label">차단 사유 :</span> <span th:text="${reason}">CSRF 토큰 위조 시도</span></p>
+        <p><span class="info-label">접속 시간 :</span> <span th:text="${#calendars.format(#calendars.createNow(), 'yyyy-MM-dd HH:mm:ss')}">2026-03-24 11:30:00</span></p>
+        <p><span class="info-label">상태 :</span> <span style="color: #ff3333; font-weight: bold;">[영구 기록됨]</span></p>
+    </div>
+
+    <div class="legal-notice">
+        [경고] 귀하의 접속 정보(IP 주소, 브라우저 환경, 요청 데이터)는 당사의 보안 관제 서버에 실시간으로 수집 및 기록되었습니다. 
+        정보통신망 이용촉진 및 정보보호 등에 관한 법률 제48조(정보통신망 침해행위 등의 금지)에 의거하여, 
+        본 시스템에 대한 무단 접근 및 공격 시도는 민형사상의 처벌 대상이 될 수 있습니다.
+    </div>
+</div>
+
+</body>
+</html>

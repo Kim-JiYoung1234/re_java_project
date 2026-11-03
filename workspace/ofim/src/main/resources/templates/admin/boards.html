@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::content})}">
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+<div th:fragment="content">
+	<style>
+/* 테이블 레이아웃 고정 */
+.table-fixed {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.text-truncate-custom {
+	display: inline-block;
+	width: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+}
+
+/* 행 클릭 디자인 */
+tbody tr {
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+	background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+tbody tr td:last-child {
+	cursor: default;
+}
+
+/* 배지 디자인 */
+.status-badge {
+	font-weight: 600;
+	font-size: 0.75rem;
+	padding: 5px 12px;
+	border-radius: 50rem;
+}
+
+.bg-normal {
+	background-color: #e8fadf;
+	color: #71dd37;
+}
+
+.bg-hidden {
+	background-color: #ebeef1;
+	color: #8592a3;
+}
+
+/* 페이징 버튼 커스텀 */
+.pagination .page-link {
+	border-radius: 8px;
+	margin: 0 2px;
+	color: #495057;
+	cursor: pointer;
+}
+
+.pagination .page-item.active .page-link {
+	background-color: #0d6efd;
+	border-color: #0d6efd;
+	color: #fff;
+}
+</style>
+
+	<div class="card card-soft mb-3 border-0 shadow-sm" style="border-radius: 18px;">
+		<div class="card-body">
+			<form id="adminSearchForm" class="row g-2 align-items-center" method="get" th:action="@{/admin/boards}">
+				<div class="col-12 col-md-2">
+					<select class="form-select" name="categoryId" onchange="fetchBoardList(1)">
+						<option value="">카테고리(전체)</option>
+						<option th:each="cat : ${categoryList}" th:value="${cat.categoryId}" th:text="${cat.categoryName}"
+							th:selected="${categoryId != null and categoryId == cat.categoryId}">카테고리명</option>
+					</select>
+				</div>
+				<div class="col-12 col-md-2">
+					<select class="form-select" name="deleted" onchange="fetchBoardList(1)">
+						<option value="">상태(전체)</option>
+						<option value="0" th:selected="${deleted != null and deleted == 0}">정상</option>
+						<option value="1" th:selected="${deleted != null and deleted == 1}">숨김</option>
+					</select>
+				</div>
+				<div class="col-12 col-md-6">
+					<div class="input-group">
+						<span class="input-group-text"><i class="bi bi-search"></i></span> <input class="form-control" name="keyword"
+							th:value="${keyword}" placeholder="제목 / 작성자 / 서브카테고리 검색"
+							onkeyup="if(window.event.keyCode==13){fetchBoardList(1)}">
+					</div>
+				</div>
+				<div class="col-12 col-md-2 d-grid d-md-flex gap-2">
+					<button class="btn btn-primary" type="button" onclick="fetchBoardList(1)">검색</button>
+					<a class="btn btn-outline-secondary" th:href="@{/admin/boards}">초기화</a>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div id="boardTableArea">
+		<div class="card border-0 shadow-sm" style="border-radius: 18px;">
+			<div class="card-body">
+				<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+					<div>
+						<div class="fw-semibold">
+							게시글 관리 <span class="badge bg-light text-dark ms-1">20개씩 보기</span>
+						</div>
+					</div>
+					<div class="d-flex gap-2 align-items-center">
+						<button type="button" class="btn btn-sm btn-outline-success" onclick="batchAction('restore')">선택 복구</button>
+						<button type="button" class="btn btn-sm btn-outline-secondary" onclick="batchAction('hide')">선택 숨김</button>
+						<div class="vr mx-2"></div>
+						<div class="small text-secondary">
+							총 <span class="fw-semibold" th:text="${totalCount}">0</span>건
+						</div>
+					</div>
+				</div>
+
+				<div class="table-responsive">
+					<table class="table align-middle mb-0 table-fixed">
+						<thead>
+							<tr>
+								<th style="width: 40px;"><input type="checkbox" class="form-check-input" id="selectAll"></th>
+								<th style="width: 70px;">ID</th>
+								<th style="width: 100px;">카테고리</th>
+								<th style="width: 120px;">서브카테고리</th>
+								<th>제목</th>
+								<th style="width: 120px;">작성자</th>
+								<th style="width: 110px;">작성일</th>
+								<th style="width: 80px;">조회수</th>
+								<th style="width: 80px;">상태</th>
+								<th class="text-end" style="width: 140px;">작업</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:if="${posts == null or #lists.isEmpty(posts)}">
+								<td colspan="10" class="text-center py-5 text-secondary">조회된 게시글이 없습니다.</td>
+							</tr>
+							<tr th:each="post : ${posts}">
+								<td><input type="checkbox" class="form-check-input post-checkbox" th:value="${post.postId}"></td>
+								<td th:text="${post.postId}"></td>
+								<td th:text="${post.categoryName}"></td>
+								<td th:text="${post.subCategory ?: '-'}"></td>
+								<td><div class="fw-semibold text-truncate-custom" th:text="${post.title}" th:title="${post.title}"></div></td>
+								<td th:text="${post.writerName}"></td>
+								<td th:text="${post.createdDate != null ? #dates.format(post.createdDate, 'yyyy-MM-dd') : '-'}"></td>
+								<td th:text="${post.viewCount}"></td>
+								<td><span class="status-badge bg-normal" th:if="${post.deleted == 0}">정상</span> <span
+									class="status-badge bg-hidden" th:if="${post.deleted == 1}">숨김</span></td>
+								<td class="text-end">
+									<button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal"
+										data-bs-target="#boardDetailModal"
+										th:attr="data-post-id=${post.postId},
+                                                 data-category-name=${post.categoryName},
+                                                 data-sub-category=${post.subCategory ?: '-'},
+                                                 data-title=${post.title},
+                                                 data-writer=${post.writerName},
+                                                 data-created-date=${post.createdDate != null ? #dates.format(post.createdDate, 'yyyy-MM-dd HH:mm') : '-'},
+                                                 data-view-count=${post.viewCount},
+                                                 data-content=${post.content},
+                                                 data-deleted=${post.deleted}">상세</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="d-flex justify-content-between align-items-center mt-4">
+					<div class="small text-secondary">
+						페이지 <span class="fw-bold text-dark" th:text="${page}">1</span> / <span th:text="${totalPages}">1</span>
+					</div>
+					<nav th:if="${totalPages > 0}">
+						<ul class="pagination pagination-sm mb-0">
+							<li class="page-item" th:classappend="${page <= 1} ? 'disabled'"><a class="page-link"
+								th:onclick="|fetchBoardList(${page - 1})|"><i class="bi bi-chevron-left"></i></a></li>
+							<li class="page-item"
+								th:each="i : ${#numbers.sequence((page - 2 > 1 ? page - 2 : 1), (page + 2 < totalPages ? page + 2 : totalPages))}"
+								th:classappend="${i == page} ? 'active'"><a class="page-link" th:text="${i}"
+								th:onclick="|fetchBoardList(${i})|"></a></li>
+							<li class="page-item" th:classappend="${page >= totalPages} ? 'disabled'"><a class="page-link"
+								th:onclick="|fetchBoardList(${page + 1})|"><i class="bi bi-chevron-right"></i></a></li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="boardDetailModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content" style="border-radius: 20px;">
+				<div class="modal-header border-0 pb-0">
+					<h5 class="modal-title fw-bold text-primary">
+						<i class="bi bi-info-circle-fill me-2"></i>게시글 상세 정보
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body p-4">
+					<div class="row g-4">
+						<div class="col-md-5">
+							<div class="p-3 bg-light rounded-4 h-100">
+								<div class="small text-secondary fw-bold mb-3 border-bottom pb-2">기본 정보</div>
+								<div class="small d-grid gap-2">
+									<div class="d-flex justify-content-between">
+										<span>ID</span><span data-role="postId" class="fw-bold"></span>
+									</div>
+									<div class="d-flex justify-content-between">
+										<span>카테고리</span><span data-role="categoryName" class="fw-bold"></span>
+									</div>
+									<div class="d-flex justify-content-between">
+										<span>서브</span><span data-role="subCategory" class="fw-bold"></span>
+									</div>
+									<div class="d-flex justify-content-between">
+										<span>작성자</span><span data-role="writer" class="fw-bold text-primary"></span>
+									</div>
+									<div class="d-flex justify-content-between">
+										<span>작성일</span><span data-role="createdDate" class="fw-bold"></span>
+									</div>
+									<div class="d-flex justify-content-between">
+										<span>조회수</span><span data-role="viewCount" class="fw-bold text-danger"></span>
+									</div>
+									<div class="d-flex justify-content-between border-top pt-2 mt-1">
+										<span>상태</span><span data-role="deletedStatus" class="fw-bold"></span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-7">
+							<div class="mb-3">
+								<label class="small text-secondary fw-bold mb-1">제목</label>
+								<div class="fw-bold fs-5 lh-base p-2 border-start border-4 border-primary bg-light rounded-end"
+									data-role="title"></div>
+							</div>
+							<div>
+								<label class="small text-secondary fw-bold mb-1">본문 내용</label>
+								<div class="p-3 bg-light rounded-4"
+									style="white-space: pre-wrap; min-height: 180px; max-height: 350px; overflow-y: auto; font-size: 0.95rem;"
+									data-role="content"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer border-0">
+					<button class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">닫기</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script th:inline="javascript">
+    (() => {
+        // [비동기 리스트 호출 함수]
+        window.fetchBoardList = async (page) => {
+            const form = document.getElementById('adminSearchForm');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            params.set('page', page);
+
+            const url = `/admin/boards?${params.toString()}`;
+
+            try {
+                // Fetch API로 요청 (Header에 AJAX임을 명시)
+                const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const html = await response.text();
+                
+                // 테이블 영역만 교체
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.getElementById('boardTableArea');
+                
+                document.getElementById('boardTableArea').innerHTML = newTable.innerHTML;
+                
+                // URL 주소창 변경 (새로고침 시 해당 페이지 유지용)
+                history.pushState(null, '', url);
+                
+                // 전체 선택 체크박스 로직 재연결
+                initSelectAll();
+            } catch (err) {
+                console.error("비동기 로드 에러:", err);
+            }
+        };
+
+        // 모달 데이터 세팅 로직
+        const detailModalEl = document.querySelector('#boardDetailModal');
+        if (detailModalEl) {
+            detailModalEl.addEventListener('show.bs.modal', (event) => {
+                const btn = event.relatedTarget;
+                const d = btn.dataset;
+                const set = (role, val) => {
+                    const el = detailModalEl.querySelector(`[data-role="${role}"]`);
+                    if(el) el.textContent = val || '-';
+                };
+                set('postId', d.postId); set('categoryName', d.categoryName); set('subCategory', d.subCategory);
+                set('writer', d.writer); set('createdDate', d.createdDate); set('viewCount', d.viewCount);
+                set('title', d.title); set('content', d.content);
+                const s = detailModalEl.querySelector('[data-role="deletedStatus"]');
+                if(s) {
+                    s.textContent = d.deleted === '1' ? '숨김' : '정상';
+                    s.style.color = d.deleted === '1' ? '#8592a3' : '#71dd37';
+                }
+            });
+        }
+
+        // 전체 선택 초기화 함수
+        function initSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            if(selectAll) {
+                selectAll.addEventListener('change', () => {
+                    document.querySelectorAll('.post-checkbox').forEach(cb => cb.checked = selectAll.checked);
+                });
+            }
+        }
+        initSelectAll();
+
+        // 행 클릭 시 체크박스 토글 (위임 방식)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.form-check-input')) return;
+            const row = e.target.closest('tr');
+            if (row && row.querySelector('.post-checkbox')) {
+                const cb = row.querySelector('.post-checkbox');
+                cb.checked = !cb.checked;
+                const selectAll = document.getElementById('selectAll');
+                const cbs = document.querySelectorAll('.post-checkbox');
+                if (selectAll) selectAll.checked = cbs.length > 0 && Array.from(cbs).every(c => c.checked);
+            }
+        });
+
+        // 일괄 처리
+        window.batchAction = async (type) => {
+            const ids = Array.from(document.querySelectorAll('.post-checkbox:checked')).map(cb => parseInt(cb.value));
+            if (ids.length === 0) { alert('항목을 선택해주세요.'); return; }
+            if (!confirm('처리하시겠습니까?')) return;
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+            try {
+                const response = await fetch(`/admin/boards/batch-${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...(csrfHeader ? { [csrfHeader]: csrfToken } : {}) },
+                    body: JSON.stringify(ids)
+                });
+                if (response.ok) fetchBoardList(1); // 일괄 처리 후 현재 필터 유지하며 새로고침
+            } catch (err) { alert('에러 발생'); }
+        };
+    })();
+</script>
+</div>
+</html>

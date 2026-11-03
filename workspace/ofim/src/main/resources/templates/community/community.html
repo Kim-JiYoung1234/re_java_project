@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>헬스케어 플랫폼 - 커뮤니티</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" th:href="@{/css/community.css}">
+
+</head>
+<body>
+
+	<header th:replace="~{header :: header}"></header>
+
+	<div class="container my-4">
+		<div class="hero-banner mb-4">
+			<img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200&h=300&auto=format&fit=crop"
+				alt="Banner" class="img-fluid w-100 shadow-sm">
+		</div>
+
+		<div class="community-header">
+			<h4 class="fw-bold mb-0 text-primary">
+				<i class="bi bi-people-fill me-2"></i>커뮤니티
+			</h4>
+		</div>
+
+		<div class="category-tabs shadow-sm border text-center">
+			<ul class="nav nav-pills justify-content-center" id="mainTabs">
+				<li class="nav-item"><a class="nav-link main-tab-link" th:classappend="${currentCategory == null} ? 'active'"
+					th:href="@{/community/main}" data-category="null">전체</a></li>
+				<li class="nav-item"><a class="nav-link main-tab-link" th:classappend="${currentCategory == 1} ? 'active'"
+					th:href="@{/community/main(categoryId=1)}" data-category="1">공지사항</a></li>
+
+				<li class="nav-item dropdown dropdown-hover"><a class="nav-link dropdown-toggle main-tab-link"
+					th:classappend="${currentCategory == 2} ? 'active'" th:href="@{/community/main(categoryId=2)}" data-category="2">자유게시판</a>
+					<ul class="dropdown-menu shadow-sm">
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '전체' or currentSub == null} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '전체', 2)">전체보기</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '일상/잡담'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '일상/잡담', 2)">일상/잡담</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '오운완/오식완'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '오운완/오식완', 2)">오운완/인증</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '정보나눔'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '정보나눔', 2)">정보나눔</a></li>
+					</ul></li>
+
+				<li class="nav-item dropdown dropdown-hover"><a class="nav-link dropdown-toggle main-tab-link"
+					th:classappend="${currentCategory == 3} ? 'active'" th:href="@{/community/main(categoryId=3)}" data-category="3">건강
+						Q&A</a>
+					<ul class="dropdown-menu shadow-sm">
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '전체' or currentSub == null} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '전체', 3)">전체보기</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '일상생활'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '일상생활', 3)">일상생활</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '운동'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '운동', 3)">운동</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '식단'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '식단', 3)">식단</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '건강'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '건강', 3)">건강</a></li>
+					</ul></li>
+
+				<li class="nav-item dropdown dropdown-hover"><a class="nav-link dropdown-toggle main-tab-link"
+					th:classappend="${currentCategory == 4} ? 'active'" th:href="@{/community/main(categoryId=4)}" data-category="4">카드뉴스</a>
+					<ul class="dropdown-menu shadow-sm">
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '전체' or currentSub == null} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '전체', 4)">전체보기</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '건강백과'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '건강백과', 4)">건강백과</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '주요영상'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '주요영상', 4)">주요영상</a></li>
+					</ul></li>
+
+				<li class="nav-item dropdown dropdown-hover"><a class="nav-link dropdown-toggle main-tab-link"
+					th:classappend="${currentCategory == 6} ? 'active'" th:href="@{/community/main(categoryId=6)}" data-category="6">🔥
+						챌린지</a>
+					<ul class="dropdown-menu shadow-sm">
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '전체' or currentSub == null} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '전체', 6)">전체보기</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '공식 챌린지'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '공식 챌린지', 6)">🏆 공식 챌린지</a></li>
+						<li><a class="dropdown-item sub-item" th:classappend="${currentSub == '자율 챌린지'} ? 'active'"
+							href="javascript:void(0);" onclick="loadSubCategory(this, '자율 챌린지', 6)">🤝 자율 챌린지</a></li>
+					</ul></li>
+
+				<li class="nav-item"><a class="nav-link main-tab-link" th:classappend="${currentCategory == 5} ? 'active'"
+					th:href="@{/community/main(categoryId=5)}" data-category="5">관리자에게</a></li>
+			</ul>
+		</div>
+
+		<div class="row">
+			<div class="col-md-3 mb-4 d-none d-md-block">
+				<div class="sticky-top" style="top: 20px;">
+					<div class="card profile-summary-card">
+						<div class="profile-header-bg"></div>
+						<div class="card-body pt-0">
+							<div th:if="${session.user != null}">
+								<div class="d-flex align-items-center gap-3" style="margin-top: -35px;">
+									<div class="flex-shrink-0 position-relative">
+										<img th:if="${session.user.profile != null and session.user.profile != ''}"
+											th:src="@{/uploads/{file}(file=${session.user.profile})}" class="profile-img-circle shadow-sm"> <img
+											th:unless="${session.user.profile != null and session.user.profile != ''}"
+											src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="profile-img-circle shadow-sm">
+
+										<div th:if="${myRanking != null and myRanking > 0 and myRanking <= 3}"
+											class="position-absolute d-flex align-items-center justify-content-center"
+											style="bottom: -5px; right: -5px; z-index: 100; width: 35px; height: 35px; background: white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); border: 2px solid #fff;">
+											<div class="premium-trophy"
+												th:classappend="${myRanking == 1 ? 'rank-gold' : (myRanking == 2 ? 'rank-silver' : 'rank-bronze')}"
+												style="transform: scale(1.1);">
+												<span th:if="${myRanking == 1}" style="font-size: 1.1rem;">🏆</span> <span th:if="${myRanking == 2}"
+													style="font-size: 1.1rem;">🏅</span> <span th:if="${myRanking == 3}" style="font-size: 1.1rem;">🎖️</span>
+											</div>
+										</div>
+									</div>
+									<div class="flex-grow-1 mt-4">
+										<div class="d-flex flex-column align-items-start">
+											<div class="premium-capsule d-flex align-items-center flex-nowrap mb-1">
+												<div class="flex-shrink-0 d-flex align-items-center me-1">
+													<img th:if="${session.user != null and session.user.memberType == '관리자'}" th:src="@{/images/admin.png}"
+														style="width: 18px; height: 18px; vertical-align: middle; margin-right: 2px;" title="관리자"> <img
+														th:if="${session.user.memberType == '전문가회원'}" th:src="@{/images/expert.png}"
+														style="width: 16px; height: 16px;"> <img th:if="${session.user.memberType == '파트너회원'}"
+														th:src="@{/images/partner.png}" style="width: 16px; height: 16px;">
+
+													<th:block th:if="${session.user.memberType == '일반회원'}">
+														<th:block th:switch="${session.user.gradeId}">
+															<img th:case="2" th:src="@{/images/bronze.png}" style="width: 18px; height: 18px;" title="브론즈">
+															<img th:case="3" th:src="@{/images/silver.png}" style="width: 18px; height: 18px;" title="실버">
+															<img th:case="4" th:src="@{/images/gold.png}" style="width: 18px; height: 18px;" title="골드">
+															<img th:case="5" th:src="@{/images/premium.png}" style="width: 18px; height: 18px;" title="프리미엄">
+														</th:block>
+													</th:block>
+												</div>
+												<h5 class="fw-bold mb-0 text-truncate d-inline-block" style="max-width: 90px; color: #333;"
+													th:classappend="${session.user.memberType == '관리자' ? 'text-admin-premium' : 'text-member-standard'}"
+													th:text="${session.user.nickname}">닉네임</h5>
+												<span th:if="${myRanking != null and myRanking > 0 and myRanking <= 3}" class="ms-1 fw-bold"
+													th:style="${myRanking == 1 ? 'color:#FFD700;' : (myRanking == 2 ? 'color:#C0C0C0;' : 'color:#CD7F32;')}"
+													style="font-size: 0.75rem; font-style: italic;"
+													th:text="${myRanking == 1 ? '1st' : (myRanking == 2 ? '2nd' : '3rd')}"></span>
+											</div>
+
+											<span class="badge badge-ofim mt-1" th:if="${session.user.memberType != '관리자'}"
+												th:with="p=${session.user.activityPoint ?: 0}"
+												th:classappend="${p >= 5000 ? 'bg-underarmor' : (p >= 2500 ? 'bg-muscle' : (p >= 1000 ? 'bg-burning' : (p >= 300 ? 'bg-runner' : 'bg-rookie')))}">
+												<span
+												th:text="${p >= 5000 ? '언더아머' : (p >= 2500 ? '머슬' : (p >= 1000 ? '버닝' : (p >= 300 ? '러너' : '비기너 루키')))}"
+												style="font-size: 0.65rem;">등급명</span>
+											</span>
+										</div>
+									</div>
+								</div>
+
+								<div class="mt-4 px-1" th:if="${session.user.memberType != '관리자'}">
+									<div class="d-flex justify-content-between align-items-end mb-2">
+										<div style="line-height: 1;">
+											<span style="font-size: 0.75rem; font-weight: 700; color: #555; letter-spacing: 0.5px;">MY ACTIVITY</span>
+											<div style="font-size: 1.1rem; font-weight: 800; color: #0d6efd;"
+												th:text="${(session.user.activityPoint ?: 0) + ' P'}">0 P</div>
+										</div>
+										<div
+											style="font-size: 0.72rem; font-weight: 700; color: #ff6b6b; background: #fff0f0; padding: 3px 10px; border-radius: 8px; border: 1px solid #ffe3e3;"
+											th:with="pts=${session.user.activityPoint ?: 0}">
+											<i class="bi bi-fire me-1"></i> <span
+												th:text="${pts < 300 ? (300 - pts) + 'P 남음' : (pts < 1000 ? (1000 - pts) + 'P 남음' : (pts < 2500 ? (2500 - pts) + 'P 남음' : (pts < 5000 ? (5000 - pts) + 'P 남음' : '최고 등급 달성!')))}"></span>
+										</div>
+									</div>
+									<div class="progress"
+										style="height: 12px; border-radius: 20px; background-color: #e9ecef; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); overflow: hidden;">
+										<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+											th:with="pts=${session.user.activityPoint ?: 0}"
+											th:style="${pts < 300 ? 'width:' + (pts * 100 / 300) + '%;' : (pts < 1000 ? 'width:' + ((pts-300) * 100 / 700) + '%;' : (pts < 2500 ? 'width:' + ((pts-1000) * 100 / 1500) + '%;' : (pts < 5000 ? 'width:' + ((pts-2500) * 100 / 2500) + '%;' : 'width: 100%;')))} + ' background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); transition: width 1.5s ease-in-out;'">
+										</div>
+									</div>
+								</div>
+
+								<div class="mt-4 px-1 py-2 text-center" th:if="${session.user.memberType == '관리자'}"
+									style="background: #f8f9fa; border-radius: 10px; border: 1px dashed #dee2e6;">
+									<span style="font-size: 0.8rem; font-weight: 700; color: #666;"> <i class="bi bi-shield-check me-1"></i>
+										서비스 운영 계정입니다
+									</span>
+								</div>
+
+								<hr class="my-3" style="opacity: 0.1;">
+
+								<div class="row g-0 text-center mb-3">
+									<div class="col-6 border-end">
+										<div style="font-size: 0.7rem; font-weight: 700; color: #888; text-transform: uppercase;">Posts</div>
+										<div class="fw-bold" style="font-size: 1rem; color: #333;" th:text="${postCount ?: 0}">0</div>
+									</div>
+									<div class="col-6">
+										<div style="font-size: 0.7rem; font-weight: 700; color: #888; text-transform: uppercase;">Comments</div>
+										<div class="fw-bold" style="font-size: 1rem; color: #333;" th:text="${replyCount ?: 0}">0</div>
+									</div>
+								</div>
+
+								<div class="d-grid gap-2">
+									<button class="btn btn-primary btn-sm rounded-pill shadow-sm" style="font-weight: 700;"
+										onclick="location.href='/mypage/main'">마이페이지 관리</button>
+									<a href="javascript:void(0);"
+										onclick="location.href='/auth/logout?redirect=' + encodeURIComponent(window.location.href)"
+										class="btn-logout small text-muted text-decoration-none"> <i class="bi bi-box-arrow-right me-1"></i>로그아웃
+									</a>
+								</div>
+							</div>
+
+							<div th:unless="${session.user != null}">
+								<div class="text-center py-2" style="margin-top: -35px;">
+									<img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="profile-img-circle shadow-sm mb-3"
+										style="background-color: white;">
+
+									<h6 class="fw-bold mb-1">방문객님 반갑습니다!</h6>
+									<p class="text-muted small mb-4">
+										로그인하여 헬스케어 커뮤니티의<br>다양한 활동에 참여해보세요.
+									</p>
+
+									<div class="d-grid px-3">
+										<button class="btn btn-primary btn-sm rounded-pill shadow-sm py-2 fw-bold"
+											onclick="openLoginModalWithBackPath()">
+											<i class="bi bi-box-arrow-in-right me-1"></i> 로그인 하러가기
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="card widget-card border-0 mb-3 shadow-sm" style="border-radius: 15px; background-color: #ffffff;">
+						<div class="card-header bg-white border-0 pt-3 pb-1 d-flex justify-content-between align-items-center">
+							<h6 class="fw-bold mb-0" style="font-size: 0.9rem; color: #343a40;">
+								<i class="bi bi-megaphone-fill me-1" style="color: #0d6efd;"></i> 주요 공지
+							</h6>
+							<a th:href="@{/community/main(categoryId=1)}" class="text-muted"
+								style="font-size: 0.75rem; text-decoration: none; transition: 0.2s;"> 더보기 <i class="bi bi-chevron-right"
+								style="font-size: 0.6rem;"></i></a>
+						</div>
+						<div class="card-body p-2">
+							<div class="list-group list-group-flush">
+								<div th:if="${#lists.isEmpty(sideNotices)}" class="py-4 text-center text-muted" style="font-size: 0.75rem;">등록된
+									공지사항이 없습니다.</div>
+								<a th:each="notice : ${sideNotices}" th:href="@{|/community/detail/${notice.postId}|}"
+									class="list-group-item list-group-item-action px-2 py-2 border-0 d-flex align-items-center gap-2"
+									style="border-radius: 10px; transition: background-color 0.2s;"> <span
+									class="badge rounded-pill flex-shrink-0"
+									style="font-size: 0.6rem; background-color: #e7f1ff; color: #0d6efd; border: 1px solid #cfe2ff; letter-spacing: 0.5px;">
+										NOTICE </span> <span class="text-truncate fw-medium" style="font-size: 0.75rem; color: #495057;"
+									th:text="${notice.title}"> 공지사항 제목 </span>
+								</a>
+							</div>
+						</div>
+					</div>
+
+					<div class="card widget-card border-0 shadow-sm">
+						<div class="card-body p-3">
+							<h6 class="fw-bold mb-3" style="font-size: 0.9rem;">🏆 ofim 랭킹 순위</h6>
+							<div th:if="${topRankers == null or #lists.isEmpty(topRankers)}" class="text-center py-3 text-muted small">랭킹
+								산정 중...</div>
+							<div th:unless="${topRankers == null or #lists.isEmpty(topRankers)}" th:each="ranker, stat : ${topRankers}"
+								class="ranking-item d-flex align-items-center p-2 rounded-3 mb-2"
+								th:style="${stat.count == 1 ? 'background-color: #fff9db;' : 'background-color: #f8f9fa;'}">
+								<span class="fw-bold me-2" th:classappend="${stat.count == 1 ? 'text-warning' : 'text-muted'}"
+									style="font-size: 0.8rem; width: 15px;" th:text="${stat.count}">1</span>
+								<div class="flex-grow-1 overflow-hidden">
+									<div class="d-flex flex-column align-items-start">
+										<div class="fw-bold text-truncate d-flex align-items-center" style="font-size: 0.75rem; width: 100%;">
+											<span th:if="${stat.count == 1}" class="premium-trophy rank-gold me-1" style="transform: scale(0.8);">🏆</span>
+											<span th:if="${stat.count == 2}" class="premium-trophy rank-silver me-1" style="transform: scale(0.8);">🏅</span>
+											<span th:if="${stat.count == 3}" class="premium-trophy rank-bronze me-1" style="transform: scale(0.8);">🎖️</span>
+											<span th:text="${ranker.writerName}" class="text-truncate">닉네임</span>
+										</div>
+										<span class="badge badge-ofim mt-1" th:if="${ranker.memberType != '관리자'}"
+											style="transform: scale(0.85); transform-origin: left; padding: 2px 8px;"
+											th:with="pts=${ranker.activityPoint != null ? ranker.activityPoint : 0}"
+											th:classappend="${pts >= 5000 ? 'bg-underarmor' : (pts >= 2500 ? 'bg-muscle' : (pts >= 1000 ? 'bg-burning' : (pts >= 300 ? 'bg-runner' : 'bg-rookie')))}">
+											<span th:text="${ranker.getDiaterRank()}" style="font-size: 0.6rem;">등급</span>
+										</span>
+									</div>
+									<div class="progress mt-1" style="height: 3px;">
+										<div class="progress-bar" th:with="pts=${ranker.activityPoint != null ? ranker.activityPoint : 0}"
+											th:classappend="${stat.count == 1 ? 'bg-warning' : 'bg-primary'}" th:style="|width: ${pts * 100 / 5000}%|"></div>
+									</div>
+								</div>
+								<span class="badge bg-white text-dark ms-1 border" style="font-size: 0.65rem;"
+									th:text="${(ranker.activityPoint != null ? ranker.activityPoint : 0) + 'P'}">0P</span>
+							</div>
+							<a href="/ranking/main" class="text-decoration-none"><button class="btn btn-outline-dark w-100 mt-2 py-1"
+									style="font-size: 0.7rem; border-radius: 10px;">전체 랭킹 확인</button></a>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-md-9">
+				<div class="card p-3 mb-4 shadow-sm border">
+					<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+						<div class="d-flex align-items-center flex-wrap gap-3">
+							<form th:action="@{/community/main}" method="get" class="d-flex gap-1" id="searchForm">
+								<input type="hidden" name="categoryId" th:value="${currentCategory}"> <input type="hidden" name="sort"
+									th:value="${currentSort}" id="sortInput"> <input type="text" name="keyword" th:value="${keyword}"
+									class="form-control form-control-sm" style="width: 180px;" placeholder="검색어 입력">
+								<button type="submit" class="btn btn-dark btn-sm px-3">검색</button>
+							</form>
+							<div class="d-flex gap-3 align-items-center border-start ps-3" style="height: 24px;">
+								<div class="d-flex gap-2">
+									<button id="btn-list" class="view-link active" onclick="changeView(this, 'list')">목록형</button>
+									<button id="btn-card" class="view-link" onclick="changeView(this, 'card')">카드형</button>
+									<button id="btn-album" class="view-link" onclick="changeView(this, 'album')">앨범형</button>
+								</div>
+								<div id="cardSortArea" class="d-none d-flex gap-2 border-start ps-3">
+									<button id="sort-createdDate" class="sort-link" onclick="handleSort('createdDate')">최신순</button>
+									<button id="sort-viewCount" class="sort-link" onclick="handleSort('viewCount')">조회순</button>
+									<button id="sort-likeCount" class="sort-link" onclick="handleSort('likeCount')">좋아요순</button>
+								</div>
+							</div>
+						</div>
+						<div class="ms-auto" id="writeBtnContainer">
+							<a
+								th:if="${currentCategory != 1 and currentCategory != 4 and (currentCategory != 6 or currentSub != '공식 챌린지') or (session.user != null and session.user.memberType == '관리자')}"
+								href="javascript:void(0);"
+								th:onclick="checkWritePermission([[${currentCategory == null ? 2 : currentCategory}]])" id="writeBtn"
+								class="btn btn-primary btn-sm px-4 shadow-sm rounded-pill"> <i class="bi bi-pencil-square me-1"></i> 글쓰기
+							</a>
+						</div>
+					</div>
+				</div>
+
+				<div id="boardContent">
+					<div id="listView" class="card p-2 shadow-sm overflow-hidden border">
+						<table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
+							<thead class="table-light">
+								<tr>
+									<th class="text-center" style="width: 70px;">번호</th>
+									<th>제목</th>
+									<th style="width: 160px;">작성자</th>
+									<th class="text-center sort-th" style="width: 100px;" onclick="handleListSort('createdDate')">작성일 <i
+										class="bi bi-caret-down sort-icon" id="icon-createdDate"></i></th>
+									<th class="text-center sort-th" style="width: 80px;" onclick="handleListSort('viewCount')">조회 <i
+										class="bi bi-caret-down sort-icon" id="icon-viewCount"></i></th>
+									<th class="text-center sort-th" style="width: 80px;" onclick="handleListSort('likeCount')">좋아요 <i
+										class="bi bi-caret-down sort-icon" id="icon-likeCount"></i></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="board : ${boardList}" th:classappend="${board.categoryId == 1} ? 'notice-row' : ''"
+									th:onclick="|location.href='/community/detail/' + ${board.postId}|">
+									<td class="text-center text-muted small"><span th:if="${board.categoryId == 1}"><i
+											class="bi bi-megaphone-fill text-danger"></i></span> <span th:unless="${board.categoryId == 1}"
+										th:text="${board.postId}">1</span></td>
+									<td style="overflow: hidden;"><a th:href="@{|/community/detail/${board.postId}|}"
+										class="post-link fw-bold d-flex justify-content-between align-items-center w-100"
+										onclick="event.stopPropagation();"> <span class="d-inline-flex align-items-center overflow-hidden"
+											style="flex: 1; min-width: 0;"> <span class="flex-shrink-0"> <span
+													th:if="${board.categoryId == 1}" class="badge me-1 fw-normal badge-notice">공지</span> <span
+													th:unless="${board.categoryId == 1 or board.categoryId == 5}" class="badge me-1 fw-normal"
+													th:classappend="${board.categoryId == 2 ? 'bg-success' : (board.categoryId == 3 ? 'bg-info' : (board.categoryId == 4 ? 'bg-warning' : (board.categoryId == 6 ? 'badge-challenge' : (board.categoryId == 5 ? 'bg-dark' : 'bg-secondary'))))}"
+													th:text="${board.subCategory}">분류</span> <span th:if="${board.categoryId == 5}"
+													class="text-primary fw-bold small me-1">[관리자에게]</span>
+											</span> <span class="text-truncate" th:text="${board.title}"
+												th:classappend="${board.categoryId == 1 and #strings.contains(board.title, '[필독]')} ? 'text-danger' : ''">제목</span>
+												<span th:if="${board.categoryId == 6}" class="flex-shrink-0 ms-1 d-flex align-items-center"> <span
+													class="badge ms-1" th:with="dDay=${board.getDDayCount()}"
+													th:classappend="${dDay < 0 ? 'bg-secondary' : (dDay <= 3 ? 'bg-danger' : 'bg-primary')}"
+													th:text="${board.getChallengeStatusText()}" style="font-size: 0.65rem;"> </span>
+											</span> <span class="flex-shrink-0 ms-1 d-flex align-items-center"> <span th:if="${board.replyCount > 0}"
+													class="text-danger fw-bold small" th:text="'[' + ${board.replyCount} + ']'"></span> <i
+													th:if="${board.imageName != null and board.imageName != ''}" class="bi bi-image text-primary ms-1"></i> <i
+													th:if="${board.videoUrl != null and board.videoUrl != ''}" class="bi bi-play-btn-fill text-danger ms-1"></i>
+											</span>
+										</span> <th:block th:if="${board.categoryId == 5}">
+												<span th:if="${board.adminReplyCount > 0}" class="badge rounded-pill bg-primary ms-2 small flex-shrink-0">답변완료</span>
+												<span th:unless="${board.adminReplyCount > 0}"
+													class="badge rounded-pill bg-secondary ms-2 small flex-shrink-0">답변대기</span>
+											</th:block>
+									</a></td>
+									<td class="small text-truncate" style="vertical-align: middle;">
+										<div class="d-flex align-items-center">
+											<div class="flex-shrink-0" style="margin-right: 8px;">
+												<img
+													th:src="${board.writerProfile != null and board.writerProfile != '' ? '/uploads/' + board.writerProfile : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+													style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; background-color: #fff;">
+											</div>
+
+											<div class="d-flex flex-column align-items-start" style="line-height: 1.1;">
+												<div class="d-flex align-items-center">
+													<div class="flex-shrink-0" th:if="${board != null}"
+														style="margin-right: 3px; display: flex; align-items: center;">
+														<th:block th:switch="${board.gradeId}">
+															<img th:case="2" th:src="@{/images/bronze.png}"
+																style="width: 14px; height: 14px; vertical-align: middle;" title="브론즈">
+															<img th:case="3" th:src="@{/images/silver.png}"
+																style="width: 14px; height: 14px; vertical-align: middle;" title="실버">
+															<img th:case="4" th:src="@{/images/gold.png}" style="width: 14px; height: 14px; vertical-align: middle;"
+																title="골드">
+															<img th:case="5" th:src="@{/images/premium.png}"
+																style="width: 14px; height: 14px; vertical-align: middle;" title="프리미엄">
+
+															<th:block th:case="*">
+																<img th:if="${board.memberType == '관리자'}" th:src="@{/images/admin.png}"
+																	style="width: 15px; height: 15px; vertical-align: middle;" title="관리자">
+																<img th:if="${board.memberType == '전문가회원'}" th:src="@{/images/expert.png}"
+																	style="width: 14px; height: 14px; vertical-align: middle;" title="전문가">
+																<img th:if="${board.memberType == '파트너회원'}" th:src="@{/images/partner.png}"
+																	style="width: 14px; height: 14px; vertical-align: middle;" title="파트너">
+															</th:block>
+														</th:block>
+													</div>
+
+													<span class="fw-bold"
+														th:classappend="${board.memberType == '관리자' ? 'text-admin-premium' : 'text-member-standard'}"
+														th:text="${board.writerName}" style="font-size: 0.85rem; letter-spacing: -0.4px;">작성자</span>
+												</div>
+
+												<span class="badge badge-ofim" th:if="${board.memberType != '관리자'}"
+													th:with="pts=${board.activityPoint != null ? board.activityPoint : 0}"
+													th:classappend="${pts >= 5000 ? 'bg-underarmor' : (pts >= 2500 ? 'bg-muscle' : (pts >= 1000 ? 'bg-burning' : (pts >= 300 ? 'bg-runner' : 'bg-rookie')))}"
+													style="font-size: 0.55rem; padding: 1px 4px; transform: scale(0.85); transform-origin: left; margin-top: 1px;">
+													<span th:text="${board.getDiaterRank()}">등급</span>
+												</span>
+											</div>
+										</div>
+									</td>
+									<td class="text-center small text-muted" th:text="${#dates.format(board.createdDate, 'MM.dd')}">02.13</td>
+									<td class="text-center small" th:text="${board.viewCount}">120</td>
+									<td class="text-center small text-danger"><i class="bi bi-heart-fill me-1"></i><span
+										th:text="${board.likeCount}">0</span></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div id="cardView" class="d-none">
+						<div class="row g-3">
+							<div class="col-md-4" th:each="board : ${boardList}">
+								<div class="card p-3 h-100 border-start border-primary border-5 shadow-sm"
+									th:onclick="|location.href='/community/detail/' + ${board.postId}|">
+									<a th:href="@{|/community/detail/${board.postId}|}" class="post-link" onclick="event.stopPropagation();">
+										<div class="d-flex justify-content-between align-items-start mb-2">
+											<span th:if="${board.categoryId == 1}" class="badge fw-normal badge-notice">공지</span> <span
+												th:unless="${board.categoryId == 1 or board.categoryId == 5}" class="badge fw-normal"
+												th:classappend="${board.categoryId == 2 ? 'bg-success' : (board.categoryId == 3 ? 'bg-info' : (board.categoryId == 4 ? 'bg-warning' : (board.categoryId == 6 ? 'badge-challenge' : (board.categoryId == 5 ? 'bg-dark' : 'bg-secondary'))))}"
+												th:text="${board.subCategory}">카테고리</span>
+											<div th:if="${board.categoryId == 6}" class="ms-auto me-1">
+												<span class="badge" th:with="dDay=${board.getDDayCount()}"
+													th:classappend="${dDay < 0 ? 'bg-secondary' : (dDay <= 3 ? 'bg-danger' : 'bg-primary')}"
+													th:text="${board.getChallengeStatusText()}"> </span>
+											</div>
+											<div class="d-flex gap-1 align-items-center">
+												<i th:if="${board.imageName != null and board.imageName != ''}" class="bi bi-image text-primary small"></i>
+												<span th:if="${board.videoUrl != null and board.videoUrl != ''}" class="badge bg-danger rounded-pill small"><i
+													class="bi bi-youtube"></i> VIDEO</span>
+											</div>
+										</div>
+										<h5 class="fw-bold d-flex justify-content-between align-items-center">
+											<span class="text-truncate" style="flex: 1; min-width: 0;"> <span th:if="${board.categoryId == 5}"
+												class="text-primary fw-bold small me-1 flex-shrink-0">[관리자에게]</span> <span th:text="${board.title}">제목</span>
+												<span th:if="${board.replyCount > 0}" class="text-danger small ms-1"
+												th:text="'[' + ${board.replyCount} + ']'"></span>
+											</span>
+										</h5>
+										<p class="text-muted small mb-2 text-truncate" th:text="${board.content}">내용...</p>
+										<div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
+											<div class="d-flex align-items-center">
+												<div class="flex-shrink-0" style="margin-right: 8px;">
+													<img
+														th:src="${board.writerProfile != null and board.writerProfile != '' ? '/uploads/' + board.writerProfile : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+														style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; background-color: #fff;">
+												</div>
+
+												<div class="d-flex flex-column align-items-start" style="line-height: 1.1;">
+													<div class="d-flex align-items-center">
+														<div class="flex-shrink-0" th:if="${board != null}"
+															style="margin-right: 3px; display: flex; align-items: center;">
+															<th:block th:switch="${board.gradeId}">
+																<img th:case="2" th:src="@{/images/bronze.png}"
+																	style="width: 14px; height: 14px; vertical-align: middle;" title="브론즈">
+																<img th:case="3" th:src="@{/images/silver.png}"
+																	style="width: 14px; height: 14px; vertical-align: middle;" title="실버">
+																<img th:case="4" th:src="@{/images/gold.png}" style="width: 14px; height: 14px; vertical-align: middle;"
+																	title="골드">
+																<img th:case="5" th:src="@{/images/premium.png}"
+																	style="width: 14px; height: 14px; vertical-align: middle;" title="프리미엄">
+
+																<th:block th:case="*">
+																	<img th:if="${board.memberType == '관리자'}" th:src="@{/images/admin.png}"
+																		style="width: 15px; height: 15px; vertical-align: middle;" title="관리자">
+																	<img th:if="${board.memberType == '전문가회원'}" th:src="@{/images/expert.png}"
+																		style="width: 14px; height: 14px; vertical-align: middle;" title="전문가">
+																	<img th:if="${board.memberType == '파트너회원'}" th:src="@{/images/partner.png}"
+																		style="width: 14px; height: 14px; vertical-align: middle;" title="파트너">
+																</th:block>
+															</th:block>
+														</div>
+
+														<span class="fw-bold"
+															th:classappend="${board.memberType == '관리자' ? 'text-admin-premium' : 'text-member-standard'}"
+															th:text="${board.writerName}" style="font-size: 0.85rem; letter-spacing: -0.4px;">작성자</span>
+													</div>
+
+													<span class="badge badge-ofim" th:if="${board.memberType != '관리자'}"
+														th:with="pts=${board.activityPoint != null ? board.activityPoint : 0}"
+														th:classappend="${pts >= 5000 ? 'bg-underarmor' : (pts >= 2500 ? 'bg-muscle' : (pts >= 1000 ? 'bg-burning' : (pts >= 300 ? 'bg-runner' : 'bg-rookie')))}"
+														style="font-size: 0.55rem; padding: 1px 4px; transform: scale(0.85); transform-origin: left; margin-top: 1px;">
+														<span th:text="${board.getDiaterRank()}">등급</span>
+													</span>
+												</div>
+											</div>
+											<div class="small text-muted">
+												<span>[[${#dates.format(board.createdDate, 'MM.dd')}]]</span> <span class="mx-1">|</span> <i
+													class="bi bi-eye"></i> [[${board.viewCount}]] <span class="mx-1">|</span> <i
+													class="bi bi-heart-fill text-danger"></i> [[${board.likeCount}]]
+											</div>
+										</div>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div id="albumView" class="d-none">
+						<div class="row g-4">
+							<div class="col-12 col-sm-6 col-lg-3" th:each="board : ${boardList}">
+								<div class="card h-100 overflow-hidden shadow-sm"
+									th:onclick="|location.href='/community/detail/' + ${board.postId}|">
+									<a th:href="@{|/community/detail/${board.postId}|}" class="post-link" onclick="event.stopPropagation();">
+										<div class="ratio ratio-16x9 album-thumb-container">
+											<div th:if="${board.categoryId == 6}" class="position-absolute top-0 start-0 m-2 z-3">
+												<span class="badge shadow-sm" th:with="dDay=${board.getDDayCount()}"
+													th:classappend="${dDay < 0 ? 'bg-secondary' : (dDay <= 3 ? 'bg-danger' : 'bg-primary')}"
+													th:text="${board.getChallengeStatusText()}"> </span>
+											</div>
+											<img th:if="${board.imageName != null and board.imageName != ''}"
+												th:src="@{/uploads/{file}(file=${board.imageName})}" class="album-thumb-img"> <img
+												th:if="${(board.imageName == null or board.imageName == '') and (board.youtubeId != null and board.youtubeId != '')}"
+												th:src="${'https://img.youtube.com/vi/' + board.youtubeId + '/mqdefault.jpg'}" class="album-thumb-img">
+											<div th:if="${board.videoUrl != null and board.videoUrl != ''}" class="album-video-indicator">
+												<i class="bi bi-play-fill"></i>
+											</div>
+											<div
+												th:if="${(board.imageName == null or board.imageName == '') and (board.youtubeId == null or board.youtubeId == '')}"
+												class="text-muted d-flex flex-column align-items-center justify-content-center h-100 bg-light">
+												<i class="bi bi-image" style="font-size: 2rem;"></i> <span class="small mt-1">No Image</span>
+											</div>
+										</div>
+										<div class="card-body p-3">
+											<div class="text-center mb-2">
+												<span th:if="${board.categoryId == 1}" class="badge mb-1 fw-normal badge-notice">공지</span> <span
+													th:unless="${board.categoryId == 1 or board.categoryId == 5}" class="badge mb-1 fw-normal"
+													th:classappend="${board.categoryId == 2 ? 'bg-success' : (board.categoryId == 3 ? 'bg-info' : (board.categoryId == 4 ? 'bg-warning' : (board.categoryId == 6 ? 'badge-challenge' : (board.categoryId == 5 ? 'bg-dark' : 'bg-secondary'))))}"
+													th:text="${board.subCategory}">분류</span>
+												<h6 class="card-title fw-bold text-truncate" th:text="${board.title}">제목</h6>
+											</div>
+											<div class="d-flex flex-column align-items-center mb-2 pb-2 border-bottom" style="line-height: 1.1;">
+												<div class="d-flex align-items-center justify-content-center w-100" style="margin-bottom: 3px;">
+													<div class="flex-shrink-0" style="margin-right: 6px;">
+														<img
+															th:src="${board.writerProfile != null and board.writerProfile != '' ? '/uploads/' + board.writerProfile : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+															style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; background-color: #fff;">
+													</div>
+
+													<div class="d-flex align-items-center overflow-hidden">
+														<div class="flex-shrink-0" th:if="${board != null}"
+															style="margin-right: 3px; display: flex; align-items: center;">
+															<th:block th:switch="${board.gradeId}">
+																<img th:case="2" th:src="@{/images/bronze.png}"
+																	style="width: 14px; height: 14px; vertical-align: middle;" title="브론즈">
+																<img th:case="3" th:src="@{/images/silver.png}"
+																	style="width: 14px; height: 14px; vertical-align: middle;" title="실버">
+																<img th:case="4" th:src="@{/images/gold.png}" style="width: 14px; height: 14px; vertical-align: middle;"
+																	title="골드">
+																<img th:case="5" th:src="@{/images/premium.png}"
+																	style="width: 14px; height: 14px; vertical-align: middle;" title="프리미엄">
+
+																<th:block th:case="*">
+																	<img th:if="${board.memberType == '관리자'}" th:src="@{/images/admin.png}"
+																		style="width: 15px; height: 15px; vertical-align: middle;" title="관리자">
+																	<img th:if="${board.memberType == '전문가회원'}" th:src="@{/images/expert.png}"
+																		style="width: 14px; height: 14px; vertical-align: middle;" title="전문가">
+																	<img th:if="${board.memberType == '파트너회원'}" th:src="@{/images/partner.png}"
+																		style="width: 14px; height: 14px; vertical-align: middle;" title="파트너">
+																</th:block>
+															</th:block>
+														</div>
+
+														<span class="fw-bold text-truncate"
+															th:classappend="${board.memberType == '관리자' ? 'text-admin-premium' : 'text-member-standard'}"
+															th:text="${board.writerName}" style="font-size: 0.85rem; letter-spacing: -0.4px; max-width: 80px;">작성자</span>
+													</div>
+												</div>
+
+												<span class="badge badge-ofim" th:if="${board.memberType != '관리자'}"
+													th:with="pts=${board.activityPoint != null ? board.activityPoint : 0}"
+													th:classappend="${pts >= 5000 ? 'bg-underarmor' : (pts >= 2500 ? 'bg-muscle' : (pts >= 1000 ? 'bg-burning' : (pts >= 300 ? 'bg-runner' : 'bg-rookie')))}"
+													style="font-size: 0.55rem; padding: 1px 4px; transform: scale(0.85);"> <span
+													th:text="${board.getDiaterRank()}">등급</span>
+												</span>
+											</div>
+											<div class="d-flex justify-content-between align-items-center" style="font-size: 0.7rem;">
+												<span class="text-muted" th:text="${#dates.format(board.createdDate, 'MM.dd')}">03.12</span>
+												<div class="d-flex gap-2">
+													<span class="text-muted"><i class="bi bi-eye"></i> [[${board.viewCount}]]</span> <span
+														class="text-danger fw-bold"><i class="bi bi-heart-fill"></i> [[${board.likeCount}]]</span>
+												</div>
+											</div>
+										</div>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<nav class="mt-5" th:if="${totalPages > 0}">
+						<ul class="pagination justify-content-center">
+							<li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'"><a class="page-link"
+								href="javascript:void(0);" th:onclick="|loadBoardPage(${currentPage - 1})|"><i class="bi bi-chevron-left"></i></a></li>
+							<li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
+								th:classappend="${i == currentPage} ? 'active'"><a class="page-link" href="javascript:void(0);"
+								th:onclick="|loadBoardPage(${i})|" th:text="${i}">1</a></li>
+							<li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'"><a class="page-link"
+								href="javascript:void(0);" th:onclick="|loadBoardPage(${currentPage + 1})|"><i class="bi bi-chevron-right"></i></a></li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer th:replace="~{footer :: footer}"></footer>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		let currentSort = [[${currentSort}]];
+        let currentViewMode = sessionStorage.getItem('community_view') || 'list';
+
+		window.onload = function() {
+            const btn = document.getElementById('btn-' + currentViewMode);
+            if(btn) changeView(btn, currentViewMode);
+            updateSortUI();
+		};
+
+		function handleSort(column) {
+			const urlParams = new URLSearchParams(window.location.search);
+			let nextSort = column + '_desc'; 
+			if (currentSort === column + '_desc') nextSort = column + '_asc';
+			else if (currentSort === column + '_asc') urlParams.delete('sort');
+			else urlParams.set('sort', nextSort);
+
+            urlParams.set('page', 1);
+            fetchBoardData(window.location.pathname + '?' + urlParams.toString());
+		}
+
+		function handleListSort(column) {
+			const urlParams = new URLSearchParams(window.location.search);
+			let nextSort;
+			if (currentSort === column + '_desc') nextSort = column + '_asc';
+			else if (currentSort === column + '_asc') urlParams.delete('sort');
+			else nextSort = column + '_desc';
+			if (nextSort) urlParams.set('sort', nextSort);
+			urlParams.set('page', 1);
+			fetchBoardData(window.location.pathname + '?' + urlParams.toString());
+		}
+
+        function loadBoardPage(pageNum) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('page', pageNum);
+            fetchBoardData(window.location.pathname + '?' + urlParams.toString());
+        }
+
+        function loadSubCategory(element, sub, categoryId) {
+            document.querySelectorAll('.sub-item').forEach(item => item.classList.remove('active'));
+            if(element) element.classList.add('active');
+
+            document.querySelectorAll('.main-tab-link').forEach(tab => {
+                tab.classList.remove('active');
+                if(tab.getAttribute('data-category') == categoryId) tab.classList.add('active');
+            });
+
+            const writeBtnContainer = document.getElementById('writeBtnContainer');
+            const sessionUser = [[${session.user}]];
+            if (sessionUser && writeBtnContainer) {
+                const userType = sessionUser.memberType;
+                let canWrite = (userType === '관리자') || !(categoryId == 1 || categoryId == 4 || (categoryId == 6 && sub === '공식 챌린지'));
+                if (canWrite) {
+                    writeBtnContainer.innerHTML = `<a href="javascript:void(0);" onclick="checkWritePermission(${categoryId})" id="writeBtn" class="btn btn-primary btn-sm px-4 shadow-sm rounded-pill"><i class="bi bi-pencil-square me-1"></i> 글쓰기</a>`;
+                } else {
+                    writeBtnContainer.innerHTML = '';
+                }
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if(categoryId) urlParams.set('categoryId', categoryId);
+            urlParams.set('subCategory', sub);
+            urlParams.set('page', 1);
+            fetchBoardData(window.location.pathname + '?' + urlParams.toString());
+        }
+
+        function fetchBoardData(url) {
+            fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('boardContent').innerHTML = html;
+                history.pushState(null, '', url);
+                const newParams = new URLSearchParams(url.split('?')[1]);
+                currentSort = newParams.get('sort');
+                applyCurrentViewMode();
+                updateSortUI();
+            })
+            .catch(error => console.error('Fetch error:', error));
+        }
+
+        function changeView(btn, type) {
+            currentViewMode = type;
+            sessionStorage.setItem('community_view', type);
+            applyCurrentViewMode();
+            const links = document.querySelectorAll('.view-link');
+            links.forEach(l => l.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function applyCurrentViewMode() {
+            document.querySelectorAll('#listView, #cardView, #albumView').forEach(v => {
+                if(v) v.classList.add('d-none');
+            });
+            const targetView = document.getElementById(currentViewMode + 'View');
+            if(targetView) targetView.classList.remove('d-none');
+            
+            const cardSortArea = document.getElementById('cardSortArea');
+            if(cardSortArea) {
+                if (currentViewMode === 'list') cardSortArea.classList.add('d-none');
+                else cardSortArea.classList.remove('d-none');
+            }
+        }
+
+        function updateSortUI() {
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.classList.remove('active');
+                icon.className = 'bi bi-caret-down sort-icon';
+            });
+            document.querySelectorAll('.sort-link').forEach(link => link.classList.remove('active'));
+            if (currentSort) {
+                const parts = currentSort.split('_');
+                const column = parts[0], order = parts[1];
+                const icon = document.getElementById('icon-' + column);
+                if (icon) {
+                    icon.classList.add('active');
+                    icon.className = order === 'asc' ? 'bi bi-caret-up-fill sort-icon active' : 'bi bi-caret-down-fill sort-icon active';
+                }
+                const sortBtn = document.getElementById('sort-' + column);
+                if (sortBtn) sortBtn.classList.add('active');
+            }
+        }
+        
+        function openLoginModalWithBackPath() {
+            const loginForm = document.querySelector('form[action="/auth/login"]');
+            if (loginForm) {
+                let redirectInput = loginForm.querySelector('input[name="redirect"]');
+                if (!redirectInput) {
+                    redirectInput = document.createElement('input');
+                    redirectInput.type = 'hidden';
+                    redirectInput.name = 'redirect';
+                    loginForm.appendChild(redirectInput);
+                }
+                redirectInput.value = window.location.href;
+            }
+            const loginModalElement = document.getElementById('loginModal');
+            if (loginModalElement) {
+                const modal = new bootstrap.Modal(loginModalElement);
+                modal.show();
+            } else {
+                location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.href);
+            }
+        }
+        
+        function checkWritePermission(categoryId) {
+            const sessionUser = [[${session.user}]];
+            if (sessionUser === null) {
+                const authModalElement = document.getElementById('headerAuthModal');
+                if (authModalElement) {
+                    const authModal = new bootstrap.Modal(authModalElement);
+                    authModal.show();
+                    const confirmBtn = authModalElement.querySelector('.btn-dark');
+                    confirmBtn.onclick = function() {
+                        authModal.hide();
+                        openLoginModalWithBackPath();
+                    };
+                } else {
+                    openLoginModalWithBackPath();
+                }
+                return;
+            }
+            location.href = '/community/write?categoryId=' + categoryId;
+        }
+		/*]]>*/
+   </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.AdminConsultMapper">
+
+    <!-- 상담 목록 -->
+    <select id="selectConsultList"
+            resultType="com.human.ofim.dto.AdminConsultDto">
+
+        SELECT
+            c.consult_id AS consultId,
+            c.consult_type AS consultType,
+            c.status AS status,
+
+            CASE
+                WHEN c.status = 1 THEN '예약신청'
+                WHEN c.status = 2 THEN '예약확정'
+                WHEN c.status = 3 THEN '상담완료'
+                WHEN c.status = 4 THEN '취소'
+                ELSE '알수없음'
+            END AS statusText,
+
+            c.created_date AS createdDate,
+            c.consult_start_date AS consultStartDate,
+            c.consult_end_date AS consultEndDate,
+
+            mu.user_name AS memberName,
+            eu.user_name AS expertName,
+
+            q.content AS consultContent,
+            a.content AS answerContent,
+
+            CASE
+                WHEN a.inquiry_id IS NULL THEN '대기'
+                ELSE '완료'
+            END AS answerStatus,
+
+            CASE
+                WHEN a.inquiry_id IS NULL
+                     AND TIMESTAMPDIFF(HOUR, c.created_date, NOW()) > 24
+                THEN '지연'
+                ELSE '정상'
+            END AS delayStatus
+
+        FROM consultation c
+        JOIN user mu ON mu.member_id = c.member_id
+        JOIN user eu ON eu.member_id = c.expert_id
+
+        LEFT JOIN inquiry q
+          ON q.inquiry_id = (
+                SELECT iq.inquiry_id
+                FROM inquiry iq
+                WHERE iq.consult_id = c.consult_id
+                  AND iq.comment_type = '질문'
+                ORDER BY iq.write_date DESC, iq.inquiry_id DESC
+                LIMIT 1
+          )
+
+        LEFT JOIN inquiry a
+          ON a.inquiry_id = (
+                SELECT ia.inquiry_id
+                FROM inquiry ia
+                WHERE ia.consult_id = c.consult_id
+                  AND ia.comment_type IN ('전문가답변','관리자답변')
+                ORDER BY ia.write_date DESC, ia.inquiry_id DESC
+                LIMIT 1
+          )
+
+        <where>
+            <if test="consultType != null and consultType != ''">
+                AND c.consult_type = #{consultType}
+            </if>
+
+            <if test="status != null">
+                AND c.status = #{status}
+            </if>
+
+            <if test="delayStatus != null and delayStatus != ''">
+                AND (
+                    CASE
+                        WHEN a.inquiry_id IS NULL
+                             AND TIMESTAMPDIFF(HOUR, c.created_date, NOW()) > 24
+                        THEN '지연'
+                        ELSE '정상'
+                    END
+                ) = #{delayStatus}
+            </if>
+
+            <if test="startDate != null and startDate != ''">
+                AND DATE(c.created_date) <![CDATA[>=]]> #{startDate}
+            </if>
+
+            <if test="endDate != null and endDate != ''">
+                AND DATE(c.created_date) <![CDATA[<=]]> #{endDate}
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchType == 'member'">
+                        AND mu.user_name LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'expert'">
+                        AND eu.user_name LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <otherwise>
+                        AND (
+                            mu.user_name LIKE CONCAT('%', #{keyword}, '%')
+                            OR eu.user_name LIKE CONCAT('%', #{keyword}, '%')
+                            OR c.consult_type LIKE CONCAT('%', #{keyword}, '%')
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+
+        ORDER BY c.created_date DESC
+    </select>
+
+    <select id="countTotalConsult" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation
+    </select>
+
+    <select id="countCompletedConsult" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation
+        WHERE status = 3
+    </select>
+
+    <select id="countWaitingConsult" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation c
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM inquiry a
+            WHERE a.consult_id = c.consult_id
+              AND a.comment_type IN ('전문가답변','관리자답변')
+        )
+    </select>
+
+    <select id="countDelayConsult" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation c
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM inquiry a
+            WHERE a.consult_id = c.consult_id
+              AND a.comment_type IN ('전문가답변','관리자답변')
+        )
+          AND TIMESTAMPDIFF(HOUR, c.created_date, NOW()) > 24
+    </select>
+
+    <select id="countTodayReceived" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation
+        WHERE DATE(created_date) = CURDATE()
+    </select>
+
+    <select id="countTodayComplete" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation
+        WHERE status = 3
+          AND DATE(consult_end_date) = CURDATE()
+    </select>
+
+    <insert id="insertAdminReply">
+        INSERT INTO inquiry
+        (
+            consult_id,
+            content,
+            write_date,
+            comment_type
+        )
+        VALUES
+        (
+            #{consultId},
+            #{adminReplyContent},
+            NOW(),
+            '관리자답변'
+        )
+    </insert>
+
+    <update id="updateConsultStatus">
+        UPDATE consultation
+        SET status = #{status}
+        WHERE consult_id = #{consultId}
+    </update>
+
+    <update id="updateConsultExpert">
+        UPDATE consultation
+        SET expert_id = #{expertId}
+        WHERE consult_id = #{consultId}
+    </update>
+
+    <select id="selectCurrentStatus" resultType="int">
+        SELECT status
+        FROM consultation
+        WHERE consult_id = #{consultId}
+    </select>
+
+    <select id="selectCurrentExpertId" resultType="long">
+        SELECT expert_id
+        FROM consultation
+        WHERE consult_id = #{consultId}
+    </select>
+
+    <insert id="insertConsultManageHistory">
+        INSERT INTO consult_manage_history
+        (
+            consult_id,
+            action_type,
+            before_expert_id,
+            after_expert_id,
+            before_status,
+            after_status,
+            reason,
+            admin_id,
+            created_date
+        )
+        VALUES
+        (
+            #{consultId},
+            #{actionType},
+            #{beforeExpertId},
+            #{afterExpertId},
+            #{beforeStatus},
+            #{afterStatus},
+            #{reason},
+            #{adminId},
+            NOW()
+        )
+    </insert>
+
+</mapper>

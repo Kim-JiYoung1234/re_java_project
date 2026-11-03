@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFIM MY | 마이페이지</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+:root {
+	--brand-color: #1fc8db;
+	--sidebar-width: 280px;
+	--bg-color: #f8fafc;
+}
+
+body {
+	font-family: 'Pretendard', sans-serif;
+	background-color: var(--bg-color);
+	margin: 0;
+}
+
+.n-wrapper {
+	display: flex;
+	max-width: 1200px;
+	margin: 0 auto;
+	min-height: 100vh;
+	padding: 40px 20px;
+	gap: 30px;
+}
+
+/* 사이드바 스타일 */
+.n-sidebar {
+	width: var(--sidebar-width);
+	flex-shrink: 0;
+}
+
+.n-nav-container {
+	position: sticky;
+	top: 40px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.n-profile-card {
+	background: #ffffff;
+	border-radius: 24px;
+	border: 1px solid #e2e8f0;
+	padding: 30px 20px;
+	text-align: center;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.n-profile-img-wrap {
+	position: relative;
+	width: 100px;
+	height: 100px;
+	margin: 0 auto 15px;
+}
+
+.n-profile-img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 3px solid var(--brand-color);
+	background-color: #f1f3f5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.n-profile-img img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover; 
+}
+
+.n-edit-badge {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	width: 32px;
+	height: 32px;
+	background: #6c757d;
+	color: #fff;
+	border-radius: 50%;
+	border: 2px solid #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+.n-profile-name {
+	font-size: 1.15rem;
+	font-weight: 800;
+	color: #1e293b;
+	margin-bottom: 4px;
+}
+
+.n-profile-email {
+	font-size: 0.85rem;
+	color: #94a3b8;
+	margin-bottom: 12px;
+}
+
+.n-profile-badge {
+	display: inline-block;
+	padding: 4px 12px;
+	background: #f0fdfa;
+	color: var(--brand-color);
+	font-size: 0.75rem;
+	font-weight: 700;
+	border-radius: 20px;
+}
+
+.n-menu-card {
+	background: #ffffff;
+	border-radius: 24px;
+	border: 1px solid #e2e8f0;
+	padding: 20px 12px;
+}
+
+.n-menu-section {
+	margin-bottom: 20px;
+}
+
+.n-menu-title {
+	font-size: 0.7rem;
+	font-weight: 700;
+	color: #94a3b8;
+	padding-left: 15px;
+	margin-bottom: 10px;
+	text-transform: uppercase;
+}
+
+.n-link {
+	display: flex;
+	align-items: center;
+	padding: 12px 15px;
+	color: #475569;
+	font-weight: 600;
+	font-size: 0.95rem;
+	border-radius: 14px;
+	text-decoration: none !important;
+	transition: 0.2s;
+}
+
+.n-link i {
+	width: 24px;
+	margin-right: 12px;
+	font-size: 1.1rem;
+	color: #cbd5e1;
+}
+
+.n-link:hover, .n-link.active {
+	background-color: #f0fdfa;
+	color: var(--brand-color);
+}
+
+.n-link:hover i, .n-link.active i {
+	color: var(--brand-color);
+}
+
+.n-link[aria-expanded="true"] .fa-chevron-down {
+	transform: rotate(180deg);
+}
+
+.fa-chevron-down {
+	transition: transform 0.3s;
+}
+
+/* 메인 콘텐츠 */
+.n-main-content {
+	flex: 1;
+	min-width: 0;
+}
+
+.expert-tab-content {
+	display: none;
+	animation: fadeIn 0.3s ease-in-out;
+}
+
+.keyframes fadeIn {from { opacity:0;
+	transform: translateY(10px);
+}
+
+to {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+}
+
+.hover-card-ui {
+	transition: all 0.25s ease-in-out;
+	border: 1px solid #eaedf1;
+}
+
+.hover-card-ui:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08) !important;
+	border-color: #d1d5db;
+	background-color: #fcfcfd;
+}
+
+.n-placeholder {
+	background: #ffffff;
+	border-radius: 24px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+	border: 1px solid #f1f5f9;
+	padding: 70px 20px;
+	text-align: center;
+	margin-top: 20px;
+}
+
+@media ( max-width : 992px) {
+	.n-wrapper {
+		flex-direction: column;
+	}
+	.n-sidebar {
+		width: 100%;
+	}
+	.n-nav-container {
+		position: static;
+	}
+}
+
+.footer {
+	background: #343a40;
+	color: white;
+	padding: 30px 0;
+	margin-top: 50px;
+}
+
+.n-link-danger {
+	display: flex;
+	align-items: center;
+	padding: 12px 15px;
+	color: #475569;
+	font-weight: 600;
+	font-size: 0.95rem;
+	border-radius: 14px;
+	text-decoration: none !important;
+	transition: 0.2s;
+}
+
+.n-link-danger i {
+	width: 24px;
+	margin-right: 12px;
+	font-size: 1.1rem;
+	color: #cbd5e1;
+}
+
+.n-link-danger:hover, .n-link-danger.active {
+	background-color: #fef2f2;
+	color: #ef4444;
+}
+
+.n-link-danger:hover i, .n-link-danger.active i {
+	color: #ef4444; 
+}
+
+/* 🌟 마이페이지 비밀번호 변경 모달 - 세련된 다크 & 미니멀 스타일 */
+#passwordModal .modal-content {
+    border: none;
+    border-radius: 24px; /* 더 둥글게 */
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12); /* 깊고 부드러운 그림자 */
+    overflow: hidden;
+}
+
+#passwordModal .modal-header {
+    border-bottom: 2px solid #f1f5f9;
+    padding: 25px 30px;
+    background-color: #f8fafc; /* 헤더 배경색 살짝 */
+}
+
+#passwordModal .modal-title {
+    font-size: 18px;
+    color: #1e293b;
+}
+
+#passwordModal .modal-body {
+    padding: 35px 35px 30px;
+}
+
+/* 라벨 디자인 커스텀 */
+#passwordModal .form-label {
+    font-size: 14px;
+    color: #64748b !important; /* text-secondary보다 조금 더 고급스러운 회색 */
+    margin-bottom: 8px;
+}
+
+/* 입력창(Input) 디자인 커스텀 - 아이콘 포함 구조 */
+#passwordModal .input-group {
+    margin-bottom: 20px;
+}
+
+#passwordModal .input-group-text {
+    background-color: #fff;
+    border: 2px solid #e2e8f0;
+    border-right: none;
+    border-radius: 12px 0 0 12px;
+    color: #94a3b8; /* 아이콘 색상 */
+    padding-left: 18px;
+}
+
+#passwordModal .form-control {
+    border: 2px solid #e2e8f0;
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+    padding: 14px 18px 14px 10px;
+    font-size: 14px;
+    color: #334155;
+    transition: all 0.3s;
+}
+
+#passwordModal .form-control:focus {
+    border-color: #93c5fd;
+    box-shadow: none;
+    background-color: #fff;
+}
+
+#passwordModal .form-control:focus + .input-group-text {
+    border-color: #93c5fd;
+}
+
+/* 유효성 검사 메시지 스타일 */
+#pwValidationMsg {
+    font-size: 13px;
+    background-color: #fff1f2; /* 연한 빨간색 배경 */
+    color: #e11d48;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-top: -10px; /* 입력창과 밀착 */
+    margin-bottom: 20px;
+}
+
+/* 푸터 디자인 커스텀 */
+#passwordModal .modal-footer {
+    border-top: 2px solid #f1f5f9;
+    padding: 20px 30px 25px;
+    background-color: #f8fafc;
+}
+
+/* 취소 버튼 커스텀 */
+#passwordModal .btn-light {
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 700;
+    font-size: 14px;
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: none;
+    transition: all 0.2s;
+}
+
+#passwordModal .btn-light:hover {
+    background-color: #e2e8f0;
+    color: #475569;
+}
+
+/* 변경하기 버튼 커스텀 - 기존 btn-dark 스타일 업그레이드 */
+#passwordModal .btn-dark {
+    border-radius: 12px;
+    padding: 12px 25px;
+    font-weight: 700;
+    font-size: 14px;
+    background-color: #1e293b; /* 진한 회색/검은색 */
+    border: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(30, 41, 59, 0.15);
+}
+
+#passwordModal .btn-dark:hover {
+    background-color: #0f172a;
+    box-shadow: 0 6px 18px rgba(30, 41, 59, 0.25);
+    transform: translateY(-2px);
+}
+
+#passwordModal .btn-dark:active {
+    transform: translateY(1px) scale(0.99);
+}
+
+</style>
+</head>
+<body>
+	<header th:replace="~{header :: header}"></header>
+
+	<div class="n-wrapper">
+		<aside class="n-sidebar">
+			<div class="n-nav-container">
+				<div class="n-profile-card">
+					<div class="n-profile-img-wrap">
+						<div class="n-profile-img">
+							<img th:if="${session.user?.profile != null and session.user.profile != ''}" th:src="@{|/uploads/${session.user.profile}|}" alt="Profile">
+							<i th:unless="${session.user?.profile != null and session.user.profile != ''}" class="fas fa-user text-secondary" style="font-size: 2.5rem;"></i>
+						</div>
+						<div class="n-edit-badge" onclick="document.getElementById('profileFile').click();">
+							<i class="fas fa-camera"></i>
+						</div>
+						<form id="profileUploadForm" th:action="@{/member/uploadProfile}" method="post" enctype="multipart/form-data" class="d-none">
+							<input type="file" id="profileFile" name="profileFile" accept="image/*" onchange="document.getElementById('profileUploadForm').submit();">
+						</form>
+					</div>
+					<div class="n-profile-name" th:text="${session.user?.nickname ?: (session.user?.loginId ?: '로그인 필요')}">이름</div>
+					<div class="n-profile-email" th:text="${session.user?.email}">email@test.com</div>
+					<div class="n-profile-badge" th:text="${userType ?: session.user?.memberType}">회원등급</div>
+				</div>
+
+				<nav class="n-menu-card">
+					<div class="n-menu-section">
+						<div class="n-menu-title">My Activity</div>
+						<a href="javascript:void(0);" class="n-link" onclick="switchTab('section-my-posts', this)"> <i class="far fa-edit"></i> <span>내가 쓴 글/댓글</span></a> 
+                        <a href="javascript:void(0);" class="n-link" onclick="switchTab('section-bookmarks', this)"> <i class="far fa-heart"></i> <span>즐겨찾기/좋아요</span></a> 
+                        <a href="javascript:void(0);" class="n-link" onclick="switchTab('section-reviews', this)"> <i class="far fa-star"></i> <span>내가 쓴 리뷰 관리</span></a>
+					</div>
+
+					<div class="n-menu-section">
+						<div class="n-menu-title">Account Info</div>
+						<a href="javascript:void(0);" class="n-link active" onclick="switchTab('section-basic', this)"> <i class="far fa-id-card"></i> <span>기본 정보 수정</span></a> 
+                        <a href="javascript:void(0);" class="n-link" onclick="switchTab('section-notifications', this)"> <i class="far fa-bell"></i> <span>알림 설정</span></a>
+					</div>
+
+					<div class="n-menu-section" th:if="${userType == '일반회원' or session.user?.memberType == 'NORMAL'}">
+						<div class="n-menu-title">My Service</div>
+						<a href="javascript:void(0);" class="n-link" onclick="switchTab('section-normal-booking', this)"> <i class="far fa-calendar-check"></i> <span>상담/예약 내역</span></a> 
+						<a href="javascript:void(0);" class="n-link" onclick="switchTab('section-inquiry', this)"> <i class="far fa-question-circle"></i> <span>1:1 문의 내역</span></a>
+                        <a href="javascript:void(0);" class="n-link" onclick="switchTab('section-normal-payment', this)"> <i class="fas fa-receipt"></i> <span>결제/이용권 내역</span></a>
+					</div>
+
+					<div class="n-menu-section" th:if="${userType == '전문가회원' or session.user?.memberType == 'EXPERT'}">
+						<div class="n-menu-title">Expert Menu</div>
+						<a href="#infoSubMenu" class="n-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" role="button" aria-expanded="false">
+							<span><i class="fas fa-user-gear"></i> 전문가 정보 관리</span> <i class="fas fa-chevron-down small"></i>
+						</a>
+						<div class="collapse" id="infoSubMenu">
+							<div class="ms-3 pt-1 border-start">
+								<a href="javascript:void(0);" class="n-link py-2 ps-4" onclick="switchTab('section-expert', this)"> <i class="fas fa-id-card-alt" style="font-size: 0.85rem;"></i> <span>프로필 관리</span></a> 
+                                <a href="javascript:void(0);" class="n-link py-2 ps-4" onclick="switchTab('section-cert', this)"> <i class="fas fa-certificate" style="font-size: 0.85rem;"></i> <span>자격증 관리</span></a> 
+                                <a href="javascript:void(0);" class="n-link py-2 ps-4" onclick="switchTab('section-edu', this)"> <i class="fas fa-graduation-cap" style="font-size: 0.85rem;"></i><span>학력 관리</span></a> 
+                                <a href="javascript:void(0);" class="n-link py-2 ps-4" onclick="switchTab('section-exp', this)"> <i class="fas fa-briefcase" style="font-size: 0.85rem;"></i> <span>경력 관리</span></a> 
+                                <a href="javascript:void(0);" class="n-link py-2 ps-4" onclick="switchTab('section-bank', this)"> <i class="fas fa-piggy-bank" style="font-size: 0.85rem;"></i> <span>정산 계좌 관리</span></a>
+							</div>
+						</div>
+
+						<a href="javascript:void(0);" class="n-link mt-1" onclick="switchTab('section-consult-list', this)"> <i class="fas fa-envelope-open-text"></i> <span>상담 신청 내역</span></a> 
+						<a href="javascript:void(0);" class="n-link" onclick="switchTab('section-inquiry', this)"> <i class="far fa-question-circle"></i> <span>1:1 문의 내역</span></a>
+                        <a href="javascript:void(0);" class="n-link" onclick="switchTab('section-revenue', this)"> <i class="fas fa-chart-line"></i> <span>수익 통계</span></a>
+					</div>
+
+					<div class="n-menu-section" th:if="${userType == '파트너회원' or session.user?.memberType == 'PARTNER'}">
+						<div class="n-menu-title">Partner Management</div>
+
+						
+                        <a href="javascript:void(0);" class="n-link" onclick="switchTab('section-ad-dashboard', this)"> 
+                            <i class="bi bi-graph-up-arrow"></i> <span>광고 성과 대시보드</span>
+						</a>
+						<a href="javascript:void(0);" class="n-link" onclick="switchTab('section-partner-reviews', this)"> 
+                            <i class="bi bi-chat-left-dots"></i> <span>리뷰 관리</span>
+                        </a>
+                        <a href="javascript:void(0);" class="n-link" onclick="switchTab('section-partner-consults', this)"> 
+                            <i class="bi bi-telephone-inbound"></i> <span>상담 및 조회 현황</span>
+                        </a>
+
+					</div>
+
+					<div class="n-menu-section">
+						<div class="n-menu-title">Security</div>
+						<a href="javascript:void(0)" class="n-link" data-bs-toggle="modal" data-bs-target="#passwordModal"> <i class="fas fa-lock"></i> <span>비밀번호 변경</span></a> 
+                        <a href="javascript:void(0)" class="n-link-danger mt-1" data-bs-toggle="modal" data-bs-target="#withdrawModal"> 
+						    <i class="fas fa-user-minus"></i> <span>회원 탈퇴</span>
+						</a>
+					</div>
+
+
+					
+
+					<div class="mt-3 pt-3 border-top px-2">
+						<a href="/auth/logout" class="n-link text-danger fw-bold"> <i class="fas fa-sign-out-alt"></i> <span>로그아웃</span></a>
+					</div>
+				</nav>
+			</div>
+		</aside>
+
+		<main class="n-main-content">
+
+            <div th:replace="~{mypage/user_info :: allUserInfo}"></div>
+
+			<div th:if="${userType == '전문가회원' or session.user?.memberType == 'EXPERT'}">
+			    <div th:replace="~{mypage/expert_info :: expertContent}"></div>
+			</div>
+			
+			<div th:if="${userType == '파트너회원' or session.user?.memberType == 'PARTNER'}">
+			    <div th:replace="~{mypage/partner_info :: partnerContent}"></div>
+			</div>
+
+			<div id="section-notifications" class="expert-tab-content">
+				<div class="n-placeholder">
+					<i class="far fa-bell mb-3" style="font-size: 3.5rem; color: #a78bfa;"></i>
+					<h4 class="fw-bold text-dark mb-2">알림 설정</h4>
+					<p class="text-secondary">이메일, 문자 등 다양한 알림 수신 여부를 설정할 수 있도록 준비 중입니다.</p>
+				</div>
+			</div>
+
+			<div id="section-revenue" class="expert-tab-content">
+				<div class="n-placeholder">
+					<i class="fas fa-chart-line mb-3" style="font-size: 3.5rem; color: #86efac;"></i>
+					<h4 class="fw-bold text-dark mb-2">수익 통계</h4>
+					<p class="text-secondary">상담을 통해 발생한 수익을 한눈에 확인할 수 있는 통계 페이지입니다.</p>
+				</div>
+			</div>
+
+			<div th:replace="~{mypage/member_info :: memberInquiry}"></div>
+
+			<div id="section-normal-payment" class="expert-tab-content">
+				<div class="n-placeholder">
+					<i class="fas fa-receipt mb-3" style="font-size: 3.5rem; color: #f87171;"></i>
+					<h4 class="fw-bold text-dark mb-2">결제/이용권 내역</h4>
+					<p class="text-secondary">결제 내역 또는 보유 중인 이용권이 없습니다.</p>
+				</div>
+			</div>
+
+			<div id="section-partner-analytics" class="expert-tab-content">
+				<div class="n-placeholder">
+					<i class="fas fa-chart-pie mb-3" style="font-size: 3.5rem; color: #34d399;"></i>
+					<h4 class="fw-bold text-dark mb-2">업체 정산 및 통계</h4>
+					<p class="text-secondary">업체의 상세 정산 내역 및 통계 데이터를 준비 중입니다.</p>
+				</div>
+			</div>
+
+		</main>
+	</div>
+	
+	
+
+	<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+	    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;"> <div class="modal-content">
+	            <div class="modal-header">
+	                <h5 class="modal-title fw-bold"><i class="fa-solid fa-lock me-2 text-primary"></i>비밀번호 변경</h5>
+	                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+	            </div>
+	            <div class="modal-body">
+	                
+	                <div class="mb-4">
+	                    <label class="form-label fw-bold">현재 비밀번호</label>
+	                    <div class="input-group">
+	                        <span class="input-group-text"><i class="fa-solid fa-unlock-keyhole"></i></span>
+	                        <input type="password" id="currentPassword" class="form-control form-control-lg fs-6" placeholder="현재 비밀번호 입력">
+	                    </div>
+	                </div>
+	
+	                <div class="mb-3">
+	                    <label class="form-label fw-bold">새 비밀번호</label>
+	                    <div class="input-group">
+	                        <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
+	                        <input type="password" id="newPassword" class="form-control form-control-lg fs-6" placeholder="새로운 비밀번호 입력">
+	                    </div>
+	                </div>
+	
+	                <div class="mb-2">
+	                    <label class="form-label fw-bold">새 비밀번호 확인</label>
+	                    <div class="input-group">
+	                        <span class="input-group-text"><i class="fa-solid fa-check-double"></i></span>
+	                        <input type="password" id="confirmPassword" class="form-control form-control-lg fs-6" placeholder="새로운 비밀번호 다시 입력">
+	                    </div>
+	                </div>
+	
+	                <div id="pwValidationMsg" class="mt-2 text-danger fw-bold" style="font-size: 0.85rem; display: none;">
+	                    <i class="fa-solid fa-circle-exclamation me-2"></i><span>메시지 내용</span>
+	                </div>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">취소</button>
+	                <button type="button" class="btn btn-dark fw-bold" onclick="changePassword()">
+	                    변경하기<i class="fa-solid fa-circle-arrow-right ms-2"></i>
+	                </button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+	
+	    
+    <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
+                <form id="withdrawForm">
+                    <div class="modal-header border-0 pb-0 pt-4 px-4">
+                        <h5 class="modal-title fw-bold text-danger fs-4"><i class="fas fa-exclamation-triangle me-2"></i>회원 탈퇴</h5>
+                        <button type="button" class="btn-close bg-light rounded-circle p-2" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4 px-4 pt-3">
+                        <div class="p-4 bg-danger bg-opacity-10 rounded-4 border border-danger border-opacity-25 mb-4">
+                            <h6 class="fw-bold text-danger mb-2">정말 탈퇴하시겠습니까?</h6>
+                            <p class="text-secondary small mb-0">
+                                탈퇴 시 귀하의 모든 개인정보가 즉시 삭제되며, <b>절대 복구할 수 없습니다.</b>
+                            </p>
+                        </div>
+                        <div class="p-4 bg-light rounded-4 border border-light">
+                            <label class="form-label fw-bold mb-2 text-dark small text-uppercase">본인 확인을 위해 비밀번호를 입력해주세요</label>
+                            <input type="password" id="withdrawPassword" class="form-control form-control-lg border-0 shadow-sm rounded-3 fw-medium text-dark px-3 mb-3" placeholder="현재 비밀번호 입력" required>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input cursor-pointer" type="checkbox" id="withdrawAgree">
+                                <label class="form-check-label fw-bold text-secondary small cursor-pointer" for="withdrawAgree">
+                                    안내 사항을 모두 확인하였으며, 탈퇴에 동의합니다.
+                                </label>
+                            </div>
+                            <div id="withdrawMsg" class="mt-2 text-danger fw-bold small" style="display: none;"><i class="fas fa-exclamation-circle me-1"></i>메시지</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+                        <button type="button" class="btn btn-light px-4 py-2 fw-bold rounded-pill" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger px-5 py-2 fw-bold rounded-pill shadow-sm" onclick="processWithdraw()">탈퇴하기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+	
+	<script>
+	// 🌟 본문 섹션 전환 함수
+    function switchTab(sectionId, btn) {
+        // 모든 탭 숨기기
+        const tabs = document.querySelectorAll('.expert-tab-content');
+        tabs.forEach(tab => tab.style.display = 'none');
+
+        // 타겟 탭 보여주기
+        const target = document.getElementById(sectionId);
+        if(target) target.style.display = 'block';
+
+        // 모든 버튼에서 active 지우기
+        document.querySelectorAll('.n-link').forEach(link => link.classList.remove('active'));
+        
+        // btn 파라미터가 없다면(새로고침 시) 직접 찾기
+        if (!btn) {
+            btn = Array.from(document.querySelectorAll('.n-link')).find(link => 
+                link.getAttribute('onclick') && link.getAttribute('onclick').includes(sectionId)
+            );
+        }
+        
+        // 버튼 파란색 칠하고 부모 폴더(서브메뉴) 열어주기
+        if(btn) {
+            btn.classList.add('active');
+            const parentCollapse = btn.closest('.collapse');
+            if(parentCollapse && !parentCollapse.classList.contains('show')) {
+                parentCollapse.classList.add('show');
+            }
+        }
+        
+        // 💡 [핵심] 사용자가 방금 누른 탭 이름을 브라우저 임시 메모리에 저장합니다!
+        sessionStorage.setItem('activeMyPageTab', sectionId);
+
+        // 리뷰 탭 클릭 시 데이터 로드
+        if(sectionId === 'section-partner-reviews') {
+            if (typeof window.loadPartnerReviews === 'function') {
+                window.loadPartnerReviews(1);
+            }
+        }
+
+        // 광고 대시보드 차트 렌더링 (기존 코드 유지)
+        if(sectionId === 'section-ad-dashboard') {
+            const checkCanvas = setInterval(() => {
+                const canvas = document.getElementById('trendChart');
+                if (canvas && typeof window.renderAdCharts === 'function') {
+                    window.renderAdCharts();
+                    clearInterval(checkCanvas);
+                }
+            }, 100);
+            setTimeout(() => clearInterval(checkCanvas), 2000);
+        }
+    }
+
+    // 🌟 2. 페이지 로드 시 탭 복원 로직
+    document.addEventListener('DOMContentLoaded', function() {
+        // 💡 브라우저 메모리에 저장된 탭 이름이 있는지 꺼내봅니다. 없으면 기본값은 'section-basic'
+        const savedTab = sessionStorage.getItem('activeMyPageTab') || 'section-basic';
+        
+        // 저장된 탭 이름으로 화면을 켭니다!
+        switchTab(savedTab, null);
+    });
+        
+ // 🌟 마이페이지 비밀번호 변경 로직
+    function changePassword() {
+        const currentPw = $('#currentPassword').val();
+        const newPw = $('#newPassword').val();
+        const confirmPw = $('#confirmPassword').val();
+        const msgArea = $('#pwValidationMsg'); // 에러 메시지 띄울 곳
+
+        // 1️⃣ 빈칸 검사
+        if (!currentPw || !newPw || !confirmPw) {
+            msgArea.html('<i class="fa-solid fa-circle-exclamation me-2"></i>모든 항목을 입력해 주세요.').show();
+            return;
+        }
+
+        // 2️⃣ 정규식 검사: 영문, 숫자, 특수문자(!@#$%^&*?_) 조합 8~20자
+        const pwRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*?_]).{8,20}$/;
+        if (!pwRegex.test(newPw)) {
+            msgArea.html('<i class="fa-solid fa-circle-exclamation me-2"></i>새 비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.').show();
+            return;
+        }
+
+        // 3️⃣ 새 비밀번호 일치 검사
+        if (newPw !== confirmPw) {
+            msgArea.html('<i class="fa-solid fa-circle-exclamation me-2"></i>새 비밀번호가 서로 일치하지 않습니다.').show();
+            return;
+        }
+
+        // 4️⃣ 현재 비번과 새 비번이 똑같은지 화면에서 1차단 (서버 가기도 전에 컷!)
+        if (currentPw === newPw) {
+            msgArea.html('<i class="fa-solid fa-circle-exclamation me-2"></i>기존과 동일한 비밀번호로는 변경할 수 없습니다.').show();
+            return;
+        }
+
+        msgArea.hide(); // 에러 메시지 숨기고 서버로 전송 준비!
+
+        // AJAX 서버 전송 로직... (아래 2번 백엔드와 연결됩니다)
+        $.ajax({
+            url: '/member/change-password', // 회원님 URL에 맞게 수정
+            type: 'POST',
+            data: { currentPassword: currentPw, newPassword: newPw },
+            success: function(res) {
+                if (res === 'success') {
+                    alert("비밀번호가 성공적으로 변경되었습니다.");
+                    $('#passwordModal').modal('hide');
+                } else if (res === 'wrong_current') {
+                    msgArea.html('<i class="fa-solid fa-circle-exclamation me-2"></i>현재 비밀번호가 틀렸습니다.').show();
+                } else if (res === 'same_as_old') {
+                    msgArea.html('<i class="fa-solid fa-circle-exclamation me-2"></i>기존과 동일한 비밀번호로는 변경할 수 없습니다.').show();
+                }
+            }
+        });
+    }
+    
+    function processWithdraw() {
+        const password = document.getElementById('withdrawPassword').value.trim();
+        const isAgreed = document.getElementById('withdrawAgree').checked;
+        const msgEl = document.getElementById('withdrawMsg');
+
+        if (!password) {
+            msgEl.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> 비밀번호를 입력해주세요.';
+            msgEl.style.display = 'block';
+            return;
+        }
+        if (!isAgreed) {
+            msgEl.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> 탈퇴 안내 사항에 동의해주세요.';
+            msgEl.style.display = 'block';
+            return;
+        }
+        if (!confirm('정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+
+        $.ajax({
+            url: '/member/withdraw', // 💡 백엔드 탈퇴 처리 URL 확인!
+            type: 'POST',
+            data: { password: password },
+            success: function(response) {
+                if (response === 'success') {
+                    alert('회원 탈퇴가 정상적으로 처리되었습니다. 이용해 주셔서 감사합니다.');
+                    window.location.href = '/'; 
+                } else if (response === 'wrong_password') {
+                    msgEl.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> 비밀번호가 일치하지 않습니다.';
+                    msgEl.style.display = 'block';
+                } else {
+                    msgEl.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> 처리 중 오류가 발생했습니다.';
+                    msgEl.style.display = 'block';
+                }
+            },
+            error: function() {
+                msgEl.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> 서버 통신 중 오류가 발생했습니다.';
+                msgEl.style.display = 'block';
+            }
+        });
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('.modal').forEach(function(modal) {
+            document.body.appendChild(modal);
+        });
+    });
+    
+    $(document).ready(function() {
+        
+        // 1. [마이페이지] 비밀번호 변경 모달 닫힐 때 초기화
+        $('#passwordModal').on('hidden.bs.modal', function () {
+            // 모든 입력창 비우기
+            $(this).find('input').val('');
+            // 에러 메시지 숨기기
+            $('#pwValidationMsg').hide().text('');
+            // 포커스 제거
+            $(this).find('input').blur();
+        });
+
+    });
+        
+</script>
+
+<footer th:replace="~{footer :: footer}"></footer>
+</body>
+</html>

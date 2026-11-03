@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="memberInquiry">
+
+    <div id="section-normal-booking" class="expert-tab-content" style="display: none;">
+        <div class="n-card border-0 shadow-sm rounded-4 mt-4" style="max-width: 1100px; margin: 0 auto;">
+            <div class="n-card-header bg-white rounded-top-4" style="border-left: 8px solid #10b981;">
+                <h5 class="mb-0 fw-bold">나의 상담 예약 내역</h5>
+            </div>
+            
+            <div class="n-card-body p-4 bg-light bg-opacity-50">
+                <div class="n-empty-state m-0 text-center py-5 bg-white rounded-4 border border-light shadow-sm" th:if="${#lists.isEmpty(myConsultList)}">
+                    <i class="far fa-calendar-times n-empty-icon mb-3" style="color: #a7f3d0; font-size: 3.5rem;"></i>
+                    <h5 class="n-empty-text fw-bold text-dark">신청하신 상담 내역이 없습니다.</h5>
+                    <p class="n-empty-sub text-secondary">나에게 맞는 전문가를 찾고 상담을 예약해 보세요!</p>
+                </div>
+
+                <div class="row g-4" th:unless="${#lists.isEmpty(myConsultList)}">
+                    <th:block th:each="item : ${myConsultList}">
+                        <div class="col-12 col-xl-6">
+                            <div class="bg-white rounded-4 p-4 hover-card-ui shadow-sm border border-light h-100 d-flex flex-column"
+                                 style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#userConsultDetailModal"
+                                 th:data-id="${item.consult_id}"
+                                 th:data-expert="${item.expertName}"
+                                 th:data-specialty="${item.specialty}"
+                                 th:data-date="${#temporals.format(item.consult_start_date, 'yyyy.MM.dd HH:mm')}"
+                                 th:data-type="${item.category}"
+                                 th:data-content="${item['consultContent']}"
+                                 th:data-status="${item.status}">
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge px-3 py-2 rounded-pill shadow-sm" 
+                                          th:classappend="${item.status == 1 ? 'bg-warning text-dark' : (item.status == 2 ? 'bg-primary text-white' : (item.status == 3 ? 'bg-success text-white' : 'bg-danger text-white'))}">
+                                        <i class="fas" th:classappend="${item.status == 1 ? 'fa-hourglass-half' : (item.status == 2 ? 'fa-calendar-check' : (item.status == 3 ? 'fa-check-circle' : 'fa-times-circle'))} + ' me-1'"></i>
+                                        <span th:text="${item.status == 1 ? '승인 대기중' : (item.status == 2 ? '예약 확정' : (item.status == 3 ? '상담 완료' : '취소됨'))}">상태</span>
+                                    </span>
+                                    <small class="text-secondary fw-semibold text-end">
+                                        <i class="far fa-calendar-alt me-1 text-primary opacity-75"></i> <span th:text="${#temporals.format(item.consult_start_date, 'yyyy.MM.dd HH:mm')}">날짜</span>
+                                    </small>
+                                </div>
+                                
+                                <h5 class="fw-bold text-dark mb-1"><span th:text="${item.expertName}">전문가명</span> 전문가</h5>
+                                <p class="small text-muted mb-3"><i class="fas fa-star text-warning me-1"></i>분야: <span th:text="${item.specialty}">전문분야</span></p>
+
+                                <div class="bg-light bg-opacity-50 p-3 rounded-3 mb-2 mt-auto border border-light">
+                                    <span class="badge px-2 py-1 fs-6 rounded-2 border bg-info bg-opacity-10 text-info border-info-subtle mb-2">
+                                        <span th:text="${item.category}">전화상담</span>
+                                    </span> 
+                                    <p class="text-secondary small mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;" th:text="${item['consultContent']}">상담 요청 내용</p>
+                                </div>
+                            </div>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="userConsultDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light border-0 rounded-top-4 pb-3 pt-4 px-4">
+                    <h5 class="modal-title fw-bold text-dark">예약 상세 정보</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 px-4 pt-3">
+                    <input type="hidden" id="uModalConsultId">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-light rounded-3 border">
+                        <div>
+                            <h6 class="fw-bold text-dark mb-1" id="uModalExpertName">전문가 이름</h6>
+                            <span class="small text-muted" id="uModalSpecialty">전문분야</span>
+                        </div>
+                        <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill" id="uModalStatusBadge">상태</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold"><i class="far fa-calendar-check me-1"></i> 상담 예약 일시</label>
+                        <div class="fs-5 fw-bold text-dark" id="uModalDate">2026.03.15 14:00</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold"><i class="fas fa-headset me-1"></i> 상담 방식</label>
+                        <div class="fs-6 fw-bold text-info" id="uModalType">전화상담</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-secondary small fw-bold"><i class="far fa-comment-dots me-1"></i> 나의 요청 내용</label>
+                        <div class="p-3 bg-light rounded-3 text-dark border border-light" id="uModalContent" style="min-height: 80px; font-size: 0.95rem;">요청 내용</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4 d-flex justify-content-between align-items-center bg-white rounded-bottom-4">
+                    <button type="button" id="btnCancelConsult" class="btn btn-outline-danger fw-bold px-4 rounded-pill" onclick="cancelMyConsult()">
+                        <i class="fas fa-times me-1"></i> 예약 취소하기
+                    </button>
+                    <button type="button" class="btn btn-dark fw-bold px-4 rounded-pill" data-bs-dismiss="modal">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="section-inquiry" class="expert-tab-content" style="display: none;" th:if="${userType != '전문가회원' and session.user?.memberType != 'EXPERT'}">
+        <div class="n-card border-0 shadow-sm rounded-4 mt-4" style="max-width: 1100px; margin: 0 auto;">
+            <div class="n-card-header bg-white rounded-top-4" style="border-left: 8px solid #38bdf8;">
+                <h5 class="mb-0 fw-bold">나의 1:1 문의 내역</h5>
+            </div>
+            
+            <div class="n-card-body p-4 bg-light bg-opacity-50">
+                <th:block th:with="inquiryList=${consultList != null ? consultList.?[category != null and (category.contains('문의') or category.contains('1:1'))] : null}">
+                    
+                    <ul class="nav nav-pills mb-4" th:unless="${#lists.isEmpty(inquiryList)}">
+                        <li class="nav-item me-2"><a class="nav-link active rounded-pill px-4 fw-bold shadow-sm" href="javascript:void(0)" onclick="filterConsult('all', this)">전체보기</a></li>
+                        <li class="nav-item me-2"><a class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary" href="javascript:void(0)" onclick="filterConsult('1', this)">답변 대기중</a></li>
+                        <li class="nav-item"><a class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary" href="javascript:void(0)" onclick="filterConsult('3', this)">답변 완료</a></li>
+                    </ul>
+
+                    <div class="n-empty-state m-0 text-center py-5 bg-white rounded-4 border border-light shadow-sm" th:if="${#lists.isEmpty(inquiryList)}">
+                        <i class="fas fa-pen-nib n-empty-icon mb-3" style="color: #c7d2fe; font-size: 3.5rem;"></i>
+                        <h5 class="n-empty-text fw-bold text-dark">작성하신 1:1 문의가 없습니다.</h5>
+                        <p class="n-empty-sub text-secondary">궁금한 점이 있으시면 언제든 문의를 남겨주세요.</p>
+                    </div>
+
+                    <div class="row g-4" th:unless="${#lists.isEmpty(inquiryList)}">
+                        <th:block th:each="item : ${inquiryList}">
+                            
+                            <div class="col-12 col-xl-6 consult-card-item" th:data-consult-status="${item.status}">
+                                <div class="bg-white rounded-4 p-4 hover-card-ui shadow-sm border border-light h-100 d-flex flex-column"
+                                     style="cursor: pointer;" data-bs-toggle="modal" th:data-bs-target="'#inquiryModal-' + ${item.consult_id}">
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="badge px-3 py-2 rounded-pill shadow-sm" th:classappend="${item.status == 1 ? 'bg-warning text-dark' : 'bg-success text-white'}">
+                                            <i class="fas" th:classappend="${item.status == 1 ? 'fa-clock' : 'fa-check-circle'} + ' me-1'"></i>
+                                            <span th:text="${item.status == 1 ? '답변 대기중' : '답변 완료'}">상태</span>
+                                        </span>
+                                        <small class="text-secondary fw-semibold text-end">
+                                            <i class="far fa-calendar-alt me-1 text-primary opacity-75"></i> <span th:text="${#temporals.format(item.consult_start_date, 'yyyy.MM.dd HH:mm')}">날짜</span>
+                                        </small>
+                                    </div>
+                                    <div class="bg-light bg-opacity-50 p-3 rounded-3 mb-2 mt-2 border border-light flex-grow-1">
+                                        <p class="text-secondary small mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;" th:text="${item.consultContent}">문의 내용</p>
+                                    </div>
+                                    <div class="mt-auto text-end border-top pt-3 border-light">
+                                        <span class="text-primary small fw-bold">답변 확인하기 <i class="fas fa-chevron-right ms-1"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" th:id="'inquiryModal-' + ${item.consult_id}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                                    <div class="modal-content rounded-4 border-0 shadow">
+                                        <div class="modal-header bg-light border-bottom-0 pb-3 pt-4 px-4">
+                                            <div><h5 class="modal-title fw-bold text-dark mb-1">📝 나의 1:1 문의 내역</h5></div>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4 bg-light bg-opacity-50">
+                                            <div class="d-flex flex-column gap-3">
+                                                <th:block th:each="inq : ${item.inquiryList}">
+                                                    <div th:if="${inq.commentType == '질문'}" class="bg-white p-3 rounded-4 border shadow-sm me-4">
+                                                        <label class="fw-bold text-secondary mb-1 small"><i class="fas fa-question-circle me-1"></i>나의 질문</label>
+                                                        <p class="text-dark small mb-1" style="white-space: pre-wrap;" th:text="${inq.content}"></p>
+                                                        <div class="text-end text-muted" style="font-size: 0.7rem;" th:text="${#temporals.format(inq.writeDate, 'yyyy.MM.dd HH:mm')}">날짜</div>
+                                                    </div>
+                                                    <div th:if="${inq.commentType == '전문가답변' or inq.commentType == '관리자답변'}" class="bg-primary bg-opacity-10 p-3 rounded-4 ms-4 shadow-sm">
+                                                        <label class="fw-bold text-primary mb-1 small"><i class="fas fa-reply me-1"></i>답변 내용</label>
+                                                        <p class="text-dark small mb-1" style="white-space: pre-wrap;" th:text="${inq.content}"></p>
+                                                        <div class="text-end text-primary opacity-75" style="font-size: 0.7rem;" th:text="${#temporals.format(inq.writeDate, 'yyyy.MM.dd HH:mm')}">날짜</div>
+                                                    </div>
+                                                </th:block>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-top-0 bg-white p-3 d-flex justify-content-between align-items-center" th:if="${item.status == 1}">
+                                            <span class="text-warning small fw-bold"><i class="fas fa-clock me-1"></i>전문가의 답변을 기다리고 있습니다.</span>
+                                            <button type="button" class="btn btn-secondary px-4 rounded-pill fw-bold" data-bs-dismiss="modal">닫기</button>
+                                        </div>
+                                        <div class="modal-footer border-top-0 bg-white p-3" th:unless="${item.status == 1}">
+                                            <button type="button" class="btn btn-secondary px-4 rounded-pill fw-bold" data-bs-dismiss="modal">닫기</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </th:block>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 일반 회원 - 상담 모달 데이터 바인딩
+        const userConsultDetailModal = document.getElementById('userConsultDetailModal');
+        if (userConsultDetailModal) {
+            userConsultDetailModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                const status = btn.getAttribute('data-status');
+
+                document.getElementById('uModalConsultId').value = btn.getAttribute('data-id');
+                document.getElementById('uModalExpertName').innerText = btn.getAttribute('data-expert') + ' 전문가';
+                document.getElementById('uModalSpecialty').innerText = btn.getAttribute('data-specialty');
+                document.getElementById('uModalDate').innerText = btn.getAttribute('data-date');
+                document.getElementById('uModalType').innerText = btn.getAttribute('data-type');
+                document.getElementById('uModalContent').innerText = btn.getAttribute('data-content');
+                
+                const badge = document.getElementById('uModalStatusBadge');
+                const cancelBtn = document.getElementById('btnCancelConsult');
+                
+                badge.className = 'badge px-3 py-2 fs-6 rounded-pill '; 
+                
+                if(status == '1') {
+                    badge.classList.add('bg-warning', 'text-dark');
+                    badge.innerText = '승인 대기중';
+                    cancelBtn.style.display = 'block'; 
+                } else if(status == '2') {
+                    badge.classList.add('bg-primary', 'text-white');
+                    badge.innerText = '예약 확정';
+                    cancelBtn.style.display = 'block'; 
+                } else if(status == '3') {
+                    badge.classList.add('bg-success', 'text-white');
+                    badge.innerText = '상담 완료';
+                    cancelBtn.style.display = 'none'; 
+                } else {
+                    badge.classList.add('bg-danger', 'text-white');
+                    badge.innerText = '취소됨';
+                    cancelBtn.style.display = 'none'; 
+                }
+            });
+        }
+    });
+
+    // 일반 회원 - 예약 취소 통신
+    function cancelMyConsult() {
+        const consultId = document.getElementById('uModalConsultId').value;
+        
+        if(!confirm('정말 이 상담 예약을 취소하시겠습니까?\n취소 후에는 되돌릴 수 없으며 다시 예약하셔야 합니다.')) {
+            return;
+        }
+
+        $.ajax({
+            url: '/consult/cancel', // 백엔드 컨트롤러 체크!
+            type: 'POST',
+            data: { consultId: consultId },
+            success: function(response) {
+                alert('상담 예약이 취소되었습니다.');
+                window.location.reload(); 
+            },
+            error: function() {
+                alert('취소 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            }
+        });
+    }
+    </script>
+</div>
+</html>

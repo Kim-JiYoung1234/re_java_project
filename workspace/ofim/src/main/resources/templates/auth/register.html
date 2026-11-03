@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>회원가입 | 건강한 시작</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+/* 기존 CSS 완벽 유지 */
+.flatpickr-current-month { display: flex !important; justify-content: center; align-items: center; }
+.flatpickr-current-month .numInputWrapper { display: none !important; }
+.custom-year-select { background: transparent; border: none; font-size: 1.1rem; font-weight: 500; color: var(--text-dark); cursor: pointer; margin-right: 8px; padding: 2px 5px; appearance: none; -webkit-appearance: none; -moz-appearance: none; }
+.flatpickr-current-month .flatpickr-monthDropdown-months { font-size: 1.1rem !important; font-weight: 500 !important; }
+.custom-year-select:hover { background: rgba(31, 200, 219, 0.1); border-radius: 4px; }
+.custom-year-select:focus { outline: none; }
+:root { --primary-gradient: linear-gradient(135deg, #0fb8ad 0%, #1fc8db 51%, #2cb5e8 100%); --primary-color: #1fc8db; --bg-color: #f4f7f6; --text-dark: #2d3748; --text-muted: #718096; --input-bg: #ffffff; }
+body { background-color: var(--bg-color); font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; min-height: 100vh; display: flex; flex-direction: column; color: var(--text-dark); }
+.navbar { background-color: #ffffff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); }
+.registration-container { max-width: 700px; margin: 60px auto; }
+.card { border: none; border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); overflow: hidden; background: #ffffff; }
+.card-header { background: var(--primary-gradient); padding: 40px 20px; text-align: center; border-bottom: none; }
+.card-header h2 { font-weight: 800; color: #ffffff; letter-spacing: -1px; margin-bottom: 10px; }
+.card-header p { color: rgba(255, 255, 255, 0.9) !important; font-weight: 500; margin: 0; }
+.card-body { padding: 50px 40px; }
+.form-label { font-weight: 600; color: var(--text-dark); margin-bottom: 10px; font-size: 0.95rem; }
+.form-control, .form-select { background-color: var(--input-bg); border: 1.5px solid #cbd5e1 !important; border-radius: 12px; padding: 14px 18px; font-weight: 500; color: var(--text-dark); transition: all 0.3s ease; }
+.form-control:focus, .form-select:focus { background-color: #ffffff; border-color: var(--primary-color) !important; box-shadow: 0 0 0 4px rgba(31, 200, 219, 0.15) !important; outline: none; }
+.form-control::placeholder { color: #a0aec0; font-weight: 400; }
+.input-group { background-color: var(--input-bg); border-radius: 12px; border: 1.5px solid #cbd5e1; transition: all 0.3s ease; overflow: hidden; }
+.input-group:focus-within { background-color: #ffffff; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(31, 200, 219, 0.15); }
+.input-group .form-control { border: none !important; background: transparent; box-shadow: none !important; }
+.input-group .btn { border: none; background-color: #edf2f7; color: var(--text-dark); font-weight: 600; border-radius: 8px; margin: 6px; padding: 8px 16px; transition: background 0.2s; }
+.input-group .btn:hover { background-color: #e2e8f0; color: var(--primary-color); }
+.special-fields { background-color: #f8fafc; border-radius: 20px; padding: 30px; margin-top: 30px; border: 1px solid #e2e8f0; position: relative; }
+.special-fields::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary-gradient); border-radius: 20px 20px 0 0; }
+.image-upload-box { background: #ffffff; padding: 20px; border-radius: 16px; border: 1px dashed #cbd5e0; display: flex; align-items: center; gap: 20px; transition: border-color 0.3s; }
+.image-upload-box:hover { border-color: var(--primary-color); }
+.preview-area img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); display: none; }
+.btn-primary { background: var(--primary-gradient); background-size: 200% auto; border: none; border-radius: 14px; padding: 16px; font-weight: 700; font-size: 1.15rem; color: white; box-shadow: 0 10px 20px rgba(31, 200, 219, 0.3); transition: all 0.3s ease; }
+.btn-primary:hover { background-position: right center; transform: translateY(-2px); box-shadow: 0 15px 25px rgba(31, 200, 219, 0.4); }
+hr.divider { border-top: 2px dashed #e2e8f0; margin: 40px 0; opacity: 1; }
+.required-mark::after { content: " *"; color: #e53e3e; font-weight: bold; margin-left: 2px; }
+.footer { background: #343a40; color: white; padding: 30px 0; margin-top: 50px; }
+</style>
+</head>
+<body>
+	<header th:replace="~{header :: header}"></header>
+
+	<div class="container registration-container">
+		<div class="card">
+			<div class="card-header">
+				<h2>회원가입</h2>
+				<p>건강한 시작과 함께할 당신의 정보를 입력해주세요.</p>
+			</div>
+			<div class="text-end px-4 pt-3">
+				<small class="text-muted"><span class="text-danger fw-bold">*</span> 표시는 필수 입력 항목입니다.</small>
+			</div>
+
+			<div class="card-body">
+				<form th:action="@{/auth/register}" method="post" id="registerForm" enctype="multipart/form-data">
+					
+                    <!-- 🌟 [보안] CSRF 토큰 삽입 -->
+                    <input type="hidden" name="csrfToken" th:value="${session.csrfToken}">
+
+					<div class="mb-5">
+						<label class="form-label"><i class="fas fa-user-tag me-2 text-primary required-mark"></i>회원구분</label>
+						<select id="memberType" name="memberType" class="form-select form-select-lg" style="font-weight: 600;">
+							<option value="NORMAL">🌱 일반회원 (건강 관리가 필요해요)</option>
+							<option value="EXPERT">💪 전문가회원 (트레이너/강사 입니다)</option>
+							<option value="PARTNER">🏢 파트너회원 (센터/제휴 업체 입니다)</option>
+						</select>
+					</div>
+
+					<h5 class="fw-bold mb-4"><i class="fas fa-id-card me-2" style="color: var(--primary-color);"></i>기본 정보</h5>
+
+					<div class="row">
+						<div class="col-md-6 mb-4">
+							<label class="form-label required-mark">이름</label> 
+							<input type="text" name="userName" class="form-control" placeholder="홍길동" required>
+						</div>
+						<div class="col-md-6 mb-4">
+							<label class="form-label required-mark">연락처</label> 
+							<input type="tel" name="phone" class="form-control" placeholder="010-0000-0000" maxlength="13">
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6 mb-4">
+							<label class="form-label required-mark">아이디</label>
+							<div class="input-group">
+								<input type="text" id="loginId" name="loginId" class="form-control" placeholder="영문/숫자" required>
+								<button type="button" id="btnCheckId" class="btn">중복확인</button>
+							</div>
+							<div id="idFeedback" class="mt-2 fw-medium" style="font-size: 0.85rem; padding-left: 5px;"></div>
+						</div>
+						<div class="col-md-6 mb-4">
+							<label class="form-label required-mark">닉네임</label>
+							<div class="input-group">
+								<input type="text" id="nickname" name="nickname" class="form-control" placeholder="닉네임" required>
+								<button type="button" id="btnCheckNickname" class="btn">중복확인</button>
+							</div>
+							<div id="nicknameFeedback" class="mt-2 fw-medium" style="font-size: 0.85rem; padding-left: 5px;"></div>
+						</div>
+					</div>
+
+					<div class="row">
+					    <div class="col-md-6 mb-4">
+					        <label class="form-label required-mark fw-bold">비밀번호</label> 
+					        <input type="password" id="password" name="password" class="form-control" placeholder="영문, 숫자, 특수문자 포함 8~20자" required>
+					        <div id="pwConditionMsg" class="mt-2 text-muted" style="font-size: 0.85rem; padding-left: 5px;">
+					            영문, 숫자, 특수문자를 포함하여 8~20자로 입력해주세요.
+					        </div>
+					    </div>
+					    
+					    <div class="col-md-6 mb-4">
+					        <label class="form-label required-mark fw-bold">비밀번호 확인</label> 
+					        <input type="password" id="passwordCheck" class="form-control" placeholder="비밀번호를 다시 입력해주세요" required>
+					        <div id="passwordFeedback" class="mt-2 fw-medium" style="font-size: 0.85rem; padding-left: 5px;"></div>
+					    </div>
+					</div>
+
+					<hr class="divider">
+
+					<h5 class="fw-bold mb-4"><i class="fas fa-user-circle me-2" style="color: var(--primary-color);"></i>상세 정보</h5>
+
+					<div class="row">
+						<div class="col-md-6 mb-4">
+							<label class="form-label required-mark">생년월일</label>
+							<div class="input-group">
+								<span class="input-group-text bg-light border-0"><i class="fas fa-calendar-alt text-primary"></i></span> 
+								<input type="text" id="birthDatePicker" name="birthDate" class="form-control" placeholder="날짜를 선택해 주세요" required readonly style="cursor: pointer; background-color: #f8fafc;">
+							</div>
+						</div>
+						<div class="col-md-6 mb-4">
+							<label class="form-label required-mark">성별</label> 
+							<select name="gender" class="form-select" required>
+								<option value="">선택해주세요</option>
+								<option value="M">남성</option>
+								<option value="F">여성</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="mb-4">
+						<label class="form-label required-mark">주소</label>
+						<div class="input-group mb-2" style="max-width: 300px;">
+							<input type="text" id="zipcode" name="zipcode" class="form-control" placeholder="우편번호" readonly required>
+							<button type="button" class="btn" style="background-color: #e2e8f0; font-weight: 600;" onclick="execDaumPostcode()">주소 검색</button>
+						</div>
+						<input type="text" id="address" name="address" class="form-control mb-2" placeholder="기본 주소" readonly required>
+						<input type="text" id="address2" name="address2" class="form-control" placeholder="상세 주소 (동, 호수 등)를 입력해주세요">
+					</div>
+
+					<div class="mb-4">
+						<label class="form-label required-mark">이메일</label>
+						<div class="input-group">
+							<input type="email" id="email" name="email" class="form-control" placeholder="example@mail.com">
+							<button type="button" id="btnCheckEmail" class="btn">중복확인</button>
+						</div>
+						<div id="emailFeedback" class="mt-2 fw-medium" style="font-size: 0.85rem; padding-left: 5px;"></div>
+					</div>
+
+					<div id="expertFields" class="special-fields" style="display: none;">
+						<h5 class="fw-bold mb-3">전문가 인증 정보</h5>
+						<p class="text-muted small mb-4">관리자 승인 후 강사 및 트레이너 활동이 가능합니다.</p>
+						<h6 class="fw-bold text-primary mt-2 mb-3"><i class="fas fa-user-tie"></i> 기본 프로필 설정</h6>
+						<div class="mb-4">
+							<label class="form-label required-mark">프로필 이미지</label>
+							<div class="image-upload-box d-flex align-items-center gap-3">
+								<div class="file-area flex-grow-1">
+									<input type="file" id="profileImageFile" name="profileImageFile" accept="image/*" class="form-control">
+								</div>
+								<div class="preview-area">
+									<img id="preview" src="#" alt="미리보기" style="display: none; max-width: 80px; height: auto; border-radius: 8px;">
+								</div>
+							</div>
+						</div>
+						<div class="mb-4">
+							<label class="form-label required-mark">전문분야</label> 
+							<select name="specialty" class="form-select">
+								<option value="">전문분야를 선택해주세요</option>
+								<option value="영양상담">영양상담</option>
+								<option value="운동상담">운동상담</option>
+								<option value="여성건강">여성건강</option>
+								<option value="남성건강">남성건강</option>
+								<option value="탈모상담">탈모상담</option>
+								<option value="일반건강상담">일반건강상담</option>
+							</select>
+						</div>
+						<div class="mb-4">
+							<label class="form-label required-mark">한줄 소개</label> 
+							<input type="text" name="expertIntroduce" class="form-control" placeholder="사용자에게 보여질 짧은 소개를 작성해주세요">
+						</div>
+						<hr class="my-4">
+						<h6 class="fw-bold text-success mb-3"><i class="fas fa-certificate"></i> 자격증 정보 입력</h6>
+						<div class="row">
+							<div class="col-md-6 mb-4">
+								<label class="form-label required-mark">자격증명</label> 
+								<input type="text" name="certName" class="form-control" placeholder="예: 생활스포츠지도사 2급">
+							</div>
+							<div class="col-md-6 mb-4">
+								<label class="form-label required-mark">발급 기관</label> 
+								<input type="text" name="issuer" class="form-control" placeholder="예: 문화체육관광부">
+							</div>
+						</div>
+						<div class="mb-4">
+							<label class="form-label required-mark">자격증 번호</label> 
+							<input type="text" name="certNo" class="form-control" placeholder="정확한 자격 번호를 입력해주세요">
+						</div>
+						<div class="row">
+							<div class="col-md-6 mb-4">
+								<label class="form-label required-mark">발급일자</label>
+								<div class="input-group">
+									<span class="input-group-text bg-light border-0"><i class="fas fa-calendar-alt text-primary"></i></span> 
+									<input type="text" id="certIssueDatePicker" name="issuedDate" class="form-control" placeholder="발급일 선택" required readonly style="cursor: pointer; background-color: #ffffff;">
+								</div>
+							</div>
+							<div class="col-md-6 mb-4">
+								<label class="form-label">만료일자</label>
+								<div class="input-group mb-2">
+									<span class="input-group-text bg-light border-0"><i class="fas fa-calendar-times text-danger"></i></span> 
+									<input type="text" id="certExpireDatePicker" name="expiredDate" class="form-control" placeholder="만료일 선택" readonly style="cursor: pointer; background-color: #ffffff;">
+								</div>
+								<div class="form-check mt-1">
+									<input class="form-check-input" type="checkbox" id="noExpiryCheckbox" style="cursor: pointer;"> 
+									<label class="form-check-label text-muted fw-medium" for="noExpiryCheckbox" style="font-size: 0.85rem; cursor: pointer;"> 만료일이 없는 자격증입니다 </label>
+								</div>
+							</div>
+						</div>
+						<div class="mb-4">
+							<label class="form-label required-mark">자격증 사본 첨부</label> 
+							<input type="file" name="certFile" class="form-control" accept="image/*, application/pdf">
+							<div class="form-text text-muted">선명하게 촬영된 사진이나 스캔본을 업로드해주세요. (관리자 확인용)</div>
+						</div>
+                        
+						<div class="alert mt-4 mb-0 d-flex align-items-center gap-3 shadow-sm" style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-left: 5px solid #3b82f6 !important; border-radius: 12px; padding: 16px;">
+						    <i class="fas fa-info-circle fs-3 text-primary"></i>
+						    <div>
+						        <p class="mb-0" style="font-size: 0.85rem; color: #1e3a8a; font-weight: 500; letter-spacing: -0.5px; word-break: keep-all; line-height: 1.5;">
+						            경력, 학력, 추가 자격증 등 상세한 전문가 정보는 회원가입 승인 후 
+						            <strong style="color: #1d4ed8; background-color: #dbeafe; padding: 2px 6px; border-radius: 4px;">[마이페이지] - [전문가 정보 관리]</strong>
+						            에서 언제든지 추가 및 관리가 가능합니다.
+						        </p>
+						    </div>
+						</div>
+					</div>
+
+					<div id="partnerFields" class="special-fields" style="display: none;">
+						<h5 class="fw-bold mb-3">파트너(센터) 정보</h5>
+						<p class="text-muted small mb-4">사업자 인증 후 제휴 업체로 등록됩니다.</p>
+						<div class="row">
+							<div class="col-md-6 mb-4">
+								<label class="form-label required-mark">상호명</label> 
+								<input type="text" name="companyName" class="form-control" placeholder="상호명을 입력하세요" required>
+							</div>
+							<div class="col-md-6 mb-4">
+								<label class="form-label required-mark">사업자등록번호</label> 
+								<input type="text" name="businessNo" class="form-control" placeholder="- 없이 10자리 숫자만 입력" maxlength="10" required>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-6 mb-4">
+								<label class="form-label required-mark">대표자명</label> 
+								<input type="text" name="ceoName" class="form-control" placeholder="대표자 성함" required>
+							</div>
+							<div class="col-md-6 mb-4">
+								<label class="form-label required-mark">개업일자</label>
+								<div class="input-group">
+									<span class="input-group-text bg-light border-0"><i class="fas fa-calendar-check text-primary"></i></span> 
+									<input type="text" id="openDatePicker" name="openDate" class="form-control" placeholder="날짜를 선택해 주세요" required readonly style="cursor: pointer; background-color: #ffffff;">
+								</div>
+							</div>
+						</div>
+						<div class="mb-4">
+							<label class="form-label required-mark">통신판매업 신고번호</label> 
+							<input type="text" name="mailOrderNo" class="form-control" placeholder="예: 제2026-서울강남-0000호" required>
+						</div>
+						<div class="p-3 bg-light rounded border mt-2 mb-4">
+							<label class="form-label fw-bold mb-3 d-block">필수 서류 첨부</label>
+							<div class="row">
+								<div class="col-md-6 mb-3 mb-md-0">
+									<label class="form-label required-mark small text-muted">사업자등록증</label>
+									<input type="file" name="businessDocsFile" class="form-control form-control-sm" accept="image/*,.pdf" required>
+								</div>
+								<div class="col-md-6">
+									<label class="form-label required-mark small text-muted">통신판매업 신고증</label> 
+									<input type="file" name="mailOrderDocsFile" class="form-control form-control-sm" accept="image/*,.pdf" required>
+								</div>
+							</div>
+							<div class="form-text text-muted mt-2" style="font-size: 0.8rem;">* PDF 또는 이미지 파일만 첨부 가능합니다.</div>
+						</div>
+					</div>
+
+					<div class="d-grid mt-5">
+						<button type="submit" class="btn btn-primary btn-lg">가입 완료하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- 세련된 커스텀 웹 모달 (alert 대체용) -->
+	<div class="modal fade" id="customAlertModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content shadow-lg" style="border-radius: 20px; border: none;">
+				<div class="modal-body text-center p-5">
+					<div id="alertModalIconContainer" class="mb-3">
+						<i id="alertModalIcon" class="fas fa-exclamation-circle text-danger" style="font-size: 3.5rem;"></i>
+					</div>
+					<h5 class="fw-bold mb-3" id="alertModalTitle">알림</h5>
+					<p class="text-muted mb-4" id="alertModalMessage" style="white-space: pre-line; font-size: 1.05rem;"></p>
+					<button type="button" class="btn btn-primary px-5 py-2" id="btnAlertConfirm" style="border-radius: 12px; font-weight: 600;">확인</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer th:replace="~{footer :: footer}"></footer>
+	
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+	<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+	<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+	<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // 1. 공통 알림 모달 설정
+    const alertModalEl = document.getElementById('customAlertModal');
+    let alertModal;
+    if(alertModalEl) {
+        alertModal = new bootstrap.Modal(alertModalEl);
+    }
+
+    function showCustomAlert(msg, type = 'error', callback = null) {
+        if(!alertModal) return alert(msg); // 모달이 없을 경우 대비
+        
+        document.getElementById('alertModalMessage').innerText = msg;
+        document.getElementById('alertModalTitle').innerText = (type === 'success') ? "완료" : "확인 필요";
+        
+        const icon = document.getElementById('alertModalIcon');
+        if(icon) {
+            if(type === 'success') icon.className = 'fas fa-check-circle text-success';
+            else icon.className = 'fas fa-exclamation-circle text-danger';
+        }
+
+        alertModal.show();
+        const btnConfirm = document.getElementById('btnAlertConfirm');
+        if(btnConfirm) {
+            btnConfirm.onclick = () => { 
+                alertModal.hide(); 
+                if(callback) callback(); 
+            };
+
+        }
+    }
+
+    // 2. 폼 요소 설정 및 제어
+    const checkState = { id: false, nickname: false, email: false };
+    const form = document.getElementById("registerForm");
+    const memberTypeSelect = document.getElementById("memberType");
+
+
+    function toggleMemberFields(type) {
+        const fieldMaps = { 'EXPERT': 'expertFields', 'PARTNER': 'partnerFields' };
+        Object.values(fieldMaps).forEach(id => {
+            const container = document.getElementById(id);
+            if(container) {
+                container.style.display = "none";
+                container.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+            }
+        });
+        const targetId = fieldMaps[type];
+        if (targetId) {
+            const targetContainer = document.getElementById(targetId);
+            if(targetContainer) {
+                targetContainer.style.display = "block";
+                targetContainer.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+            }
+        }
+    }
+
+    function handleDuplicateCheck(endpoint, queryParam, value, feedbackElement, stateKey) {
+        if (!value) { showCustomAlert("값을 입력해주세요."); return; }
+        fetch(`/auth/${endpoint}?${queryParam}=${encodeURIComponent(value)}`)
+            .then(res => res.json())
+            .then(isDuplicate => {
+                if(!feedbackElement) return;
+                if (isDuplicate) {
+                    feedbackElement.textContent = "✕ 이미 사용 중입니다.";
+                    feedbackElement.style.color = "#e53e3e";
+                    checkState[stateKey] = false;
+                } else {
+                    feedbackElement.textContent = "✓ 사용 가능합니다.";
+                    feedbackElement.style.color = "#0fb8ad";
+                    checkState[stateKey] = true;
+                }
+
+            });
+    }
+
+    if(memberTypeSelect) {
+        memberTypeSelect.addEventListener("change", (e) => toggleMemberFields(e.target.value));
+        memberTypeSelect.dispatchEvent(new Event('change'));
+    }
+
+    // 3. 파일 및 입력 제한 이벤트
+    const profileImageFile = document.getElementById("profileImageFile");
+    if(profileImageFile) {
+        profileImageFile.addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById("preview");
+                    if(preview) {
+                        preview.src = event.target.result;
+                        preview.style.display = "block";
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    const phoneInput = document.querySelector('input[name="phone"]');
+    if(phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let val = e.target.value.replace(/[^0-9]/g, '');
+            if (val.length < 4) e.target.value = val;
+            else if (val.length < 8) e.target.value = `${val.slice(0, 3)}-${val.slice(3)}`;
+            else e.target.value = `${val.slice(0, 3)}-${val.slice(3, 7)}-${val.slice(7, 11)}`;
+        });
+    }
+    
+    const loginIdInput = document.getElementById("loginId");
+    if (loginIdInput) {
+        loginIdInput.addEventListener("input", function(e) {
+            const englishAndNumbersOnly = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+            if (e.target.value !== englishAndNumbersOnly) e.target.value = englishAndNumbersOnly;
+        });
+    }
+    
+    // 🌟 [추가된 부분] 실시간 비밀번호 검사 
+    const pw = document.getElementById("password");
+    const pwCheck = document.getElementById("passwordCheck");
+    const pwConditionMsg = document.getElementById("pwConditionMsg");
+    const pwFeedback = document.getElementById("passwordFeedback"); 
+    const pwRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*?_]).{8,20}$/;
+
+    if (pw && pwCheck) {
+        const validatePasswordMatch = () => {
+            const p1 = pw.value; const p2 = pwCheck.value;
+            if (p2 === "") { if(pwFeedback) pwFeedback.textContent = ""; pwCheck.classList.remove('is-valid', 'is-invalid'); return; }
+            if (p1 === p2) { 
+                if(pwFeedback) { pwFeedback.textContent = "✓ 비밀번호가 일치합니다."; pwFeedback.style.color = "#0fb8ad"; }
+                pwCheck.classList.remove('is-invalid'); pwCheck.classList.add('is-valid');
+            } else { 
+                if(pwFeedback) { pwFeedback.textContent = "✕ 비밀번호가 일치하지 않습니다."; pwFeedback.style.color = "#e53e3e"; }
+                pwCheck.classList.remove('is-valid'); pwCheck.classList.add('is-invalid');
+            }
+        };
+
+        pw.addEventListener("input", function(e) {
+            const val = e.target.value;
+            if (val.length === 0) {
+                if(pwConditionMsg) {
+                    pwConditionMsg.className = "mt-2 text-muted";
+                    pwConditionMsg.textContent = "영문, 숫자, 특수문자를 포함하여 8~20자로 입력해주세요.";
+                }
+                pw.classList.remove('is-valid', 'is-invalid');
+            } else if (pwRegex.test(val)) {
+                if(pwConditionMsg) {
+                    pwConditionMsg.className = "mt-2 text-success";
+                    pwConditionMsg.innerHTML = '<i class="fas fa-check"></i> 완벽한 비밀번호입니다!';
+                }
+                pw.classList.remove('is-invalid'); pw.classList.add('is-valid');
+            } else {
+                if(pwConditionMsg) {
+                    pwConditionMsg.className = "mt-2 text-danger";
+                    pwConditionMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> 영문, 숫자, 특수문자를 모두 포함해주세요.';
+                }
+                pw.classList.remove('is-valid'); pw.classList.add('is-invalid');
+            }
+            validatePasswordMatch();
+        });
+
+        pwCheck.addEventListener("input", validatePasswordMatch);
+    }
+    
+    const businessNoInput = document.querySelector('input[name="businessNo"]');
+    if (businessNoInput) businessNoInput.addEventListener("input", function(e) { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
+
+    // 4. 중복 검사 버튼 이벤트
+    const btnCheckId = document.getElementById("btnCheckId");
+    if(btnCheckId) btnCheckId.onclick = () => handleDuplicateCheck('check-id', 'loginId', document.getElementById("loginId").value, document.getElementById("idFeedback"), 'id');
+    
+    const btnCheckNickname = document.getElementById("btnCheckNickname");
+    if(btnCheckNickname) btnCheckNickname.onclick = () => handleDuplicateCheck('check-nickname', 'nickname', document.getElementById("nickname").value, document.getElementById("nicknameFeedback"), 'nickname');
+    
+    const btnCheckEmail = document.getElementById("btnCheckEmail");
+    if(btnCheckEmail) {
+        btnCheckEmail.onclick = () => {
+            const email = document.getElementById("email").value;
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showCustomAlert("올바른 이메일 형식이 아닙니다."); return; }
+            handleDuplicateCheck('check-email', 'email', email, document.getElementById("emailFeedback"), 'email');
+        };
+    }
+
+    ['loginId', 'nickname', 'email'].forEach(id => {
+        const el = document.getElementById(id);
+        const feedbackEl = document.getElementById(id === 'loginId' ? 'idFeedback' : id + 'Feedback');
+        if(el) {
+            el.addEventListener("input", () => {
+                checkState[id.replace('loginId', 'id')] = false;
+                if(feedbackEl) {
+                    feedbackEl.textContent = "중복 확인이 필요합니다.";
+                    feedbackEl.style.color = "#a0aec0"; // 회색으로 변경
+                }
+            });
+        }
+    });
+
+    // 5. 폼 전송 (Submit) 통합 검사
+    if(form) {
+        form.addEventListener("submit", function(e) {
+            e.preventDefault(); 
+            if (!checkState.id) { showCustomAlert("아이디 중복 확인을 해주세요."); return; }
+            if (!checkState.nickname) { showCustomAlert("닉네임 중복 확인을 해주세요."); return; }
+            if (!checkState.email) { showCustomAlert("이메일 중복 확인을 해주세요."); return; }
+            
+            // 🌟 [추가된 부분] 제출 전 정규식 마지막 확인!
+            const pwVal = document.getElementById("password").value;
+            const pwRegexCheck = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*?_]).{8,20}$/;
+            if (!pwRegexCheck.test(pwVal)) {
+                showCustomAlert("비밀번호 조건을 다시 확인해주세요.");
+                document.getElementById("password").focus();
+                return;
+            }
+
+            if (pwVal !== document.getElementById("passwordCheck").value) {
+                showCustomAlert("비밀번호가 일치하지 않습니다."); 
+                document.getElementById("passwordCheck").focus(); 
+                return;
+            }
+
+            const typeActionMap = { 'NORMAL': '/auth/register', 'PARTNER': '/register/partner', 'EXPERT': '/register/expert' };
+            form.action = typeActionMap[memberTypeSelect.value];
+            
+            const typeMessageMap = {
+                'NORMAL': '🌱 일반 회원가입 처리를 시작합니다!',
+                'EXPERT': '💪 전문가 회원가입 처리를 시작합니다.',
+                'PARTNER': '🏢 파트너 회원가입 서류를 전송 중입니다...'
+            };
+
+            showCustomAlert(typeMessageMap[memberTypeSelect.value], 'success', () => {
+                form.submit(); 
+            });
+        });
+    }
+
+    // 6. 달력(Flatpickr) 기능 유지
+    function applyYearSelect(instance) {
+        const defaultYearInput = instance.calendarContainer.querySelector('.numInputWrapper');
+        if (defaultYearInput) defaultYearInput.style.display = 'none';
+        const yearSelect = document.createElement('select'); yearSelect.className = 'custom-year-select';
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i >= currentYear - 100; i--) {
+            const opt = document.createElement('option'); opt.value = i; opt.innerText = i + '년'; yearSelect.appendChild(opt);
+        }
+        yearSelect.value = instance.currentYear;
+        yearSelect.addEventListener('change', function(e) { instance.changeYear(parseInt(e.target.value)); });
+        const monthDropdown = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+        if (monthDropdown) monthDropdown.parentNode.insertBefore(yearSelect, monthDropdown);
+        instance.customYearSelect = yearSelect;
+    }
+
+    function applyFutureYearSelect(instance) {
+        const defaultYearInput = instance.calendarContainer.querySelector('.numInputWrapper');
+        if (defaultYearInput) defaultYearInput.style.display = 'none';
+        const yearSelect = document.createElement('select'); yearSelect.className = 'custom-year-select';
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear + 20; i >= currentYear - 10; i--) {
+            const opt = document.createElement('option'); opt.value = i; opt.innerText = i + '년'; yearSelect.appendChild(opt);
+        }
+        yearSelect.value = instance.currentYear;
+        yearSelect.addEventListener('change', function(e) { instance.changeYear(parseInt(e.target.value)); });
+        const monthDropdown = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+        if (monthDropdown) monthDropdown.parentNode.insertBefore(yearSelect, monthDropdown);
+        instance.customYearSelect = yearSelect;
+    }
+
+    if(typeof flatpickr !== 'undefined') {
+        const bp = document.getElementById("birthDatePicker");
+        if(bp) flatpickr("#birthDatePicker", { locale: "ko", dateFormat: "Y-m-d", maxDate: "today", disableMobile: "true", onReady: function(selectedDates, dateStr, instance) { applyYearSelect(instance); }, onYearChange: function(selectedDates, dateStr, instance) { if (instance.customYearSelect) instance.customYearSelect.value = instance.currentYear; } });
+        
+        const op = document.getElementById("openDatePicker");
+        if(op) flatpickr("#openDatePicker", { locale: "ko", dateFormat: "Y-m-d", maxDate: "today", disableMobile: "true", onReady: function(selectedDates, dateStr, instance) { applyYearSelect(instance); }, onYearChange: function(selectedDates, dateStr, instance) { if (instance.customYearSelect) instance.customYearSelect.value = instance.currentYear; } });
+        
+        const cip = document.getElementById("certIssueDatePicker");
+        if(cip) flatpickr("#certIssueDatePicker", { locale: "ko", dateFormat: "Y-m-d", maxDate: "today", disableMobile: "true", onReady: function(selectedDates, dateStr, instance) { applyYearSelect(instance); }, onYearChange: function(selectedDates, dateStr, instance) { if (instance.customYearSelect) instance.customYearSelect.value = instance.currentYear; } });
+        
+        const cep = document.getElementById("certExpireDatePicker");
+        if(cep) flatpickr("#certExpireDatePicker", { locale: "ko", dateFormat: "Y-m-d", minDate: "today", disableMobile: "true", onReady: function(selectedDates, dateStr, instance) { applyFutureYearSelect(instance); }, onYearChange: function(selectedDates, dateStr, instance) { if (instance.customYearSelect) instance.customYearSelect.value = instance.currentYear; } });
+    }
+
+    const expireDatePicker = document.getElementById("certExpireDatePicker");
+    const noExpiryCheckbox = document.getElementById("noExpiryCheckbox");
+    if (expireDatePicker && noExpiryCheckbox) {
+        noExpiryCheckbox.addEventListener("change", function() {
+            if (this.checked) {
+                expireDatePicker.value = ""; expireDatePicker.disabled = true; expireDatePicker.style.backgroundColor = "#e2e8f0"; expireDatePicker.style.cursor = "not-allowed";
+            } else {
+                expireDatePicker.disabled = false; expireDatePicker.style.backgroundColor = "#ffffff"; expireDatePicker.style.cursor = "pointer";
+            }
+        });
+    }
+}); 
+
+// 7. 다음 우편번호 (DOMContentLoaded 바깥 유지)
+function execDaumPostcode() {
+    new daum.Postcode({
+        oncomplete: function(data) {
+            var addr = ''; 
+            if (data.userSelectedType === 'R') addr = data.roadAddress;
+            else addr = data.jibunAddress;
+            document.getElementById('zipcode').value = data.zonecode;
+            document.getElementById('address').value = addr;
+            document.getElementById('address2').focus();
+        }
+    }).open();
+}
+</script>
+</body>
+</html>

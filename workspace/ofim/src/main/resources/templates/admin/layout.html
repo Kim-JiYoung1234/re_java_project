@@ -1,0 +1,375 @@
+<!doctype html>
+<!-- 다른 문법(Layout Dialect)을 쓰는 팀원을 위해 layout 네임스페이스 추가 -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" th:fragment="layout(content)">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title th:text="${pageTitle != null ? pageTitle + ' | OFIM' : '관리자 | OFIM'}">관리자 | OFIM</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f6f7fb;
+      margin: 0;
+      overflow-x: hidden;
+      color: #1f2937;
+    }
+
+    .admin-container {
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: #111827;
+      color: #e5e7eb;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      gap: 12px;
+    }
+
+    .brand .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    .brand .title {
+      font-weight: 800;
+      font-size: 1.08rem;
+      line-height: 1.1;
+    }
+
+    .menu {
+      padding: 16px;
+    }
+
+    .menu .section {
+      font-size: .75rem;
+      opacity: .6;
+      padding: 14px 12px 6px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .menu a.nav-link {
+      color: #e5e7eb;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+      text-decoration: none;
+      font-size: .95rem;
+      transition: .2s;
+    }
+
+    .menu a.nav-link:hover {
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      transform: translateX(4px);
+    }
+
+    .menu a.nav-link.active {
+      background: rgba(59,130,246,.25);
+      color: #fff;
+      font-weight: 700;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .content-wrap {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 72px;
+      background: #fff;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .page-body {
+      padding: 24px;
+      flex: 1;
+    }
+
+    .card-soft {
+      border: none;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      background: #fff;
+    }
+
+    .stat-card {
+      border: none;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      background: #fff;
+      height: 100%;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      background: #eef4ff;
+      color: #2563eb;
+    }
+
+    .table thead th {
+      border-bottom: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: .88rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .table tbody td {
+      vertical-align: middle;
+      border-color: #f1f5f9;
+      font-size: .94rem;
+    }
+
+    .badge-soft-primary {
+      background: #e0edff;
+      color: #1d4ed8;
+    }
+
+    .badge-soft-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-soft-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-soft-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .badge-soft-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .empty-box {
+      border: 1px dashed #d1d5db;
+      border-radius: 18px;
+      background: #fafafa;
+      padding: 48px 20px;
+      text-align: center;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+<div class="admin-container">
+  <aside class="sidebar shadow-lg">
+    <div class="brand">
+      <div class="logo">O</div>
+      <div>
+        <div class="title">OFIM Admin</div>
+        <div class="small" style="opacity:.7; font-size:.8rem;">관리자 콘솔</div>
+      </div>
+    </div>
+
+    <nav class="menu">
+      <div class="section">MAIN</div>
+      <a class="nav-link"
+         th:href="@{/admin/dashboard}"
+         th:classappend="${activeMenu == 'dashboard'} ? ' active' : ''">
+        <i class="bi bi-speedometer2"></i> 대시보드
+      </a>
+
+      <div class="section">MEMBER</div>
+      <a class="nav-link"
+         th:href="@{/admin/users}"
+         th:classappend="${activeMenu == 'users'} ? ' active' : ''">
+        <i class="bi bi-people"></i> 회원 관리
+      </a>
+
+     <a class="nav-link"
+         th:href="@{/admin/fitness/list}"
+         th:classappend="${activeMenu == 'fitness' or activeMenu == 'fitness_detail'} ? ' active' : ''">
+        <i class="bi bi-building"></i> 파트너사 관리
+      </a>
+
+      <a class="nav-link"
+         th:href="@{/admin/expert/list}"
+         th:classappend="${activeMenu == 'expert' or activeMenu == 'expert_detail'} ? ' active' : ''">
+        <i class="bi bi-patch-check"></i> 전문가 관리
+      </a>
+
+      <a class="nav-link"
+         th:href="@{/admin/generalUser(status=0)}"
+         th:classappend="${activeMenu == 'general_user'} ? ' active' : ''">
+        <i class="bi bi-person-lines-fill"></i> 일반회원 관리
+      </a>
+
+      <div class="section">CONSULT</div>
+      <a class="nav-link"
+         th:href="@{/admin/consulting/list}"
+         th:classappend="${activeMenu == 'consulting'} ? ' active' : ''">
+        <i class="bi bi-chat-dots"></i> 상담 현황 관리
+      </a>
+
+      <a class="nav-link" th:href="@{/admin/expert/review}"
+   		  th:classappend="${activeMenu == 'expert_review' or activeMenu == 'expert_review_detail'} ? ' active' : ''">
+          <i class="bi bi-hourglass-split"></i> 전문가 심사관리
+      </a>
+
+      <div class="section">BOARD</div>
+      <a class="nav-link"
+         th:href="@{/admin/boards}"
+         th:classappend="${activeMenu == 'boards'} ? ' active' : ''">
+        <i class="bi bi-card-text"></i> 게시글 관리
+      </a>
+
+      <a class="nav-link"
+         th:href="@{/admin/reports}"
+         th:classappend="${activeMenu == 'reports'} ? ' active' : ''">
+        <i class="bi bi-flag"></i> 신고글 관리
+      </a>
+
+      <div class="section">FINANCE & AD</div>
+      <a class="nav-link"
+         th:href="@{/admin/settlements}"
+         th:classappend="${activeMenu == 'settlements'} ? ' active' : ''">
+        <i class="bi bi-cash-coin"></i> 광고 정산 관리
+      </a>
+
+      <a class="nav-link"
+         th:href="@{/admin/expert-settlements}"
+         th:classappend="${activeMenu == 'expert_settlement'} ? ' active' : ''">
+        <i class="bi bi-cash-stack"></i> 전문가정산관리
+      </a>
+
+      <a class="nav-link text-warning fw-bold"
+         th:href="@{/admin/ad-review}"
+         th:classappend="${activeMenu == 'ad_review'} ? ' active' : ''">
+        <i class="bi bi-badge-ad-fill"></i> 광고 심사 (Bidding)
+      </a>
+
+      <div class="section">SECURITY</div>
+      <a class="nav-link text-danger fw-bold"
+         th:href="@{/admin/security}"
+         th:classappend="${activeMenu == 'security'} ? ' active' : ''">
+        <i class="bi bi-shield-lock-fill"></i> 보안 및 감사 로그
+      </a>
+
+      <hr class="border-secondary my-4" style="opacity:.2;" />
+
+      <div class="px-3">
+        <div class="small mb-2 fw-semibold">
+          <i class="bi bi-person-circle me-1"></i> Admin 계정
+        </div>
+        <a class="btn btn-sm btn-outline-danger w-100 rounded-pill mt-1"
+           th:href="@{/admin/logout}">
+          <i class="bi bi-box-arrow-left me-1"></i> 로그아웃
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="content-wrap">
+    <div class="topbar">
+      <div class="left d-flex align-items-center gap-2">
+        <span class="fw-bold fs-5"
+              th:text="${pageTitle != null ? pageTitle : '관리자'}">관리자</span>
+        <span class="text-muted small mt-1"
+              th:if="${pageDesc != null}"
+              th:text="${pageDesc}"></span>
+      </div>
+
+      <div class="right d-flex align-items-center gap-3">
+        <a class="btn btn-sm btn-light border rounded-pill px-3 shadow-sm"
+           th:href="@{/home}">
+          <i class="bi bi-house-door me-1"></i> 서비스 홈
+        </a>
+      </div>
+    </div>
+
+    <!-- [핵심 수정] th:replace가 th:case를 무시하고 덮어씌우는 현상을 방지하기 위해 <th:block>으로 1차 방어막을 쳤습니다. -->
+    <main class="page-body" layout:fragment="content">
+      <th:block th:switch="${activeMenu}">
+        <th:block th:case="'dashboard'"><div th:replace="~{admin/dashboard::content}"></div></th:block>
+        <th:block th:case="'users'"><div th:replace="~{admin/users::content}"></div></th:block>
+        <th:block th:case="'fitness'"><div th:replace="~{admin/fitness/list::content}"></div></th:block>
+        <th:block th:case="'fitness_detail'"><div th:replace="~{admin/fitness/detail::content}"></div></th:block>
+        <th:block th:case="'expert'"><div th:replace="~{admin/expert/experts::content}"></div></th:block>
+        <th:block th:case="'expert_detail'"><div th:replace="~{admin/expert/detail::content}"></div></th:block>
+        
+        <th:block th:case="'expert_review'"><div th:replace="~{admin/expert/expert-review::content}"></div></th:block>
+        <th:block th:case="'expert_review_detail'"><div th:replace="~{admin/expert/review-detail::content}"></div></th:block>
+        <th:block th:case="'consulting'"><div th:replace="~{admin/consulting_list::content}"></div></th:block>
+        
+        <th:block th:case="'settlements'"><div th:replace="~{admin/settlements::content}"></div></th:block>
+        <th:block th:case="'expert_settlement'"><div th:replace="~{admin/expert/expert-settlement::content}"></div></th:block>
+        <th:block th:case="'expert_settlement_detail'"><div th:replace="~{admin/expert/settlement-detail::content}"></div>
+		</th:block>
+        <th:block th:case="'ad_review'"><div th:replace="~{admin/ad_review::content}"></div></th:block>
+        
+        <!-- [신규 추가] 보안 페이지 연결 -->
+        <th:block th:case="'security'"><div th:replace="~{admin/security::content}"></div></th:block>
+        
+        <!-- 아직 만들어지지 않은 메뉴를 위한 안전 가드 -->
+        <th:block th:case="*">
+            <th:block th:if="${content != null}">
+                <th:block th:replace="${content}"></th:block>
+            </th:block>
+            <div th:unless="${content != null}" class="alert alert-warning border-0 shadow-sm" style="border-radius: 15px;">
+              <i class="bi bi-exclamation-triangle me-2"></i> 아직 준비 중이거나 연결되지 않은 페이지입니다. (Menu: <span th:text="${activeMenu}"></span>)
+            </div>
+        </th:block>
+      </th:block>
+    </main>
+  </div>
+</div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

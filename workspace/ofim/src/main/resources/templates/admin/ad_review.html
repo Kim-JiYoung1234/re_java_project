@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{admin/layout :: layout(~{::#main-content})}">
+    <div id="main-content" th:fragment="content">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+            <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-shield-check me-2 text-primary"></i>신규 등록된 광고 심사 대기열</h5>
+                <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="bi bi-sort-down me-1"></i> 입찰가 높은 순 우선 정렬</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="py-3">신청일</th>
+                            <th class="py-3">센터명(파트너)</th>
+                            <th class="py-3">유형 및 키워드</th>
+                            <th class="text-start ps-4 py-3">광고 소재(제목/내용)</th>
+                            <th class="py-3 text-danger fw-bold">총 입찰 금액</th>
+                            <th class="py-3">심사 관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ad : ${pendingAds}">
+                            <td class="text-muted small" th:text="${ad['requestDate']}">2026-03-09</td>
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${ad['centerName']}">센터명</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-dark rounded-pill mb-1" th:text="${ad['adType']}">유형</span><br>
+                                <small class="text-primary fw-bold" th:text="${ad['targetKeyword']}"></small>
+                            </td>
+                            <td class="text-start ps-4" style="max-width: 300px;">
+                                <div class="fw-bold text-truncate" th:text="${ad['adTitle']}">광고 제목</div>
+                                <small class="text-muted text-truncate d-block" th:text="${ad['adContent']}">광고 내용</small>
+                            </td>
+                            <td class="fw-extrabold text-danger fs-5" th:text="'₩ ' + ${#numbers.formatInteger(ad['bidPrice'], 0, 'COMMA')}"></td>
+                            <td>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <form action="/admin/ad-approve" method="post">
+                                        <input type="hidden" name="adId" th:value="${ad['adId']}">
+                                        <input type="hidden" name="centerNo" th:value="${ad['centerNo']}">
+                                        <button type="submit" class="btn btn-sm btn-success fw-bold px-3">승인</button>
+                                    </form>
+                                    <form action="/admin/ad-reject" method="post">
+                                        <input type="hidden" name="adId" th:value="${ad['adId']}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-bold px-3">반려</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(pendingAds)}">
+                            <td colspan="6" class="py-5 text-muted bg-light">
+                                <i class="bi bi-emoji-smile fs-1 d-block mb-2"></i>
+                                <span class="fw-bold">현재 심사 대기 중인 광고가 없습니다.</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</th:block>
+</html>

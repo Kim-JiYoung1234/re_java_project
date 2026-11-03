@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFIM 랭킹 - 레벨업의 시작</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style th:inline="none">
+@import
+	url('https://fonts.googleapis.com/css2?family=Pretendard:wght@800&family=Black+Han+Sans&display=swap')
+	;
+
+body {
+	font-family: 'Pretendard', sans-serif;
+	background-color: #f8f9fa;
+	margin: 0;
+	padding: 0;
+}
+
+.rank-top-section {
+	background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+	padding: 80px 0 100px 0;
+	color: white;
+	border-radius: 0 0 60px 60px;
+	margin-bottom: 50px;
+	position: relative;
+}
+
+.refresh-btn {
+	position: absolute;
+	top: 25px;
+	right: 30px;
+	background: #00f2fe;
+	border: none;
+	color: #1e293b;
+	border-radius: 12px;
+	padding: 10px 20px;
+	font-weight: 800;
+	z-index: 20;
+	box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+	cursor: pointer;
+	transition: all 0.2s ease-in-out;
+}
+
+.refresh-btn:hover {
+	background: #ffffff;
+	color: #00f2fe;
+	transform: translateY(-3px) scale(1.05);
+	box-shadow: 0 8px 25px rgba(0, 242, 254, 0.6);
+}
+
+.refresh-btn:active {
+	transform: translateY(-1px) scale(0.98);
+	box-shadow: 0 2px 10px rgba(0, 242, 254, 0.4);
+}
+
+.table-header-flex {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	margin-bottom: 15px;
+	padding: 0 10px;
+}
+
+.search-container {
+	position: relative;
+	width: 300px;
+}
+
+.search-input {
+	width: 100%;
+	padding: 10px 15px 10px 40px;
+	border-radius: 12px;
+	border: 2px solid #e2e8f0;
+	background: white;
+	color: #1e293b;
+	font-weight: 600;
+	transition: all 0.2s;
+}
+
+.search-input:focus {
+	outline: none;
+	border-color: #1e293b;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.search-icon {
+	position: absolute;
+	left: 15px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #64748b;
+	font-size: 1rem;
+}
+
+/* 🌟 [수정] 흰 배경에서도 쨍하게 보이는 강력 노란색 꿀렁 아우라 */
+.premium-trophy {
+	display: inline-block;
+	position: relative;
+	z-index: 1;
+	line-height: 1;
+	vertical-align: middle;
+}
+
+.premium-trophy::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 18px;
+	height: 18px;
+	/* 🌟 노란색 밀도 대폭 강화 (1.0 불투명도 사용) */
+	background: radial-gradient(circle, rgba(251, 191, 36, 1) 0%,
+		rgba(251, 191, 36, 0.7) 60%, rgba(251, 191, 36, 0) 100%);
+	border-radius: 50%;
+	z-index: -1;
+	/* 🌟 번지는 효과(Blur)와 노란색 글로우(Box-Shadow) 추가 */
+	box-shadow: 0 0 15px 5px rgba(251, 191, 36, 0.6);
+	animation: aura-wiggle 1.5s infinite ease-in-out;
+}
+
+@
+keyframes aura-wiggle { 0%, 100% {
+	transform: translate(-50%, -50%) scale(1.1);
+	opacity: 0.6;
+	filter: blur(3px);
+}
+
+50
+
+
+%
+{
+transform
+
+
+:
+
+
+translate
+(
+
+
+-50
+%
+,
+-50
+%
+
+
+)
+
+
+scale
+(
+
+
+2
+.8
+
+
+)
+; /* 🌟 범위를 2.8배로 확 키움 */
+
+
+opacity
+
+
+:
+
+
+1
+; /* 🌟 가장 진해질 때 100% 농도 */
+
+
+filter
+
+
+:
+
+
+blur
+(
+
+
+5px
+
+
+)
+;
+
+
+box-shadow
+
+
+:
+
+
+0
+
+
+0
+
+
+25px
+
+
+10px
+
+
+rgba
+(
+
+
+251
+,
+191
+,
+36
+,
+0
+.8
+
+
+)
+; /* 🌟 후광 효과 강화 */
+
+
+}
+}
+
+/* 🌟 [유지] 배지 정렬용 컨테이너 */
+.grade-td-container {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	height: 100%;
+}
+
+.rank-icon-absolute {
+	position: absolute;
+	left: -55px;
+	width: 45px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.badge-ofim {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 15px;
+	border-radius: 50px;
+	font-weight: 800;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	transition: all 0.3s;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	font-size: 0.75rem;
+	min-width: 115px;
+	justify-content: center;
+}
+
+.bg-underarmor {
+	background: linear-gradient(135deg, #000 0%, #333 100%);
+	color: #ffcc00 !important;
+	border: 1.5px solid #ffcc00 !important;
+}
+
+.bg-muscle {
+	background: #1a2a33 !important;
+	color: #ffffff !important;
+	border: 1px solid #4dabf7 !important;
+}
+
+.bg-burning {
+	background: linear-gradient(135deg, #dc3545 0%, #800000 100%);
+	color: white !important;
+}
+
+.bg-runner {
+	background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+	color: white !important;
+	border: 1.5px solid #a8ff78 !important;
+}
+
+.bg-rookie {
+	background: #ffffff !important;
+	color: #495057 !important;
+	border: 1.5px solid #fab005 !important;
+}
+
+.top-rank-container {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	gap: 20px;
+	max-width: 1000px;
+	margin: 0 auto;
+	padding-top: 80px;
+}
+
+.top-rank-card {
+	background: #ffffff;
+	border-radius: 30px;
+	padding: 30px 20px;
+	text-align: center;
+	color: #1e293b;
+	flex: 1;
+	position: relative;
+	transition: transform 0.3s;
+}
+
+.rank-1 {
+	height: 400px;
+	border: 4px solid #fbbf24;
+	z-index: 10;
+	box-shadow: 0 0 35px rgba(251, 191, 36, 0.5);
+}
+
+.rank-2 {
+	height: 330px;
+	border: 3px solid #339af0;
+}
+
+.rank-3 {
+	height: 290px;
+	border: 3px solid #fd7e14;
+}
+
+.crown-icon {
+	font-size: 3.8rem;
+	position: absolute;
+	top: -60px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.rank-img {
+	width: 90px;
+	height: 90px;
+	border-radius: 50%;
+	object-fit: cover;
+	margin-bottom: 10px;
+	background: #f1f5f9;
+}
+
+.rank-1 .rank-img {
+	width: 130px;
+	height: 130px;
+	border: 4px solid #fbbf24;
+}
+
+.rank-list-img {
+	width: 48px;
+	height: 48px;
+	border-radius: 12px;
+	object-fit: cover;
+	border: 2px solid #e2e8f0;
+}
+
+.rank-name {
+	font-weight: 800;
+	font-size: 1.3rem;
+	color: #1e293b;
+	margin-bottom: 5px;
+}
+
+.pts-badge {
+	background: #1e293b;
+	color: #ffffff !important;
+	padding: 8px 15px;
+	border-radius: 12px;
+	font-weight: 800;
+	font-size: 0.9rem;
+}
+
+.rank-list-card {
+	border: none;
+	border-radius: 30px;
+	background: white;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+	overflow: visible !important;
+}
+
+.table thead th {
+	background: #f1f5f9;
+	color: #64748b;
+	font-weight: 800;
+	border: none;
+	padding: 22px;
+	text-align: left !important;
+}
+
+.col-rank {
+	padding-left: 45px !important;
+	width: 120px;
+}
+
+.col-user {
+	padding-left: 48px !important;
+}
+
+.col-grade {
+	padding-left: 95px !important;
+	width: 320px;
+}
+
+.col-pts {
+	padding-left: 65px !important;
+	width: 200px;
+}
+
+.pagination-container {
+	display: flex;
+	justify-content: center;
+	margin: 40px 0;
+	gap: 8px;
+}
+
+.page-link-custom {
+	width: 45px;
+	height: 45px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 12px;
+	background: white;
+	color: #1e293b;
+	font-weight: 800;
+	cursor: pointer;
+}
+
+.page-link-custom.active {
+	background: #1e293b;
+	color: white;
+}
+
+tr.table-warning {
+	background-color: #fffef0 !important;
+	border-left: 4px solid #fbbf24;
+	position: relative;
+	transition: all 0.2s ease;
+}
+
+.table-warning .badge.bg-warning {
+	background-color: #fbbf24 !important;
+	color: #1e293b !important;
+	font-weight: 800;
+}
+
+.bi-spin {
+	animation: rotate 1s linear infinite;
+}
+
+@
+keyframes rotate {from { transform:rotate(0deg);
+	
+}
+
+to {
+	transform: rotate(360deg);
+}
+}
+</style>
+</head>
+<body>
+
+	<header th:replace="~{header :: header}"></header>
+
+	<input type="hidden" id="loginUserNickname" th:value="${session.user != null ? session.user.nickname : ''}">
+
+	<div class="rank-top-section text-center">
+		<button class="refresh-btn" id="btnRefresh">
+			<i class="bi bi-arrow-clockwise me-1"></i>랭킹 갱신
+		</button>
+		<h2
+			style="font-family: 'Black Han Sans', sans-serif; font-size: 3.2rem; letter-spacing: -1px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center;">
+			<span class="premium-trophy" style="font-size: 3.5rem; margin-right: 15px;">🏆</span> <span><span
+				style="color: #fbbf24;">OFIM</span> 랭킹</span>
+		</h2>
+		<p style="font-weight: 600; opacity: 0.8; font-size: 1.15rem; margin-bottom: 0;">상태창을 갱신하여 당신의 도전자 순위를 확인하세요</p>
+		<div id="top-rank-box" class="top-rank-container"></div>
+	</div>
+
+	<div class="container mb-5">
+		<div class="table-header-flex">
+			<h5 class="fw-bold mb-0 text-secondary">
+				<i class="bi bi-fire me-2" style="color: #ff4d4d;"></i>도전자 리스트
+			</h5>
+			<div class="search-container d-flex gap-2">
+				<select id="gradeFilter" class="form-select"
+					style="width: 150px; border-radius: 12px; font-weight: 600; border: 2px solid #e2e8f0;">
+					<option value="all">전체 등급</option>
+					<option value="언더아머">언더아머</option>
+					<option value="머슬 빌더">머슬 빌더</option>
+					<option value="버닝 파이터">버닝 파이터</option>
+					<option value="오핌 러너">오핌 러너</option>
+					<option value="비기너 루키">비기너 루키</option>
+				</select>
+
+				<div style="position: relative; flex: 1;">
+					<i class="bi bi-search search-icon"></i> <input type="text" id="rankSearch" class="search-input"
+						placeholder="닉네임 검색...">
+				</div>
+			</div>
+		</div>
+
+		<div class="card rank-list-card">
+			<div class="card-body p-0">
+				<table class="table table-hover align-middle mb-0">
+					<thead>
+						<tr>
+							<th class="col-rank">순위</th>
+							<th class="col-user">도전자</th>
+							<th class="col-grade">활동 등급</th>
+							<th class="col-pts">활동 포인트</th>
+						</tr>
+					</thead>
+					<tbody id="rank-table-body"></tbody>
+				</table>
+			</div>
+		</div>
+		<div id="pagination-box" class="pagination-container"></div>
+	</div>
+
+	<footer th:replace="~{footer :: footer}"></footer>
+
+	<script>
+    $(document).ready(function() {
+        const loginNickname = $('#loginUserNickname').val();
+        let allRankData = [], filteredData = [], currentPage = 1, itemsPerPage = 20;
+
+        function getGradeInfo(pts) {
+            if (pts >= 5000) return { name: '언더아머', class: 'bg-underarmor', icon: '⛓️' };
+            if (pts >= 2500) return { name: '머슬 빌더', class: 'bg-muscle', icon: '🏋️‍♂️' };
+            if (pts >= 1000) return { name: '버닝 파이터', class: 'bg-burning', icon: '🥊' };
+            if (pts >= 300)  return { name: '오핌 러너', class: 'bg-runner', icon: '🏃‍♂️' };
+            return { name: '비기너 루키', class: 'bg-rookie', icon: '🐣' };
+        }
+
+        function getProfilePath(user) {
+            const fileName = user.imageName || user.profile;
+            return (fileName && fileName.trim() !== "") ? "/uploads/" + fileName : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+        }
+
+        // 🌟 [추가] 통합 필터링 함수
+        function applyFilters() {
+            const searchKeyword = $('#rankSearch').val().toLowerCase().trim();
+            const selectedGrade = $('#gradeFilter').val();
+
+            filteredData = allRankData.filter(user => {
+                const gradeInfo = getGradeInfo(user.activityPoint);
+                const matchesName = user.writerName.toLowerCase().includes(searchKeyword);
+                const matchesGrade = (selectedGrade === 'all' || gradeInfo.name === selectedGrade);
+                return matchesName && matchesGrade;
+            });
+
+            renderTable(1); // 검색 시 무조건 1페이지로 이동
+        }
+
+        function loadRanking() {
+            $.ajax({
+                url: '/ranking/api/rankers',
+                method: 'GET',
+                success: function(data) {
+                    if (!data || data.length === 0) return;
+                    allRankData = data; 
+                    // 로드 후 현재 필터 상태 유지하며 필터링 적용
+                    applyFilters();
+                    
+                    let topHtml = '';
+                    if(data.length >= 2) topHtml += renderTopCard(data[1], '2', '🏅', 'rank-2');
+                    topHtml += renderTopCard(data[0], '1', '🏆', 'rank-1');
+                    if(data.length >= 3) topHtml += renderTopCard(data[2], '3', '🎖️', 'rank-3');
+                    $('#top-rank-box').html(topHtml);
+                }
+            });
+        }
+
+        // 🌟 [수정] 닉네임 입력 이벤트
+        $('#rankSearch').on('input', applyFilters);
+
+        // 🌟 [추가] 등급 선택 이벤트
+        $('#gradeFilter').on('change', applyFilters);
+
+        function renderTable(page) {
+            currentPage = page;
+            const start = (page - 1) * itemsPerPage;
+            const pageData = filteredData.slice(start, start + itemsPerPage);
+
+            let tableHtml = '';
+            if (pageData.length === 0) {
+                tableHtml = `<tr><td colspan="4" class="py-5 text-muted text-center">검색 결과가 없습니다.</td></tr>`;
+            } else {
+                pageData.forEach((user) => {
+                    const actualRank = allRankData.findIndex(u => u.writerName === user.writerName) + 1;
+                    let profileImg = getProfilePath(user);
+                    let isMyRank = (loginNickname !== '' && loginNickname === user.writerName) ? 'table-warning' : '';
+                    const grade = getGradeInfo(user.activityPoint);
+
+                    let rankIcon = '';
+                    if (actualRank === 1) rankIcon = '🏆';
+                    else if (actualRank === 2) rankIcon = '🏅';
+                    else if (actualRank === 3) rankIcon = '🎖️';
+
+                    let rankIconHtml = rankIcon !== '' ? `<div class="rank-icon-absolute"><span class="premium-trophy">${rankIcon}</span></div>` : '';
+
+                    tableHtml += `
+                        <tr class="${isMyRank}">
+                            <td class="col-rank" style="font-weight:800;">${actualRank}위</td>
+                            <td class="col-user">
+                                <div class="d-flex align-items-center py-2">
+                                    <img src="${profileImg}" class="rank-list-img me-3">
+                                    <span style="font-weight: 800; font-size: 1.1rem; color: #334155;">
+                                        ${user.writerName} ${isMyRank ? '<span class="badge bg-warning text-dark ms-2">나</span>' : ''}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="col-grade">
+                                <div class="grade-td-container">
+                                    ${rankIconHtml}
+                                    <span class="badge badge-ofim ${grade.class}">
+                                        <span class="emoji-icon me-1">${grade.icon}</span> ${grade.name}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="col-pts"><span class="pts-badge">${user.activityPoint.toLocaleString()} P</span></td>
+                        </tr>`;
+                });
+            }
+            $('#rank-table-body').html(tableHtml);
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            let html = '';
+            if (totalPages > 1) {
+                for (let i = 1; i <= totalPages; i++) {
+                    html += `<div class="page-link-custom ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</div>`;
+                }
+            }
+            $('#pagination-box').html(html);
+        }
+
+        window.changePage = function(page) { renderTable(page); };
+
+        function renderTopCard(user, rankNum, icon, customClass) {
+            let profileImg = getProfilePath(user);
+            let ptBg = rankNum === '1' ? '#fbbf24' : '#1e293b';
+            let ptColor = rankNum === '1' ? '#1e293b' : '#fff';
+            const grade = getGradeInfo(user.activityPoint);
+            let iconHtml = `<div class="crown-icon premium-trophy">${icon}</div>`;
+
+            return `
+                <div class="top-rank-card ${customClass}">
+                    ${iconHtml}
+                    <div style="margin-top: ${rankNum === '1' ? '15px' : '35px'};">
+                        <img src="${profileImg}" class="rank-img shadow-sm">
+                        <div class="rank-name text-truncate">${user.writerName}</div>
+                        <div class="mb-2"><span class="badge badge-ofim ${grade.class}" style="transform: scale(0.9);"><span class="emoji-icon">${grade.icon}</span> ${grade.name}</span></div>
+                        <span class="pts-badge" style="background:${ptBg}; color:${ptColor} !important;">${user.activityPoint.toLocaleString()} P</span>
+                    </div>
+                </div>`;
+        }
+
+        loadRanking();
+        
+        // 🌟 [수정] 갱신 버튼 이벤트 (필터 상태까지 모두 초기화)
+        $('#btnRefresh').click(function() { 
+            $('#rankSearch').val('');
+            $('#gradeFilter').val('all');
+            const $icon = $(this).find('i');
+            $icon.addClass('bi-spin'); 
+            loadRanking(); 
+            setTimeout(() => $icon.removeClass('bi-spin'), 800);
+        });
+    });
+    </script>
+</body>
+</html>

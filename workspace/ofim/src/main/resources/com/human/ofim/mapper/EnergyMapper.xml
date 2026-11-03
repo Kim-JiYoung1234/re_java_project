@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.EnergyMapper">
+	<select id="selectFoodByName" parameterType="String"
+		resultType="com.human.ofim.dto.FoodDetailDto">
+		SELECT
+		food_id AS foodId,
+		food_name AS foodName,
+		count_unit AS
+		countUnit,
+		kcal AS kCal,
+		carbs_g AS carbs, sugar_g AS sugar,
+		protein_g AS
+		protein,
+		fat_g AS fat,
+		sodum_mg AS sodum, trans_fat_g AS transFat,
+		saturated_fat_g AS saturatedFat,
+		cholesterol_mg AS cholesterol
+		FROM food
+		WHERE food_name LIKE CONCAT('%', #{foodKeyword}, '%')
+
+	</select>
+
+
+	<select id="selectExerciseByName" parameterType="String"
+		resultType="com.human.ofim.dto.ExerciseDetailDto">
+
+		SELECT
+		exercise_id AS exerciseId,
+		exercise_name AS
+		exerciseName,
+		intensity,
+		exercise_unit AS exerciseUnit,
+		IF(exercise_unit
+		= 'MIN',
+		hour_calories_burned, count_calories_burned) AS calories
+		from
+		exercise_info where exercise_name like CONCAT('%',
+		#{exerciseKeyword},
+		'%')
+	</select>
+
+	<select id="selectAllFood" resultType="FoodDetailDto">
+		SELECT
+		food_id AS foodId,
+		food_name AS foodName,
+		count_unit AS
+		countUnit,
+		kcal AS kCal,
+		carbs_g AS
+		carbs, sugar_g AS sugar,
+		protein_g AS
+		protein,
+		fat_g AS fat,
+		sodum_mg AS
+		sodum, trans_fat_g AS transFat,
+		saturated_fat_g AS saturatedFat,
+		cholesterol_mg AS cholesterol
+		FROM food limit 20
+	</select>
+
+	<select id="selectAllExercise" resultType="ExerciseDetailDto">
+		SELECT
+		exercise_id AS
+		exerciseId,
+		exercise_name AS
+		exerciseName,
+		intensity,
+		exercise_unit AS
+		exerciseUnit,
+		IF(exercise_unit
+		= 'MIN',
+		hour_calories_burned,
+		count_calories_burned) AS calories
+		from
+		exercise_info
+	</select>
+
+	<insert id="insertFoodData"
+		parameterType="com.human.ofim.dto.FoodRecordDto">
+		INSERT INTO meal_record (
+		health_record_id,
+		food_id,
+		intake,
+		meal_time
+		)
+		SELECT
+		h.health_record_id,
+		#{foodId},
+		#{intake},
+		#{mealTime}
+		FROM health_info h
+		WHERE h.member_id = #{memberId}
+		ORDER BY h.health_record_id DESC
+		LIMIT 1
+	</insert>
+
+	<insert id="insertExerciseData"
+		parameterType="com.human.ofim.dto.ExerciseRecordDto">
+		INSERT INTO exercise_detail (
+		health_record_id,
+		exercise_id,
+		volume
+		)
+		SELECT
+		h.health_record_id,
+		#{exerciseId},
+		#{volume}
+		FROM health_info h
+		WHERE h.member_id = #{memberId}
+		ORDER BY
+		h.health_record_id DESC
+		LIMIT 1
+	</insert>
+
+	<select id="selectFoodRecord" parameterType="long"
+		resultType="com.human.ofim.dto.FoodRecordDto">
+
+		select m.food_id as foodId, m.intake, m.meal_time as
+		mealTime,
+		f.food_name as foodName, f.kcal as calories
+		from meal_record as m
+		left join food as f
+		on m.food_id = f.food_id
+		left join health_info as h
+		on
+		h.health_record_id = m.health_record_id 
+		where h.member_id = #{memberId} AND date(h.record_date) = curdate()
+		order by h.record_date desc, m.meal_time desc
+	</select>
+
+	<select id="selectExerciseRecord" parameterType="long"
+		resultType="com.human.ofim.dto.ExerciseRecordDto">
+
+		SELECT
+		ed.exercise_id AS exerciseId,
+		ed.volume,
+		ei.exercise_unit as exerciseUnit,
+		ei.exercise_name AS exerciseName,
+		h.record_date AS recordDate,
+		IF(ei.exercise_unit = 'MIN',
+		ei.hour_calories_burned,
+		ei.count_calories_burned) AS calories
+		FROM exercise_detail AS ed
+		LEFT JOIN
+		exercise_info AS ei ON ed.exercise_id = ei.exercise_id
+		LEFT JOIN
+		health_info AS h ON ed.health_record_id = h.health_record_id
+		WHERE
+		h.member_id = #{memberId} AND date(h.record_date) = curdate()
+		ORDER BY h.record_date DESC
+	</select>
+
+<insert id="insertEmptyHealthInfoToday" parameterType="long">
+    INSERT IGNORE INTO health_info (member_id, record_date)
+    VALUES (#{memberId}, CURDATE())
+</insert>
+
+<select id="selectFoodRecordAll" parameterType="long"
+		resultType="com.human.ofim.dto.FoodRecordDto">
+
+		select 
+			m.food_id as foodId, m.intake, m.meal_time as mealTime,
+			f.food_name as foodName, f.kcal as calories,
+			h.record_date
+		from meal_record as m
+			left join food as f
+			on m.food_id = f.food_id
+			left join health_info as h
+			on h.health_record_id = m.health_record_id 
+		where h.member_id = #{memberId}
+		order by h.record_date desc, m.meal_time desc
+	</select>
+
+	<select id="selectExerciseRecordAll" parameterType="long"
+		resultType="com.human.ofim.dto.ExerciseRecordDto">
+
+		SELECT
+			ed.exercise_id AS exerciseId,
+			ed.volume,
+			ei.exercise_unit as exerciseUnit,
+			ei.exercise_name AS exerciseName,
+			h.record_date AS recordDate,
+		IF(ei.exercise_unit = 'MIN',
+			ei.hour_calories_burned,
+			ei.count_calories_burned) AS calories
+		FROM exercise_detail AS ed
+		LEFT JOIN
+		exercise_info AS ei ON ed.exercise_id = ei.exercise_id
+		LEFT JOIN
+		health_info AS h ON ed.health_record_id = h.health_record_id
+		WHERE
+		h.member_id = #{memberId}
+		ORDER BY h.record_date DESC
+	</select>
+
+</mapper>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- 1. 리뷰 목록 조각 (안전한 data- 속성으로 변경) -->
+<div th:fragment="partner-reviews-fragment">
+    <div th:if="${#lists.isEmpty(partnerReviews)}" class="text-center py-5 text-muted">아직 등록된 리뷰가 없습니다.</div>
+    <div th:each="rev : ${partnerReviews}" class="card mb-3 border-light shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div><span class="badge bg-light text-dark me-2" th:text="${rev.centerName}">센터명</span><strong th:text="${rev.nickname}">작성자</strong></div>
+                <span class="text-muted small" th:text="${rev.createdDate}">작성일</span>
+            </div>
+            <div class="mb-2">
+                <span th:each="i : ${#numbers.sequence(1, 5)}" th:classappend="${i <= rev.rating} ? 'text-warning' : 'text-light'" class="bi bi-star-fill"></span>
+            </div>
+            <p class="mb-3" th:text="${rev.content}">리뷰 내용</p>
+            <div th:if="${rev.replyContent != null}" class="p-3 bg-light rounded shadow-sm mb-2" style="border-left: 4px solid #ff9800;">
+                <div class="d-flex justify-content-between mb-1"><strong class="small">나의 답변</strong><span class="text-muted small" th:text="${rev.replyDate}">날짜</span></div>
+                <p class="small mb-0" th:text="${rev.replyContent}">내용</p>
+                <div class="text-end">
+                    <button class="btn btn-link btn-sm text-warning p-0 btn-reply-modal" 
+                            th:data-id="${rev.reviewId}" th:data-content="${rev.replyContent}">수정</button>
+                </div>
+            </div>
+            <div th:if="${rev.replyContent == null}" class="text-end">
+                <button class="btn btn-sm btn-outline-warning btn-reply-modal" 
+                        th:data-id="${rev.reviewId}" data-content="">답변하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:fragment="partnerContent">
+
+    <!-- [광고 대시보드 섹션] -->
+    <div id="section-ad-dashboard" class="expert-tab-content" style="display: none;">
+        <section class="content-box mb-4" style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <h4 style="margin-bottom: 0; color: #0fb8ad; font-weight: 800;"><i class="bi bi-card-list me-2"></i>나의 광고 현황 목록</h4>
+                <button class="btn btn-outline-primary btn-sm" onclick="window.renderAdCharts()"><i class="bi bi-arrow-clockwise me-1"></i>새로고침</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center" style="font-size: 0.95rem;">
+                    <thead class="table-light"><tr><th>시설명</th><th>결제유형(과금방식)</th><th>광고종류</th><th>노출 기간</th><th>남은 일수</th><th>진행 상태</th></tr></thead>
+                    <tbody id="adListTbody"><tr><td colspan="6" class="py-5 text-muted">데이터를 불러오는 중입니다...</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+
+        <h5 class="fw-bold mt-4 mb-3"><i class="bi bi-cash-coin text-primary me-2"></i>결제 유형별 운영 현황</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card p-4 border-0 shadow-sm rounded-4 h-100 bg-primary bg-opacity-10">
+                    <h6 class="fw-bold text-primary mb-3">정액제 (CPT) 요약</h6>
+                    <div class="row text-center">
+                        <div class="col-6 border-end"><div class="text-primary small fw-bold mb-1">총 결제금액</div><div class="fs-4 fw-bold text-primary" id="cptPrice">0원</div></div>
+                        <div class="col-6"><div class="text-muted small mb-1">진행중인 광고</div><div class="fs-4 fw-bold" id="cptActiveCount">0건</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card p-4 border-0 shadow-sm rounded-4 h-100 bg-danger bg-opacity-10">
+                    <h6 class="fw-bold text-danger mb-3">종량제 (CPC) 요약</h6>
+                    <div class="row text-center">
+                        <div class="col-6 border-end"><div class="text-danger small fw-bold mb-1">남은 예산</div><div class="fs-4 fw-bold text-danger" id="cpcBudget">0원</div></div>
+                        <div class="col-6"><div class="text-muted small mb-1">진행중인 광고</div><div class="fs-4 fw-bold" id="cpcActiveCount">0건</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mt-4 mb-3"><i class="bi bi-bar-chart-fill text-success me-2"></i>광고 종류별 성과 리포트 (누적)</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card p-4 border-0 shadow-sm rounded-4 h-100 bg-success bg-opacity-10">
+                    <h6 class="fw-bold text-success mb-3">배너형 (홈 화면)</h6>
+                    <div class="row text-center">
+                        <div class="col-6 border-end"><div class="text-muted small mb-1">누적 노출</div><div class="fs-4 fw-bold" id="bannerImp">0</div></div>
+                        <div class="col-6"><div class="text-muted small mb-1">누적 클릭</div><div class="fs-4 fw-bold" id="bannerClick">0</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card p-4 border-0 shadow-sm rounded-4 h-100 bg-warning bg-opacity-10">
+                    <h6 class="fw-bold text-dark mb-3">상위노출형 (키워드)</h6>
+                    <div class="row text-center">
+                        <div class="col-6 border-end"><div class="text-muted small mb-1">누적 노출</div><div class="fs-4 fw-bold" id="keywordImp">0</div></div>
+                        <div class="col-6"><div class="text-muted small mb-1">누적 클릭</div><div class="fs-4 fw-bold" id="keywordClick">0</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-8"><div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h6 class="fw-bold text-muted mb-4"><i class="bi bi-graph-up text-primary me-2"></i>전체 광고 통합 최근 7일 클릭 추이</h6><div style="height: 250px; width: 100%;"><canvas id="adClickTrendChart"></canvas></div></div></div>
+            <div class="col-md-4"><div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h6 class="fw-bold text-muted mb-4"><i class="bi bi-pie-chart-fill text-warning me-2"></i>전체 유입 키워드 비중</h6><div style="height: 250px; width: 100%;"><canvas id="adKeywordChart"></canvas></div></div></div>
+        </div>
+    </div> 
+
+    <!-- 🌟 [리뷰 관리 섹션] -->
+    <div id="section-partner-reviews" class="expert-tab-content" style="display: none;">
+        <section class="content-box" style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <h4 style="margin-bottom: 0; color: #ff9800; font-weight: 800;"><i class="bi bi-chat-square-text-fill me-2"></i>내 시설 리뷰 관리</h4>
+                <button class="btn btn-outline-warning btn-sm" onclick="window.loadPartnerReviews(1)"><i class="bi bi-arrow-clockwise me-1"></i>새로고침</button>
+            </div>
+            <div id="partner-reviews-container"><div class="text-center py-4 text-muted">리뷰를 불러오는 중입니다...</div></div>
+        </section>
+
+        <!-- 리뷰 답글 모달 -->
+        <div class="modal fade" id="replyModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+                    <div class="modal-header bg-light border-0">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-chat-dots-fill me-2 text-warning"></i>리뷰 답글 달기</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="replyTargetReviewId">
+                        <textarea id="replyContentTextarea" rows="4" class="form-control bg-light" placeholder="고객님께 답글을 남겨주세요." style="border-radius: 8px;"></textarea>
+                    </div>
+                    <div class="modal-footer border-0 bg-light d-flex justify-content-end">
+                        <button type="button" class="btn btn-secondary fw-bold shadow-sm" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-warning fw-bold text-white shadow-sm" onclick="window.submitReply()">등록 및 수정</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- [상담 현황 섹션] -->
+    <div id="section-partner-consults" class="expert-tab-content" style="display: none;">
+        <section class="content-box" style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <h4 style="margin-bottom: 0; color: #0fb8ad; font-weight: 800;"><i class="bi bi-bar-chart-line-fill me-2"></i>오늘의 시설 반응 현황</h4>
+                <button class="btn btn-outline-info btn-sm" onclick="window.loadPartnerConsults()"><i class="bi bi-arrow-clockwise me-1"></i>새로고침</button>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6"><div class="card p-4 text-center border-info border-opacity-25 shadow-sm h-100"><div class="text-muted fw-bold mb-2">오늘 전화번호 복사(조회) 횟수</div><div class="fs-2 fw-bold text-info" id="todayPhoneCopyCount">0건</div></div></div>
+                <div class="col-md-6"><div class="card p-4 text-center border-success border-opacity-25 shadow-sm h-100"><div class="text-muted fw-bold mb-2">신규 문자 상담 신청</div><div class="fs-2 fw-bold text-success" id="newConsultCount">0건</div></div></div>
+            </div>
+        </section>
+
+        <section class="content-box" style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-graph-up-arrow text-primary me-2"></i>최근 7일간 고객 반응 추이</h5>
+            <div style="height: 300px; width: 100%;"><canvas id="consultTrendChart"></canvas></div>
+        </section>
+
+        <section class="content-box" style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <h4 style="margin-bottom: 20px; color: #28a745; font-weight: 800;"><i class="bi bi-inbox-fill me-2"></i>문자 상담 신청 내역</h4>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center" style="font-size: 0.95rem;">
+                    <thead class="table-light"><tr><th>신청일시</th><th>시설명</th><th>고객명</th><th>연락처</th><th>상담 내용</th><th>상태</th></tr></thead>
+                    <tbody id="partnerConsultTbody"><tr><td colspan="6" class="py-5 text-muted">데이터를 불러오는 중입니다...</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- 상담 상세 모달 -->
+    <div class="modal fade" id="consultDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+                <div class="modal-header bg-light border-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-chat-text-fill me-2 text-primary"></i>상담 상세 정보</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="detailConsultNo">
+                    <div class="row mb-3">
+                        <div class="col-6"><h6 class="fw-bold text-muted small mb-1">고객명</h6><div class="p-2 bg-light rounded border fw-bold text-dark" id="detailCustomerName"></div></div>
+                        <div class="col-6"><h6 class="fw-bold text-muted small mb-1">연락처</h6><div class="p-2 bg-light rounded border fw-bold text-primary" id="detailCustomerPhone"></div></div>
+                    </div>
+                    <div class="mb-4"><h6 class="fw-bold text-muted small mb-1">고객 문의 내용 전체</h6><div class="p-3 bg-light rounded border text-dark" style="white-space: pre-wrap; min-height: 100px; font-size: 0.95rem;" id="detailCustomerMemo"></div></div>
+                    <hr class="mb-4 opacity-25">
+                    <div class="mb-2"><h6 class="fw-bold text-success small mb-2"><i class="bi bi-journal-check me-1"></i>파트너 메모 (관리용)</h6><textarea id="detailPartnerMemo" rows="3" class="form-control bg-light"></textarea></div>
+                </div>
+                <div class="modal-footer border-0 bg-light d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger fw-bold shadow-sm" id="detailStatusBtn">확인완료 처리</button>
+                    <button type="button" class="btn btn-primary fw-bold px-4 shadow-sm" id="detailSaveMemoBtn">저장 및 닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스크립트 영역 (전역 스코프 유지) -->
+    <script th:inline="javascript">
+        // 전역 차트 인스턴스
+        window.consultTrendChartInstance = null;
+        window.adClickTrendChartInstance = null;
+        window.adKeywordChartInstance = null;
+
+        // 🌟 1. 리뷰 데이터 로드 함수
+        window.loadPartnerReviews = function(page) {
+            $.ajax({
+                url: '/mypage/partner/reviews/fragment',
+                type: 'GET',
+                data: { page: page },
+                success: function(html) {
+                    $('#partner-reviews-container').html(html);
+                },
+                error: function() {
+                    console.error("리뷰 로드 에러");
+                }
+            });
+        };
+
+        // 🌟 2. 답글 달기/수정 모달 띄우기 함수
+        window.openReplyModal = function(reviewId, content) {
+            $('#replyTargetReviewId').val(reviewId);
+            $('#replyContentTextarea').val(content || ''); // null 방지
+            var replyModal = new bootstrap.Modal(document.getElementById('replyModal'));
+            replyModal.show();
+        };
+
+        // 🌟 3. 답글 등록 API 호출 함수
+        window.submitReply = function() {
+            var reviewId = $('#replyTargetReviewId').val();
+            var replyContent = $('#replyContentTextarea').val();
+            
+            $.ajax({
+                url: '/mypage/partner/reviews/reply',
+                type: 'POST',
+                data: { reviewId: reviewId, replyContent: replyContent },
+                success: function(res) {
+                    if(res === 'success') {
+                        alert('리뷰 답글이 정상적으로 등록되었습니다.');
+                        $('#replyModal').modal('hide');
+                        window.loadPartnerReviews(1); // 새로고침
+                        $('.modal-backdrop').remove(); // 잔상 제거
+                        $('body').removeClass('modal-open').css('padding-right', '');
+                    } else {
+                        alert('답글 등록에 실패했습니다.');
+                    }
+                },
+                error: function() {
+                    alert('서버 통신 오류가 발생했습니다.');
+                }
+            });
+        };
+
+        // --- 기존 광고 및 상담 로직 (손대지 않음) ---
+        window.renderAdCharts = function() {
+            $("#adListTbody").html('<tr><td colspan="6" class="py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>데이터 로딩 중...</td></tr>');
+            $.ajax({
+                url: '/api/ad/stats',
+                type: 'GET',
+                success: function(res) {
+                    if(res.summary) {
+                        $('#cptPrice').text(Number(res.summary.cptPrice || 0).toLocaleString() + '원');
+                        $('#cptActiveCount').text((res.summary.cptActiveCount || 0) + '건');
+                        $('#cpcBudget').text(Number(res.summary.cpcBudget || 0).toLocaleString() + '원');
+                        $('#cpcActiveCount').text((res.summary.cpcActiveCount || 0) + '건');
+                        $('#bannerImp').text(Number(res.summary.bannerImp || 0).toLocaleString());
+                        $('#bannerClick').text(Number(res.summary.bannerClick || 0).toLocaleString());
+                        $('#keywordImp').text(Number(res.summary.keywordImp || 0).toLocaleString());
+                        $('#keywordClick').text(Number(res.summary.keywordClick || 0).toLocaleString());
+                    }
+                    let tbodyHtml = '';
+                    if(res && res.adList && res.adList.length > 0) {
+                        res.adList.forEach(item => {
+                            let statusBadge = item.isAd === 2 ? '<span class="badge bg-warning text-dark shadow-sm px-2 py-1">심사중</span>' : item.isAd === 1 ? '<span class="badge bg-success shadow-sm px-2 py-1">진행중</span>' : '<span class="badge bg-secondary shadow-sm px-2 py-1">기간만료</span>';
+                            let typeParts = (item.adType || '').split('|');
+                            let kindStr = (typeParts[0] || '').replace('IMAGE_BANNER', '배너형').replace('TEXT_KEYWORD', '상위노출형');
+                            let billingStr = (typeParts[1] || '').replace('CPT', '정액제').replace('CPC', '종량제');
+                            let sDate = item.adStartDate ? String(item.adStartDate).split('T')[0] : '-';
+                            let eDate = item.adEndDate ? String(item.adEndDate).split('T')[0] : '-';
+                            let remainDays = item.remainingDays !== null ? item.remainingDays : 0;
+                            let remainText = item.isAd === 0 ? '만료됨' : (remainDays === 0 ? 'D-Day' : `D-${remainDays}`);
+                            let remainBadge = remainDays <= 3 && item.isAd !== 0 ? 'text-danger fw-bold' : 'text-primary fw-bold';
+                            tbodyHtml += `<tr><td class="fw-bold text-dark">${item.centerName}</td><td><span class="badge bg-light text-dark border">${billingStr}</span></td><td><span class="badge bg-light text-primary border">${kindStr}</span></td><td class="small text-muted">${sDate} ~ ${eDate}</td><td class="${remainBadge}">${remainText}</td><td>${statusBadge}</td></tr>`;
+                        });
+                    } else { tbodyHtml = '<tr><td colspan="6" class="py-5 text-muted">등록된 광고 내역이 없습니다.</td></tr>'; }
+                    $("#adListTbody").html(tbodyHtml);
+                    requestAnimationFrame(() => { renderAdPerformanceCharts(res.dailyClicks, res.keywords); });
+                }
+            });
+        };
+
+        function renderAdPerformanceCharts(dailyClicks, keywords) {
+            if(window.adClickTrendChartInstance) window.adClickTrendChartInstance.destroy();
+            let clickLabels = dailyClicks ? dailyClicks.map(item => item.dateLabel) : [];
+            let clickData = dailyClicks ? dailyClicks.map(item => item.clickCount) : [];
+            const ctxClick = document.getElementById('adClickTrendChart');
+            if(ctxClick) {
+                window.adClickTrendChartInstance = new Chart(ctxClick.getContext('2d'), {
+                    type: 'line', data: { labels: clickLabels, datasets: [{ label: '일별 클릭수', data: clickData, borderColor: '#4e73df', backgroundColor: 'rgba(78, 115, 223, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+            if(window.adKeywordChartInstance) window.adKeywordChartInstance.destroy();
+            let kwLabels = keywords ? keywords.map(item => item.keyword) : [];
+            let kwData = keywords ? keywords.map(item => item.cnt) : [];
+            const ctxKw = document.getElementById('adKeywordChart');
+            if(ctxKw) {
+                window.adKeywordChartInstance = new Chart(ctxKw.getContext('2d'), {
+                    type: 'doughnut', data: { labels: kwLabels, datasets: [{ data: kwData, backgroundColor: ['#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '70%' }
+                });
+            }
+        }
+
+        window.renderConsultTrendChart = function(phoneTrend, consultTrend) {
+            if(window.consultTrendChartInstance) window.consultTrendChartInstance.destroy();
+            const ctx = document.getElementById('consultTrendChart');
+            if(!ctx) return;
+            let labels = phoneTrend ? phoneTrend.map(item => item.dateLabel || item.DATE_LABEL || item.date) : [];
+            let copyData = phoneTrend ? phoneTrend.map(item => item.phoneCopyCount || item.count || item.cnt || 0) : [];
+            let consultData = consultTrend ? consultTrend.map(item => item.consultCount || item.count || item.cnt || 0) : [];
+            window.consultTrendChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'bar', data: { labels: labels, datasets: [ { label: '전화번호 조회수', data: copyData, backgroundColor: 'rgba(13, 202, 240, 0.7)' }, { label: '문자 상담 신청', data: consultData, backgroundColor: 'rgba(25, 135, 84, 0.7)' } ] }, options: { responsive: true, maintainAspectRatio: false }
+            });
+        };
+
+        window.loadPartnerConsults = function() {
+            $.ajax({
+                url: '/api/fitness/partner/consults',
+                type: 'GET',
+                success: function(data) {
+                    if(data.success) {
+                        $('#todayPhoneCopyCount').text((data.stats.phoneCopyCount || 0) + '건');
+                        $('#newConsultCount').text((data.stats.newConsultCount || 0) + '건');
+                        if(data.phoneTrend && data.consultTrend) { window.renderConsultTrendChart(data.phoneTrend, data.consultTrend); }
+                        let tbodyHtml = '';
+                        if(data.list && data.list.length > 0) {
+                            data.list.forEach(item => {
+                                let statusHtml = item.status === 0 ? `<span class="badge bg-danger shadow-sm">미확인</span>` : '<span class="badge bg-secondary">확인완료</span>';
+                                let encodedMemo = encodeURIComponent(item.memo || "");
+                                let encodedPMemo = encodeURIComponent(item.partnerMemo || "");
+                                tbodyHtml += `<tr><td class="small text-muted">${item.regDate}</td><td class="fw-bold">${item.centerName || ''}</td><td>${item.customerName}</td><td>${item.customerPhone}</td><td class="text-start"><div class="d-flex justify-content-between align-items-center"><div class="text-truncate text-muted" style="max-width: 200px;">${item.memo}</div><button class="btn btn-sm btn-outline-primary mt-1 fw-bold shadow-sm consult-detail-btn" data-no="${item.consultNo}" data-name="${item.customerName}" data-phone="${item.customerPhone}" data-memo="${encodedMemo}" data-pmemo="${encodedPMemo}" data-status="${item.status}">상세보기</button></div></td><td>${statusHtml}</td></tr>`;
+                            });
+                        } else { tbodyHtml = '<tr><td colspan="6" class="py-5 text-muted">상담 신청 내역이 없습니다.</td></tr>'; }
+                        $('#partnerConsultTbody').html(tbodyHtml);
+                    }
+                }
+            });
+        };
+
+        window.updateConsultStatus = function(consultNo) {
+            $.ajax({
+                url: '/api/fitness/partner/consults/status',
+                type: 'POST',
+                data: { consultNo: consultNo },
+                success: function(res) {
+                    if(res.success) {
+                        alert('확인완료 처리되었습니다.');
+                        $('#consultDetailModal').modal('hide');
+                        window.loadPartnerConsults();
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open').css('padding-right', '');
+                    } else { alert('상태 변경 중 오류가 발생했습니다.'); }
+                }
+            });
+        };
+
+        $(document).ready(function() {
+            // 네비게이션 탭 클릭 로드
+            $(document).on('click', '.n-link', function() {
+                const onclickAttr = $(this).attr('onclick');
+                if(!onclickAttr) return;
+                
+                if(onclickAttr.includes('section-partner-consults')) {
+                    setTimeout(window.loadPartnerConsults, 150);
+                } else if(onclickAttr.includes('section-ad-dashboard')) {
+                    setTimeout(window.renderAdCharts, 150);
+                } else if(onclickAttr.includes('section-partner-reviews')) {
+                    setTimeout(function() { window.loadPartnerReviews(1); }, 150);
+                }
+            });
+            
+            if(sessionStorage.getItem('activeMyPageTab') === 'section-ad-dashboard') window.renderAdCharts();
+
+            // 리뷰 모달 띄우기 이벤트 바인딩 (동적 생성 버튼 호환)
+            $(document).on('click', '.btn-reply-modal', function() {
+                var reviewId = $(this).data('id');
+                var content = $(this).data('content');
+                window.openReplyModal(reviewId, content);
+            });
+
+            // 상담 상세 이벤트 (유지)
+            $(document).on('click', '.consult-detail-btn', function() {
+                const no = $(this).data('no'), name = $(this).data('name'), phone = $(this).data('phone');
+                const memo = decodeURIComponent($(this).data('memo')), pmemo = decodeURIComponent($(this).data('pmemo')), status = $(this).data('status');
+                $('#detailConsultNo').val(no); $('#detailCustomerName').text(name); $('#detailCustomerPhone').text(phone); $('#detailCustomerMemo').text(memo); $('#detailPartnerMemo').val(pmemo);
+                const $statusBtn = $('#detailStatusBtn');
+                if (status === 0) {
+                    $statusBtn.text('확인완료 처리').removeClass('btn-secondary').addClass('btn-outline-danger').prop('disabled', false);
+                    $statusBtn.off('click').on('click', function() { window.updateConsultStatus(no); });
+                } else {
+                    $statusBtn.text('확인완료 됨').removeClass('btn-outline-danger').addClass('btn-secondary').prop('disabled', true).off('click');
+                }
+                var modal = new bootstrap.Modal(document.getElementById('consultDetailModal'));
+                modal.show();
+            });
+
+            $(document).on('click', '#detailSaveMemoBtn', function() {
+                const no = $('#detailConsultNo').val(), pmemo = $('#detailPartnerMemo').val();
+                $.ajax({
+                    url: '/api/fitness/partner/consults/memo',
+                    type: 'POST', data: { consultNo: no, partnerMemo: pmemo },
+                    success: function(res) {
+                        if(res.success) {
+                            alert('메모가 저장되었습니다.');
+                            $('#consultDetailModal').modal('hide');
+                            window.loadPartnerConsults();
+                            $('.modal-backdrop').remove();
+                            $('body').removeClass('modal-open').css('padding-right', '');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</div>
+</html>

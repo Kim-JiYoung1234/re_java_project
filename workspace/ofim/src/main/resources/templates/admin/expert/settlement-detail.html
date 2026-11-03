@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="content">
+
+    <style>
+        .detail-card {
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(15,23,42,.06);
+            background: #fff;
+        }
+
+        .label {
+            font-size: .9rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .value {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .sub {
+            font-size: .8rem;
+            color: #9ca3af;
+        }
+    </style>
+
+    <!-- 상단 정보 -->
+    <div class="detail-card p-4 mb-4">
+        <div class="row">
+
+            <div class="col-md-3">
+                <div class="label">전문가</div>
+                <div class="value" th:text="${header.expertName}">홍길동</div>
+                <div class="sub" th:text="'ID : ' + ${header.expertId}"></div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="label">정산월</div>
+                <div class="value" th:text="${settlementMonth}">2026-03</div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="label">상담건수</div>
+                <div class="value" th:text="${header.consCnt}">10</div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="label">정산금액</div>
+                <div class="value"
+                     th:text="${#numbers.formatDecimal(header.currAmt,0,'COMMA',0,'POINT')} + '원'">
+                    100,000원
+                </div>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <div class="row mt-3">
+
+            <div class="col-md-4">
+                <div class="label">정산 기간</div>
+                <div th:text="${header.startDt} + ' ~ ' + ${header.endDt}"></div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="label">은행</div>
+                <div th:text="${header.bankName}">국민은행</div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="label">계좌번호</div>
+                <div th:text="${header.acctNo}">123-456</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 상담 리스트 -->
+    <div class="detail-card p-4">
+
+        <h5 class="fw-bold mb-3">상담 내역</h5>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>상담ID</th>
+                        <th>회원</th>
+                        <th>유형</th>
+                        <th>시작</th>
+                        <th>종료</th>
+                        <th>금액</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr th:if="${#lists.isEmpty(detailList)}">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            상담 내역이 없습니다.
+                        </td>
+                    </tr>
+
+                    <tr th:each="d : ${detailList}">
+                        <td th:text="${d.consultId}"></td>
+                        <td th:text="${d.memberName}"></td>
+                        <td th:text="${d.consultType}"></td>
+
+                        <td th:text="${#temporals.format(d.consultStartDate, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td th:text="${#temporals.format(d.consultEndDate, 'yyyy-MM-dd HH:mm')}"></td>
+
+                        <td th:text="${#numbers.formatDecimal(d.amount,0,'COMMA',0,'POINT')} + '원'"></td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+</html>

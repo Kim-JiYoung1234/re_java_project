@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>시설 광고 관리센터 | 입찰</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<style>
+    body { background-color: #f8f9fa; font-family: 'Noto Sans KR', sans-serif; }
+    .ad-card { border-radius: 20px; border: 2px solid transparent; transition: 0.3s; cursor: pointer; }
+    .ad-card.selected { border-color: #0d6efd; background-color: #f1f7ff; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2); }
+    .price-box { background: #212529; color: #00ff88; border-radius: 15px; padding: 20px; font-family: monospace; font-size: 1.8rem; text-align: center; }
+    /* 커스텀 탭 스타일 */
+    .nav-pills .nav-link { font-weight: 600; color: #495057; border-radius: 10px; transition: 0.2s; }
+    .nav-pills .nav-link.active { background-color: #0d6efd; color: #fff; box-shadow: 0 2px 8px rgba(13,110,253,0.3); }
+</style>
+</head>
+<body>
+    <header th:replace="~{header :: header}"></header>
+
+    <div class="container py-5" style="max-width: 800px;">
+        <div class="text-center mb-5">
+            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill mb-2 fw-bold">Bidding System</span>
+            <h2 class="fw-bold"><i class="bi bi-megaphone-fill text-primary me-2"></i>프리미엄 광고 입찰 센터</h2>
+            <p class="text-muted">원하는 과금 방식과 입찰가를 입력하세요. 검색 노출 시 강력한 홍보 효과를 누리세요.</p>
+        </div>
+
+        <form action="/ad/pay" method="post" id="adForm">
+            <div class="card shadow-sm border-0 mb-4 rounded-4 p-4">
+                <h5 class="fw-bold mb-3"><span class="badge bg-primary me-2">1</span>광고할 시설 선택</h5>
+                <select class="form-select form-select-lg bg-light" name="centerNo" required>
+                    <option value="">-- 시설을 선택해주세요 --</option>
+                    <option th:each="center : ${myCenters}" th:value="${center.centerNo}" th:text="${center.centerName}"></option>
+                </select>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4 rounded-4 p-4">
+                <h5 class="fw-bold mb-3"><span class="badge bg-primary me-2">2</span>광고 상품 선택</h5>
+                <input type="hidden" name="adType" id="adType" value="상위노출형">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="card ad-card p-4 selected h-100" onclick="selectAd('상위노출형', this, 10000)">
+                            <h5 class="fw-bold text-primary"><i class="bi bi-search"></i> 키워드 상위노출</h5>
+                            <p class="small text-muted mb-2">특정 검색어 입력 시 리스트 상단에 노출되는 경쟁 입찰 상품</p>
+                            <h6 class="fw-bold mt-auto mb-0">최소 입찰가: 일 10,000원</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card ad-card p-4 h-100" onclick="selectAd('배너형', this, 50000)">
+                            <h5 class="fw-bold text-danger"><i class="bi bi-images"></i> 메인 홈 프리미엄 배너</h5>
+                            <p class="small text-muted mb-2">사이트 메인 캐러셀에 단독 노출되는 한정 구좌 입찰 상품</p>
+                            <h6 class="fw-bold mt-auto mb-0">최소 입찰가: 일 50,000원</h6>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="keywordDiv" class="p-3 bg-light rounded-3 border border-primary border-opacity-25">
+                    <label class="form-label fw-bold text-primary">타겟 검색어 지정 (다중 입력) <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-lg" name="targetKeyword" placeholder="예: 강남PT, 강남역PT, 강남 헬스장">
+                    <div class="mt-2 text-muted small lh-sm">
+                        <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                        <strong>쉼표(,)</strong>로 구분하여 여러 개의 키워드를 등록할 수 있습니다.<br>
+                        고객이 '강남PT'와 '강남역 PT'를 다르게 검색할 수 있으니 유사어를 모두 적어주세요!
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4 rounded-4 p-4">
+                <h5 class="fw-bold mb-3"><span class="badge bg-primary me-2">3</span>광고 소재 입력 (심사 대상)</h5>
+                <div class="alert alert-warning small border-0"><i class="bi bi-exclamation-circle-fill me-1"></i> 관리자의 소재 심사(허위 과장 광고 등)를 통과해야 노출이 시작됩니다.</div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">메인 카피 (제목)</label>
+                    <input type="text" class="form-control" name="adTitle" placeholder="예: 봄맞이 PT 50% 파격 할인 이벤트!" required>
+                </div>
+                <div>
+                    <label class="form-label fw-bold">상세 내용</label>
+                    <textarea class="form-control" name="adContent" rows="2" required></textarea>
+                </div>
+            </div>
+
+            <!-- [핵심 변경 구간] 4. 과금 방식 및 결제 설정 -->
+            <div class="card shadow-lg border-primary mb-5 rounded-4 p-4" style="background: linear-gradient(to right, #ffffff, #f8f9fc);">
+                <h5 class="fw-bold mb-4"><span class="badge bg-primary me-2">4</span>과금 방식 및 결제 설정</h5>
+                
+                <!-- 서버로 넘어갈 과금 모델 파라미터 (기본값 CPT) -->
+                <input type="hidden" name="billingModel" id="billingModel" value="CPT">
+
+                <!-- 탭 메뉴 -->
+                <ul class="nav nav-pills nav-fill mb-4 p-1 bg-white rounded-3 shadow-sm border" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-cpt" type="button" onclick="selectBilling('CPT')">
+                            <i class="bi bi-calendar-check me-1"></i> 기간 정액제 (CPT)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-danger" id="tab-cpc" type="button" onclick="selectBilling('CPC')">
+                            <i class="bi bi-cursor-fill me-1"></i> 클릭 종량제 (CPC)
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- 1) 정액제(CPT) 폼 -->
+                <div id="cptSection" class="row align-items-center g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">진행 기간</label>
+                        <select class="form-select form-select-lg" name="durationDays" id="durationDays" onchange="calcPrice()">
+                            <option value="7">7일</option>
+                            <option value="15">15일</option>
+                            <option value="30" selected>30일</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">일일 입찰 금액 (원)</label>
+                        <input type="number" class="form-control form-control-lg fw-bold text-primary" id="dailyBidPrice" value="10000" step="1000" oninput="calcPrice()">
+                    </div>
+                </div>
+
+                <!-- 2) 종량제(CPC) 폼 (기본 숨김) -->
+                <div id="cpcSection" class="row align-items-center g-3 d-none">
+                    <div class="col-12">
+                        <div class="alert alert-danger bg-opacity-10 border-danger border-opacity-25 small mb-3">
+                            <i class="bi bi-info-circle-fill text-danger me-1"></i>
+                            고객이 광고를 <strong>1회 클릭할 때마다 500원씩 차감</strong>되며, 충전금액이 0원이 되면 광고가 자동으로 종료됩니다.
+                        </div>
+                        <label class="form-label fw-bold text-danger">광고 예치금 충전 금액 (원)</label>
+                        <select class="form-select form-select-lg fw-bold text-danger border-danger" id="cpcAmount" onchange="calcPrice()">
+                            <option value="50000">50,000원 (예상 100회 클릭)</option>
+                            <option value="100000" selected>100,000원 (예상 200회 클릭)</option>
+                            <option value="300000">300,000원 (예상 600회 클릭)</option>
+                            <option value="500000">500,000원 (예상 1,000회 클릭)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <!-- 최종 서버로 제출될 결제금액 파라미터 -->
+                    <input type="hidden" name="paymentAmount" id="paymentAmountInput" value="300000">
+                    <label class="form-label fw-bold">총 결제 예정액</label>
+                    <div class="price-box shadow-sm py-2">₩<span id="priceDisplay">300,000</span></div>
+                    <p id="bidWarning" class="text-danger small mt-2 d-none fw-bold text-center"><i class="bi bi-x-circle"></i> 최소 입찰가보다 낮게 입력할 수 없습니다.</p>
+                </div>
+                
+                <button type="button" onclick="fakePayment()" class="btn btn-primary btn-lg w-100 mt-4 fw-bold shadow-lg" style="height: 60px;">
+                    <i class="bi bi-file-earmark-check-fill me-2"></i> 광고 심사 제출 및 결제
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="modal fade" id="loadingModal" data-bs-backdrop="static" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-5 rounded-4 border-0 shadow-lg">
+          <div class="modal-body">
+            <div class="spinner-border text-primary mb-4" style="width: 4rem; height: 4rem;" role="status"></div>
+            <h4 class="fw-bold mb-2">입찰 및 결제 처리 중...</h4>
+            <p class="text-muted">잠시만 기다려주세요.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentBilling = 'CPT';
+        let minDailyPrice = 10000;
+
+        // [신규 추가] 과금 방식(CPT/CPC) 탭 전환 함수
+        function selectBilling(model) {
+            currentBilling = model;
+            document.getElementById('billingModel').value = model; // 폼 데이터 변경
+            
+            if(model === 'CPT') {
+                document.getElementById('tab-cpt').classList.add('active');
+                document.getElementById('tab-cpc').classList.remove('active', 'bg-danger', 'text-white');
+                document.getElementById('tab-cpc').classList.add('text-danger');
+                
+                document.getElementById('cptSection').classList.remove('d-none');
+                document.getElementById('cpcSection').classList.add('d-none');
+            } else {
+                document.getElementById('tab-cpc').classList.add('active', 'bg-danger', 'text-white');
+                document.getElementById('tab-cpc').classList.remove('text-danger');
+                document.getElementById('tab-cpt').classList.remove('active');
+                
+                document.getElementById('cpcSection').classList.remove('d-none');
+                document.getElementById('cptSection').classList.add('d-none');
+            }
+            calcPrice();
+        }
+
+        // 기존 광고 상품 선택 로직
+        function selectAd(type, element, minPrice) {
+            document.querySelectorAll('.ad-card').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('adType').value = type;
+            minDailyPrice = minPrice;
+            document.getElementById('dailyBidPrice').value = minPrice; 
+            document.getElementById('dailyBidPrice').min = minPrice;
+            document.getElementById('keywordDiv').style.display = (type === '배너형') ? 'none' : 'block';
+            calcPrice();
+        }
+
+        // 과금 방식에 맞춰 결제 금액 동적 계산 로직 업데이트
+        function calcPrice() {
+            let total = 0;
+            let warningEl = document.getElementById('bidWarning');
+            warningEl.classList.add('d-none'); // 초기화
+
+            if (currentBilling === 'CPT') {
+                let days = parseInt(document.getElementById('durationDays').value);
+                let bidPrice = parseInt(document.getElementById('dailyBidPrice').value);
+                
+                if (bidPrice < minDailyPrice || isNaN(bidPrice)) {
+                    warningEl.classList.remove('d-none');
+                }
+                total = bidPrice * days;
+            } else {
+                // 종량제(CPC)는 선택한 충전금액이 곧 최종 결제금액
+                total = parseInt(document.getElementById('cpcAmount').value);
+            }
+            
+            document.getElementById('paymentAmountInput').value = total;
+            document.getElementById('priceDisplay').innerText = total.toLocaleString();
+        }
+
+        function fakePayment() {
+            const form = document.getElementById('adForm');
+            
+            // CPT일 때만 일일 입찰가 최소금액 검증 수행
+            if (currentBilling === 'CPT') {
+                if(!form.checkValidity() || parseInt(document.getElementById('dailyBidPrice').value) < minDailyPrice) {
+                    form.reportValidity();
+                    return;
+                }
+            } else {
+                if(!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+            }
+
+            new bootstrap.Modal(document.getElementById('loadingModal')).show();
+            setTimeout(() => { form.submit(); }, 1500);
+        }
+    </script>
+</body>
+</html>

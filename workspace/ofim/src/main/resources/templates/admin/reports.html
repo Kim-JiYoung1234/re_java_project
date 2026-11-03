@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::content})}">
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+<div th:fragment="content">
+	<style>
+/* ✅ 테이블 레이아웃 고정 */
+.table-fixed {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.text-truncate-custom {
+	display: inline-block;
+	width: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.text-truncate-custom:hover {
+	text-decoration: underline;
+	color: #0d6efd;
+}
+
+tbody tr {
+	transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+	background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* ✅ 신고 처리 상태 (🟡🔵🟢) */
+.status-select {
+	font-size: 0.8rem;
+	font-weight: 700;
+	border-radius: 8px;
+	padding-left: 8px;
+	padding-right: 25px;
+	height: 32px;
+	border: none;
+}
+
+.status-0 {
+	background-color: #fff3cd;
+	color: #856404;
+}
+
+.status-1 {
+	background-color: #cfe2ff;
+	color: #084298;
+}
+
+.status-2 {
+	background-color: #d1e7dd;
+	color: #0f5132;
+}
+
+/* ✅ 게시글 상태 배지 (정상/숨김) */
+.post-status-badge {
+	font-weight: 600;
+	font-size: 0.7rem;
+	padding: 2px 8px;
+	border-radius: 4px;
+	display: inline-block;
+}
+
+.bg-normal {
+	background-color: #e8fadf;
+	color: #71dd37;
+	border: 1px solid #71dd37;
+}
+
+.bg-hidden {
+	background-color: #ffe5e5;
+	color: #ff3e1d;
+	border: 1px solid #ff3e1d;
+}
+
+/* 메모 영역 디자인 */
+.memo-wrapper {
+	position: relative;
+	cursor: pointer;
+}
+
+.memo-preview {
+	font-size: 0.85rem;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+	padding: 5px 8px;
+	background-color: #fcfcfc;
+	min-height: 38px;
+	max-height: 60px;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	white-space: pre-wrap;
+}
+
+.memo-wrapper:hover {
+	border-color: #0d6efd;
+	background-color: #fff;
+}
+</style>
+
+	<div class="card border-0 shadow-sm mb-4"
+		style="border-radius: 18px; background: linear-gradient(to right, #ffffff, #f8f9fa);">
+		<div class="card-body p-4">
+			<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+				<div>
+					<h4 class="fw-bold mb-1">
+						<i class="bi bi-shield-exclamation text-danger me-2"></i>신고 관리
+					</h4>
+					<p class="text-secondary small mb-0">게시글 상태(정상/숨김)를 확인하며 신고 건을 처리하세요.</p>
+				</div>
+				<div class="text-end">
+					<div class="small text-secondary mb-1">전체 신고 건수</div>
+					<h3 class="fw-bold text-primary mb-0">
+						<span th:text="${totalCount}">0</span>건
+					</h3>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="card border-0 shadow-sm" style="border-radius: 18px;">
+		<div class="card-body">
+			<div class="table-responsive">
+				<table class="table align-middle mb-0 table-fixed">
+					<thead class="table-light">
+						<tr>
+							<th style="width: 70px;">ID</th>
+							<th style="width: 100px;">신고자</th>
+							<th style="width: 220px;">신고 게시글</th>
+							<th>신고 사유</th>
+							<th style="width: 140px;">처리 상태</th>
+							<th style="width: 200px;">관리자 메모</th>
+							<th style="width: 160px;">신고일</th>
+							<th class="text-end" style="width: 100px;">작업</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						<tr th:if="${reports == null or #lists.isEmpty(reports)}">
+							<td colspan="8" class="text-center py-5 text-secondary">접수된 신고 내역이 없습니다.</td>
+						</tr>
+
+						<tr th:each="r : ${reports}">
+							<td class="small fw-bold text-muted" th:text="${r.postId}"></td>
+							<td>
+								<div class="small fw-bold text-truncate" th:text="${r.reporterName}"></div>
+								<div class="text-muted" style="font-size: 0.65rem;" th:text="'ID:'+${r.memberId}"></div>
+							</td>
+							<td>
+								<div class="mb-1">
+									<span class="post-status-badge bg-normal" th:if="${r.deleted == 0}">정상</span> <span
+										class="post-status-badge bg-hidden" th:if="${r.deleted == 1}">숨김</span>
+								</div> <a th:href="@{/community/detail/{id}(id=${r.postId})}" target="_blank"
+								class="text-decoration-none text-dark fw-bold text-truncate-custom small" th:text="${r.postTitle}"
+								th:title="${r.postTitle}"></a>
+							</td>
+							<td>
+								<div class="text-truncate-custom small text-danger" th:text="${r.content}" data-bs-toggle="modal"
+									data-bs-target="#reportContentModal" th:attr="data-content=${r.content}, data-title=${r.postTitle}"></div>
+							</td>
+							<td><select class="form-select form-select-sm status-select" th:classappend="'status-' + ${r.status}"
+								onchange="updateStatusStyle(this)" th:attr="data-post-id=${r.postId}, data-member-id=${r.memberId}">
+									<option value="0" th:selected="${r.status == 0}">🟡 신규접수</option>
+									<option value="1" th:selected="${r.status == 1}">🔵 검토중</option>
+									<option value="2" th:selected="${r.status == 2}">🟢 처리완료</option>
+							</select></td>
+							<td>
+								<div class="memo-wrapper" data-bs-toggle="modal" data-bs-target="#memoEditModal"
+									th:attr="data-post-id=${r.postId}, data-member-id=${r.memberId}, data-memo=${r.adminMemo}">
+									<div class="memo-preview" th:text="${r.adminMemo ?: '메모 입력...'}"></div>
+								</div>
+							</td>
+							<td class="small text-muted"
+								th:text="${r.accusationDate != null ? #dates.format(r.accusationDate, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+							<td class="text-end">
+								<button th:if="${r.deleted == 0}" class="btn btn-sm btn-outline-danger px-3 w-100" type="button"
+									onclick="togglePostStatus(this, 'hide')" th:attr="data-post-id=${r.postId}">숨김</button>
+
+								<button th:if="${r.deleted == 1}" class="btn btn-sm btn-outline-success px-3 w-100" type="button"
+									onclick="togglePostStatus(this, 'restore')" th:attr="data-post-id=${r.postId}">복구</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="reportContentModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content" style="border-radius: 20px; border: none;">
+				<div class="modal-header border-0 pb-0">
+					<h5 class="modal-title fw-bold text-danger">
+						<i class="bi bi-exclamation-triangle-fill me-2"></i>신고 사유 상세
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body p-4">
+					<div class="mb-3">
+						<label class="small text-secondary fw-bold mb-1">대상 게시글</label>
+						<div id="modalPostTitle" class="fw-bold p-2 bg-light rounded text-dark small"></div>
+					</div>
+					<div>
+						<label class="small text-secondary fw-bold mb-1">신고 상세 내용</label>
+						<div id="modalReportContent" class="p-3 bg-light rounded-4"
+							style="white-space: pre-wrap; min-height: 100px; font-size: 0.95rem; color: #d63384;"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="memoEditModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content" style="border-radius: 20px; border: none;">
+				<div class="modal-header border-0 pb-0">
+					<h5 class="modal-title fw-bold text-primary">
+						<i class="bi bi-pencil-square me-2"></i>관리자 메모 편집
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body p-4">
+					<input type="hidden" id="editMemoPostId"> <input type="hidden" id="editMemoMemberId">
+					<textarea id="modalMemoContent" class="form-control" rows="8"
+						style="border-radius: 15px; resize: none; font-size: 0.95rem;" placeholder="여기에 메모를 작성하세요..."></textarea>
+				</div>
+				<div class="modal-footer border-0">
+					<button class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">취소</button>
+					<button class="btn btn-primary px-4 rounded-pill" onclick="saveMemoFromModal()">저장하기</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script th:inline="javascript">
+        // 1. 모달 로직 (동일)
+        document.getElementById('reportContentModal')?.addEventListener('show.bs.modal', function (event) {
+            const div = event.relatedTarget;
+            document.getElementById('modalReportContent').textContent = div.getAttribute('data-content') || '내용이 없습니다.';
+            document.getElementById('modalPostTitle').textContent = div.getAttribute('data-title') || '제목 없음';
+        });
+
+        document.getElementById('memoEditModal')?.addEventListener('show.bs.modal', function (event) {
+            const wrapper = event.relatedTarget;
+            document.getElementById('editMemoPostId').value = wrapper.getAttribute('data-post-id');
+            document.getElementById('editMemoMemberId').value = wrapper.getAttribute('data-member-id');
+            document.getElementById('modalMemoContent').value = wrapper.getAttribute('data-memo') || '';
+        });
+
+        // 2. 공통 헤더/데이터 준비 함수
+        const getFetchOptions = (body) => {
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+            return {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...(csrfHeader ? { [csrfHeader]: csrfToken } : {}) },
+                body: body
+            };
+        };
+
+        // 3. 메모 저장
+        async function saveMemoFromModal() {
+            const postId = document.getElementById('editMemoPostId').value;
+            const memberId = document.getElementById('editMemoMemberId').value;
+            const content = document.getElementById('modalMemoContent').value;
+            const select = document.querySelector(`select[data-post-id="${postId}"][data-member-id="${memberId}"]`);
+
+            const body = new URLSearchParams();
+            body.append('postId', postId);
+            body.append('memberId', memberId);
+            body.append('status', select.value);
+            body.append('adminMemo', content);
+
+            try {
+                const res = await fetch('/admin/reports/update', getFetchOptions(body.toString()));
+                if(res.ok) { alert('메모가 저장되었습니다.'); location.reload(); }
+            } catch(e) { alert('저장 실패'); }
+        }
+
+        function updateStatusStyle(select) {
+            select.classList.remove('status-0', 'status-1', 'status-2');
+            select.classList.add('status-' + select.value);
+        }
+
+        // ✅ 4. 상태 전환 통합 함수 (자동 상태 변경 포함)
+        async function togglePostStatus(button, action) {
+            const postId = button.dataset.postId;
+            const row = button.closest('tr');
+            const select = row.querySelector('select');
+            const memberId = select.dataset.memberId;
+            const currentMemo = row.querySelector('.memo-wrapper').getAttribute('data-memo') || '';
+            
+            const message = (action === 'hide') 
+                ? '게시글을 숨기고 신고를 [처리완료]로 변경하시겠습니까?' 
+                : '게시글을 복구하시겠습니까?';
+            
+            if (!confirm(message)) return;
+
+            const boardUrl = (action === 'hide') ? '/admin/boards/hide' : '/admin/boards/restore';
+            // 숨김 시 '처리완료(2)', 복구 시 '검토중(1)'
+            const nextReportStatus = (action === 'hide') ? 2 : 1;
+
+            try {
+                // 1. 게시글 숨김/복구
+                const boardRes = await fetch(boardUrl, getFetchOptions(`postId=${postId}`));
+                
+                if (boardRes.ok) {
+                    // 2. 신고 처리 상태 자동 업데이트
+                    const reportParams = new URLSearchParams();
+                    reportParams.append('postId', postId);
+                    reportParams.append('memberId', memberId);
+                    reportParams.append('status', nextReportStatus);
+                    reportParams.append('adminMemo', currentMemo);
+
+                    const reportRes = await fetch('/admin/reports/update', getFetchOptions(reportParams.toString()));
+                    
+                    if (reportRes.ok) {
+                        alert(action === 'hide' ? '숨김 및 처리완료 되었습니다.' : '복구 및 검토중으로 변경되었습니다.');
+                        location.reload();
+                    }
+                }
+            } catch (err) {
+                alert('처리 중 에러가 발생했습니다.');
+            }
+        }
+    </script>
+</div>
+</html>

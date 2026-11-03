@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthCare Platform - Project</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+
+<style>
+/* --- 기본 레이아웃 & 폰트 등 기존 스타일 유지 --- */
+body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; color: #333; }
+.navbar { background-color: #ffffff; border-bottom: 1px solid #dee2e6; }
+.hero-section { background: linear-gradient(135deg, #0d6efd, #0dcaf0); color: white; padding: 60px 0; }
+.card { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s; }
+.card:hover { transform: translateY(-5px); }
+.footer { background: #343a40; color: white; padding: 30px 0; margin-top: 50px; }
+.login-card { background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 20px; transition: all 0.3s ease; }
+.login-card:hover { border-color: #0d6efd; transform: translateY(-3px); }
+.profile-box-home { width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background-color: #f1f3f5; margin: 0 auto 15px; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; }
+.profile-box-home img { width: 100%; height: 100%; object-fit: cover; }
+.profile-box-home i { font-size: 3rem; color: #adb5bd; }
+.text-shadow-strong { text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.9), 0px 0px 4px rgba(0, 0, 0, 0.8); }
+.form-control:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+.hover-primary:hover { color: #0d6efd !important; }
+.ranking-scroll-container { max-height: 280px; overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
+.ranking-scroll-container::-webkit-scrollbar { width: 4px; }
+.ranking-scroll-container::-webkit-scrollbar-thumb { background-color: #e9ecef; border-radius: 10px; }
+.premium-trophy { display: inline-block; position: relative; z-index: 1; vertical-align: middle; }
+.premium-trophy::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; z-index: -1; animation: aura-wiggle 1.5s infinite ease-in-out; }
+.rank-gold::before { background: radial-gradient(circle, #fbbf24 0%, rgba(251, 191, 36, 0) 100%); box-shadow: 0 0 8px #fbbf24; }
+.rank-silver::before { background: radial-gradient(circle, #94a3b8 0%, rgba(148, 163, 184, 0) 100%); box-shadow: 0 0 8px #94a3b8; }
+.rank-bronze::before { background: radial-gradient(circle, #fd7e14 0%, rgba(253, 126, 20, 0) 100%); box-shadow: 0 0 8px #fd7e14; }
+@keyframes aura-wiggle { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; } 50% { transform: translate(-50%, -50%) scale(2); opacity: 0.8; } }
+@keyframes shine-badge { 0% { transform: translateX(-150%) rotate(30deg); } 100% { transform: translateX(150%) rotate(30deg); } }
+.bg-premium-user { background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 45%, #b38728 70%, #fcf6ba 100%) !important; color: #333 !important; font-weight: 900 !important; border: none !important; box-shadow: 0 0 10px rgba(184, 134, 11, 0.5); position: relative; overflow: hidden; }
+.bg-premium-user::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(255, 255, 255, 0.3); transform: rotate(30deg); animation: shine-badge 3s infinite; }
+.badge-ofim { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 50px; font-weight: 800; font-size: 0.65rem; }
+.bg-underarmor { background: #000; color: #ffcc00 !important; border: 1px solid #ffcc00; }
+.bg-muscle { background: #2c5364; color: #fff !important; }
+.bg-burning { background: #dc3545; color: #fff !important; }
+.bg-runner { background: #11998e; color: #fff !important; }
+.bg-rookie { background: #fff; color: #495057; border: 1px solid #fab005; }
+.widget-card .list-group-item:hover { background-color: #eceef0 !important; transition: background-color 0.2s ease; cursor: pointer; }
+</style>
+</head>
+<body>
+
+    <header th:replace="~{header :: header}"></header>
+
+    <div class="modal fade" id="serverMsgModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center pt-0 pb-5 px-4">
+                    <i class="bi bi-check-circle-fill text-success mb-3" style="font-size: 4rem; display: inline-block;"></i>
+                    <h4 class="fw-bold mb-3">알림</h4>
+                    <p class="text-secondary fs-5 mb-4" th:text="${msg}">메시지</p>
+                    <button type="button" class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow-sm" data-bs-dismiss="modal">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">당신의 건강한 내일을 기록하세요</h1>
+            <p class="lead">식단, 운동, 수면을 한 곳에서 관리하고 전문가의 조언을 받으세요.</p>
+            <div class="mt-4">
+                <button class="btn btn-light btn-lg px-4 me-2">기록 시작하기</button>
+                <a th:href="@{/membership}" class="btn btn-outline-light btn-lg px-4">회원 혜택 보기</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="container my-4">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-8 col-md-7 col-12">
+                <div id="bannerCarousel" class="carousel slide shadow-lg rounded-4 overflow-hidden">
+                    <div class="carousel-indicators">
+                        <button type="button" data-bs-target="#bannerCarousel" th:each="banner, stat : ${bannerList}" th:attr="data-bs-slide-to=${stat.index}" th:class="${stat.index == 0} ? 'active' : ''"></button>
+                    </div>
+                    <div class="carousel-inner">
+                        <div th:each="banner, stat : ${bannerList}" th:class="'carousel-item ad-banner-item ' + (${stat.index == 0} ? 'active' : '')" th:data-center-no="${banner.centerNo}" style="cursor: pointer;" th:onclick="|trackAdClick(${banner.centerNo}, '/fitness_detail?id=${banner.centerNo}')|">
+                            <img th:src="${banner.imageUrl}" class="d-block w-100" alt="광고" style="height: 350px; object-fit: cover; filter: brightness(0.5);">
+                            <div class="carousel-caption d-none d-md-block" style="text-align: left; bottom: 10%; left: 8%;">
+                                <span class="badge bg-warning text-dark px-3 py-2 fs-6 shadow-sm mb-3" style="font-weight: 900;"> <i class="bi bi-megaphone-fill text-danger me-1"></i> PREMIUM SPONSOR </span>
+                                <h1 class="text-white text-shadow-strong mb-2" style="font-size: 3.2rem; font-weight: 900;" th:text="${banner.centerName}"></h1>
+                                <h3 th:text="${banner.adTitle}" class="fw-bold text-info mb-2 text-shadow-strong"></h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-5 col-12">
+                <div id="loginAreaCard" class="login-card p-4 shadow-sm border-0 bg-white" style="border-radius: 20px; height: 350px;">
+                    <div th:if="${session.user == null}" class="h-100 d-flex flex-column justify-content-center">
+                        <h5 class="fw-bold mb-4 text-center">로그인 하세요.</h5>
+                        <form th:action="@{/auth/login}" method="post">
+                            <input type="hidden" name="csrfToken" th:value="${session.csrfToken}">
+
+                            <div class="form-floating mb-3">
+                                <input type="text" id="mainLoginId" class="form-control bg-light border-0" name="loginId" placeholder="ID"> <label>아이디</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="password" class="form-control bg-light border-0" name="password" placeholder="PW"> <label>비밀번호</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm rounded-pill">로그인</button>
+                        </form>
+
+                        <div class="mt-4 d-flex justify-content-center align-items-center gap-3">
+                            <a th:href="@{/auth/register}" class="text-decoration-none text-muted small hover-primary">회원가입</a>
+                            <span class="text-light" style="width: 1px; height: 12px; background-color: #dee2e6;"></span>
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#findAccountModal" class="text-decoration-none text-muted small hover-primary">아이디/비밀번호 찾기</a>
+                        </div>
+                    </div>
+
+                    <div th:unless="${session.user == null}" class="text-center h-100 d-flex flex-column justify-content-center">
+                        <div class="profile-box-home">
+                            <img th:if="${session.user.profile != null and session.user.profile != ''}" th:src="@{|/uploads/${session.user.profile}|}" alt="Profile">
+                            <i th:unless="${session.user.profile != null and session.user.profile != ''}" class="fas fa-user"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1"><span class="text-primary" th:text="${session.user.nickname}">닉네임</span>님 환영합니다!</h5>
+                        <hr class="my-3">
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/mypage/main}" class="btn btn-outline-primary py-2 fw-bold rounded-pill">내 정보 수정</a> 
+                            <a th:href="@{/auth/logout}" class="btn btn-light py-2 text-muted fw-bold rounded-pill">로그아웃</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container my-5">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 p-4 shadow-sm border-0" style="border-radius: 15px;">
+                    <h5 class="fw-bold text-success"><i class="bi bi-egg-fried me-2"></i>음식 별 칼로리</h5>
+                    <hr>
+                    <table class="table table-borderless small mb-3">
+                        <tbody>
+                            <tr><td>밥</td><td class="text-end">450 kcal</td></tr>
+                            <tr><td>치킨</td><td class="text-end">600 kcal</td></tr>
+                            <tr><td>현미밥</td><td class="text-end">200 kcal</td></tr>
+                        </tbody>
+                    </table>
+                    <a class="btn btn-sm btn-outline-success mt-auto rounded-pill" th:href="@{/record/foodSearch}">식단 검색하기</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 p-4 shadow-sm border-primary border-1" style="border-radius: 15px;">
+                    <h5 class="fw-bold text-primary"><i class="bi bi-bicycle me-2"></i>운동 별 칼로리</h5>
+                    <hr>
+                    <table class="table table-borderless small mb-3">
+                        <tbody>
+                            <tr><td>러닝</td><td class="text-end">200 kcal</td></tr>
+                            <tr><td>사이클링</td><td class="text-end">120 kcal</td></tr>
+                            <tr><td>요가</td><td class="text-end">0 kcal</td></tr>
+                        </tbody>
+                    </table>
+                    <a class="btn btn-sm btn-outline-primary mt-auto rounded-pill" th:href="@{/record/exerciseSearch}">운동 검색하기</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card widget-card border-0 shadow-sm h-100" style="border-radius: 15px; background-color: #ffffff;">
+                    <div class="card-header bg-white border-0 pt-3 pb-1 d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0" style="font-size: 0.9rem; color: #343a40;"><i class="bi bi-megaphone-fill me-1" style="color: #0d6efd;"></i> 주요 공지</h6>
+                        <a th:href="@{/community/main(categoryId=1)}" class="text-muted" style="font-size: 0.7rem; text-decoration: none;">더보기 <i class="bi bi-chevron-right" style="font-size: 0.6rem;"></i></a>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="list-group list-group-flush">
+                            <div th:if="${#lists.isEmpty(recentNotices)}" class="py-4 text-center text-muted" style="font-size: 0.75rem;">등록된 공지사항이 없습니다.</div>
+                            <a th:each="notice : ${recentNotices}" th:href="@{|/community/detail/${notice.postId}|}" class="list-group-item list-group-item-action px-2 py-2 border-0 d-flex align-items-center gap-2" style="border-radius: 10px; transition: background-color 0.2s;">
+                                <span class="badge rounded-pill flex-shrink-0" style="font-size: 0.6rem; background-color: #e7f1ff; color: #0d6efd; border: 1px solid #cfe2ff;">NOTICE</span>
+                                <span class="text-truncate fw-medium" style="font-size: 0.75rem; color: #495057;" th:text="${notice.title}">공지사항 제목</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-5 g-4">
+            <div class="col-md-8">
+                <div class="card p-4 shadow-sm border-0 h-100" style="border-radius: 15px;">
+                    <h5 class="fw-bold mb-3">진행 중인 챌린지 (D)</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">스쿼트 100개 30일 챌린지 <span class="badge bg-primary rounded-pill">124명 참여중</span></li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">하루 물 2L 마시기 <span class="badge bg-primary rounded-pill">56명 참여중</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card p-4 h-100 bg-white shadow-sm border-0" style="border-radius: 15px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">🏆 OFIM 랭킹 순위</h5>
+                        <a href="/ranking/main" class="text-muted text-decoration-none" style="font-size: 11px;">전체보기 <i class="bi bi-chevron-right"></i></a>
+                    </div>
+
+                    <div class="ranking-scroll-container">
+                        <div th:if="${#lists.isEmpty(topRankers)}" class="text-center py-4 text-muted small">랭킹 산정 중...</div>
+                        <div th:unless="${#lists.isEmpty(topRankers)}" th:each="ranker, stat : ${topRankers}" class="d-flex align-items-center p-2 rounded-3 mb-2" th:style="${stat.count == 1 ? 'background-color: #fff9db;' : 'background-color: #f8f9fa;'}">
+                            <span class="fw-bold me-2 text-center" style="width: 15px; font-size: 0.8rem;" th:classappend="${stat.count == 1 ? 'text-warning' : 'text-muted'}" th:text="${stat.count}">1</span>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="fw-bold text-truncate d-flex align-items-center" style="font-size: 0.75rem;">
+                                    <span th:if="${stat.count == 1}" class="premium-trophy rank-gold me-1" style="transform: scale(0.7);">🏆</span> 
+                                    <span th:if="${stat.count == 2}" class="premium-trophy rank-silver me-1" style="transform: scale(0.7);">🏅</span> 
+                                    <span th:if="${stat.count == 3}" class="premium-trophy rank-bronze me-1" style="transform: scale(0.7);">🎖️</span> 
+                                    <span th:text="${ranker.writerName}">닉네임</span>
+                                </div>
+                                <div class="mt-1">
+                                    <span class="badge badge-ofim" th:with="pts=${ranker.activityPoint != null ? ranker.activityPoint : 0}" th:classappend="${ranker.memberType == '유료회원' ? 'bg-premium-user' : (pts >= 5000 ? 'bg-underarmor' : (pts >= 2500 ? 'bg-muscle' : (pts >= 1000 ? 'bg-burning' : (pts >= 300 ? 'bg-runner' : 'bg-rookie'))))}">
+                                        <span th:text="${ranker.memberType == '유료회원' ? 'PREMIUM' : ranker.getDiaterRank()}">등급</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="badge bg-white text-dark ms-1 border" style="font-size: 0.6rem;" th:text="${(ranker.activityPoint != null ? ranker.activityPoint : 0) + 'P'}">0P</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-dark w-100 mt-auto btn-sm" style="border-radius: 10px;" onclick="location.href='/ranking/main'">전체 랭킹 확인하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 🌟 여기가 문제의 푸터 영역이었습니다. 올바르게 수정되었습니다. -->
+    <footer class="footer text-center">
+        <div class="container">
+            <p class="mb-0">&copy; 2026 HealthCare Project Team. All Rights Reserved.</p>
+            <small class="text-muted">휴먼IT학원 2차 프로젝트 - 팀 5인 협업물</small>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script th:inline="javascript">
+        $(document).ready(function() {
+            let msg = /*[[${msg}]]*/null;
+            if (msg && msg.trim() !== '') {
+                var myModal = new bootstrap.Modal(document.getElementById('serverMsgModal'));
+                myModal.show();
+            }
+
+            let loginRequired = /*[[${loginRequired}]]*/ false;
+            let showLoginModal = /*[[${showLoginModal}]]*/ false;
+            
+            if (loginRequired || showLoginModal) {
+                $('html, body').animate({ scrollTop: $('#loginAreaCard').offset().top - 120 }, 400);
+                $('#loginAreaCard').css({
+                    'border': '2px solid #0d6efd',
+                    'box-shadow': '0 0 25px rgba(13, 110, 253, 0.5)',
+                    'transform': 'translateY(-8px)',
+                    'transition': 'all 0.3s ease'
+                });
+                setTimeout(function() { $('#mainLoginId').focus(); }, 500);
+            }
+
+            var myCarousel = document.querySelector('#bannerCarousel');
+            if (myCarousel) {
+                new bootstrap.Carousel(myCarousel, { interval : 3500, ride : 'carousel', pause : false });
+            }
+
+            document.querySelectorAll('.ad-banner-item').forEach(function(item) {
+                let centerNo = item.getAttribute('data-center-no');
+                if (centerNo) {
+                    fetch('/api/ad/impression/' + centerNo, { method: 'POST' }).catch(err => {});
+                }
+            });
+        });
+
+        function findMyId() {
+            const name = $('#findIdName').val();
+            const email = $('#findIdEmail').val();
+            if(!name || !email) return alert("정보를 모두 입력해주세요.");
+            $.post('/auth/find-id', { userName: name, email: email }, function(res) {
+                if(res === 'not_found') alert("일치하는 회원 정보가 없습니다.");
+                else alert("찾으시는 아이디는 [" + res + "] 입니다.");
+            });
+        }
+
+        function sendPwResetMail() {
+            const email = $('#findPwEmail').val();
+            if(!email) return alert("이메일을 입력해주세요.");
+            $.post('/auth/send-reset-email', { email: email }, function(res) {
+                if(res === 'success') alert("이메일로 재설정 링크를 발송했습니다.");
+                else alert("존재하지 않는 이메일이거나 오류가 발생했습니다.");
+            });
+        }
+
+        function trackAdClick(centerNo, targetUrl) {
+            fetch('/api/ad/click/' + centerNo, { method: 'POST' }).finally(() => {
+                window.location.href = targetUrl;
+            });
+        }
+       
+    </script>
+</body>
+</html>

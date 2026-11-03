@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::content})}">
+<th:block th:fragment="content">
+
+   <!-- 상단 요약 카드 -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card">
+      <div class="card-body p-4">
+        <div class="text-secondary small mb-2">전체상담</div>
+        <div class="fs-4 fw-bold" th:text="${totalConsult != null ? totalConsult : 0}">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card">
+      <div class="card-body p-4">
+        <div class="text-secondary small mb-2">답변완료</div>
+        <div class="fs-4 fw-bold text-success"
+             th:text="${completedConsult != null ? completedConsult : 0} + '(' + (${completedRate != null ? completedRate : 0}) + '%)'">
+          0(0%)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card">
+      <div class="card-body p-4">
+        <div class="text-secondary small mb-2">답변대기</div>
+        <div class="fs-4 fw-bold text-warning"
+             th:text="${waitingConsult != null ? waitingConsult : 0}">
+          0
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card">
+      <div class="card-body p-4">
+        <div class="text-secondary small mb-2">지연상담</div>
+        <div class="fs-4 fw-bold text-danger"
+             th:text="${delayConsult != null ? delayConsult : 0} + '(' + (${delayRate != null ? delayRate : 0}) + '%)'">
+          0(0%)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card">
+      <div class="card-body p-4">
+        <div class="text-secondary small mb-2">오늘접수</div>
+        <div class="fs-4 fw-bold text-primary"
+             th:text="${todayReceived != null ? todayReceived : 0}">
+          0
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card">
+      <div class="card-body p-4">
+        <div class="text-secondary small mb-2">오늘완료</div>
+        <div class="fs-4 fw-bold text-success"
+             th:text="${todayComplete != null ? todayComplete : 0}">
+          0
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- 검색/필터 -->
+  <div class="card card-soft mb-3">
+    <div class="card-body">
+      <form class="row g-2 align-items-center" method="get" th:action="@{/admin/consulting/list}">
+
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="consultType">
+            <option value="">상담유형(전체)</option>
+            <option value="채팅" th:selected="${consultType == '채팅'}">채팅</option>
+            <option value="전화" th:selected="${consultType == '전화'}">전화</option>
+           <option value="1:1문의" th:selected="${consultType == '1:1문의'}">1:1 문의</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="status">
+            <option value="">상태(전체)</option>
+            <option value="1" th:selected="${status == 1}">신청접수</option>
+<option value="2" th:selected="${status == 2}">예약확정</option>
+<option value="3" th:selected="${status == 3}">상담완료</option>
+<option value="4" th:selected="${status == 4}">취소</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="delayStatus">
+            <option value="">지연여부(전체)</option>
+            <option value="정상" th:selected="${delayStatus == '정상'}">정상</option>
+            <option value="지연" th:selected="${delayStatus == '지연'}">지연</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-2">
+          <input type="date" class="form-control" name="startDate" th:value="${startDate}">
+        </div>
+
+        <div class="col-12 col-md-2">
+          <input type="date" class="form-control" name="endDate" th:value="${endDate}">
+        </div>
+
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="searchType">
+            <option value="all" th:selected="${searchType == 'all'}">전체검색</option>
+            <option value="member" th:selected="${searchType == 'member'}">신청회원</option>
+            <option value="expert" th:selected="${searchType == 'expert'}">전문가명</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-8">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input class="form-control"
+                   name="keyword"
+                   placeholder="신청회원 / 전문가명 / 상담유형 검색"
+                   th:value="${keyword}">
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 d-grid d-md-flex gap-2">
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-search me-1"></i> 검색
+          </button>
+          <a class="btn btn-outline-secondary" th:href="@{/admin/consulting/list}">
+            초기화
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- 목록 -->
+  <div class="card card-soft">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <div class="fw-semibold">상담현황 관리</div>
+        </div>
+        <div class="small text-secondary">
+          총 <span class="fw-semibold" th:text="${consultList != null ? #lists.size(consultList) : 0}">0</span>건
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+          <tr>
+            <th style="width:90px;">상담ID</th>
+            <th style="width:110px;">유형</th>
+            <th style="width:120px;">신청회원</th>
+            <th style="width:120px;">전문가</th>
+            <th style="width:180px;">미리보기</th>
+            <th style="width:160px;">신청일시</th>
+            <th style="width:160px;">예약일시</th>
+            <th style="width:100px;">상태</th>
+            <th style="width:100px;">지연여부</th>
+            <th class="text-end" style="width:170px;">작업</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <tr th:if="${consultList == null or #lists.isEmpty(consultList)}">
+            <td colspan="10">
+              <div class="empty-box">
+                <i class="bi bi-chat-square-text fs-2 d-block mb-2"></i>
+                조회된 상담 내역이 없습니다.
+              </div>
+            </td>
+          </tr>
+
+          <tr th:each="consult : ${consultList}"
+              th:classappend="${consult.delayStatus == '지연'} ? 'table-danger'">
+            <td class="fw-semibold" th:text="${consult.consultId}">1001</td>
+
+            <td>
+              <span class="badge rounded-pill badge-soft-primary"
+                    th:if="${consult.consultType == '채팅'}">채팅</span>
+              <span class="badge rounded-pill badge-soft-success"
+                    th:if="${consult.consultType == '전화'}">전화</span>
+              <span class="badge rounded-pill badge-soft-warning"
+      th:if="${consult.consultType == '1:1문의'}">1:1 문의</span>
+            </td>
+
+            <td th:text="${consult.memberName}">홍길동</td>
+            <td th:text="${consult.expertName}">김전문</td>
+
+            <td>
+              <div class="text-truncate" style="max-width:170px;"
+                   th:text="${consult.consultContent != null and consult.consultContent != '' ? consult.consultContent : '-'}">
+                질문 내용
+              </div>
+            </td>
+
+            <td class="text-secondary"
+                th:text="${consult.createdDate != null ? #temporals.format(consult.createdDate, 'yyyy-MM-dd HH:mm') : '-'}">
+              2026-03-12 10:10
+            </td>
+
+            <td class="text-secondary"
+                th:text="${consult.consultStartDate != null ? #temporals.format(consult.consultStartDate, 'yyyy-MM-dd HH:mm') : '-'}">
+              2026-03-12 14:00
+            </td>
+
+            <td>
+              <span class="badge rounded-pill badge-soft-warning" th:if="${consult.status == 1}">신청접수</span>
+              <span class="badge rounded-pill badge-soft-primary" th:if="${consult.status == 2}">예약확정</span>
+              <span class="badge rounded-pill badge-soft-success" th:if="${consult.status == 3}">상담완료</span>
+              <span class="badge rounded-pill badge-soft-secondary" th:if="${consult.status == 4}">취소</span>
+            </td>
+
+            <td>
+              <span class="badge rounded-pill badge-soft-danger"
+                    th:if="${consult.delayStatus == '지연'}">지연</span>
+              <span class="badge rounded-pill badge-soft-secondary"
+                    th:if="${consult.delayStatus == '정상'}">정상</span>
+            </td>
+
+            <td class="text-end">
+              <div class="d-flex justify-content-end gap-1 flex-wrap">
+                <button class="btn btn-sm btn-outline-secondary"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#consultDetailModal"
+                        th:attr="data-consult-id=${consult.consultId},
+                                 data-consult-type=${consult.consultType},
+                                 data-member-name=${consult.memberName},
+                                 data-expert-name=${consult.expertName},
+                                 data-created-date=${consult.createdDate},
+                                 data-start-date=${consult.consultStartDate},
+                                 data-end-date=${consult.consultEndDate},
+                                 data-status=${consult.status},
+                                 data-delayed=${consult.delayStatus},
+                                 data-content=${consult.consultContent},
+                                 data-answer-content=${consult.answerContent}">
+                  상세
+                </button>
+
+                <button class="btn btn-sm btn-outline-primary"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#consultEditModal"
+                        th:attr="data-consult-id=${consult.consultId},
+                                 data-consult-type=${consult.consultType},
+                                 data-member-name=${consult.memberName},
+                                 data-expert-name=${consult.expertName},
+                                 data-created-date=${consult.createdDate},
+                                 data-start-date=${consult.consultStartDate},
+                                 data-status=${consult.status}">
+                  수정
+                </button>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상세 모달 -->
+  <div class="modal fade" id="consultDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius:18px;">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">상담 상세</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="p-3 border rounded-4 bg-light h-100">
+                <div class="small text-secondary mb-2">기본 정보</div>
+                <div><span class="text-secondary">상담ID:</span> <span data-role="consultId" class="fw-semibold"></span></div>
+                <div><span class="text-secondary">상담유형:</span> <span data-role="consultType"></span></div>
+                <div><span class="text-secondary">신청회원:</span> <span data-role="memberName"></span></div>
+                <div><span class="text-secondary">전문가:</span> <span data-role="expertName"></span></div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="p-3 border rounded-4 bg-light h-100">
+                <div class="small text-secondary mb-2">처리 상태</div>
+                <div><span class="text-secondary">신청일시:</span> <span data-role="createdDate"></span></div>
+                <div><span class="text-secondary">예약/상담일시:</span> <span data-role="startDate"></span></div>
+                <div><span class="text-secondary">종료일시:</span> <span data-role="endDate"></span></div>
+                <div><span class="text-secondary">상태:</span> <span data-role="status"></span></div>
+                <div><span class="text-secondary">지연여부:</span> <span data-role="delayed"></span></div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="p-3 border rounded-4 bg-light mb-3">
+                <div class="small text-secondary mb-2">상담 신청 내용</div>
+                <div style="white-space:pre-wrap; min-height:100px;" data-role="content">-</div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="p-3 border rounded-4 bg-light mb-3">
+                <div class="small text-secondary mb-2">답변 히스토리</div>
+                <div style="white-space:pre-wrap; min-height:100px;" data-role="answerContent">-</div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="p-3 border rounded-4 bg-light">
+                <div class="small text-secondary mb-2">관리자 답변</div>
+                <textarea class="form-control mb-3" rows="5" data-role="adminReply"
+                          placeholder="관리자 답변을 입력하세요"></textarea>
+                <div class="d-flex justify-content-end">
+                  <button type="button" class="btn btn-primary" data-role="saveAdminReplyBtn">
+                    관리자 답변 저장
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 수정 모달 -->
+  <div class="modal fade" id="consultEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" style="border-radius:18px;">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">상담 수정</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="p-3 border rounded-4 bg-light mb-3">
+            <div><span class="text-secondary">상담ID:</span> <span data-role="editConsultId" class="fw-semibold"></span></div>
+            <div><span class="text-secondary">상담유형:</span> <span data-role="editConsultType"></span></div>
+            <div><span class="text-secondary">신청회원:</span> <span data-role="editMemberName"></span></div>
+            <div><span class="text-secondary">현재 전문가:</span> <span data-role="editExpertName"></span></div>
+            <div><span class="text-secondary">현재 상태:</span> <span data-role="editStatus"></span></div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">처리 유형</label>
+            <select class="form-select" data-role="editActionType">
+              <option value="">선택하세요</option>
+              <option value="complete">답변 완료</option>
+              <option value="changeExpert">전문가 변경</option>
+              <option value="release">접수해제</option>
+            </select>
+          </div>
+
+          <div class="mb-3 d-none" data-role="expertSelectWrap">
+            <label class="form-label">변경할 전문가</label>
+            <select class="form-select" data-role="newExpertId">
+              <option value="">전문가 선택</option>
+              <option th:each="expert : ${expertOptions}"
+                      th:value="${expert.expertId}"
+                      th:text="${expert.name}">
+                전문가명
+              </option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">처리 사유</label>
+            <textarea class="form-control" rows="4" data-role="editReason"
+                      placeholder="처리 사유를 입력하세요"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">닫기</button>
+          <button class="btn btn-primary" type="button" data-role="openEditConfirmBtn">확인</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 최종 확인 모달 -->
+  <div class="modal fade" id="consultEditConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:18px;">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">처리 확인</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-2"><span class="text-secondary">상담ID:</span> <span data-role="confirmConsultId" class="fw-semibold"></span></div>
+          <div class="mb-2"><span class="text-secondary">처리 유형:</span> <span data-role="confirmActionType"></span></div>
+          <div class="mb-2 d-none" data-role="confirmExpertWrap"><span class="text-secondary">변경 전문가:</span> <span data-role="confirmExpertName"></span></div>
+          <div class="mb-2"><span class="text-secondary">사유:</span></div>
+          <div class="border rounded-3 p-3 bg-light" style="white-space:pre-wrap;" data-role="confirmReason">-</div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">취소</button>
+          <button class="btn btn-primary" type="button" data-role="confirmEditSubmitBtn">최종 처리</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    const detailModalEl = document.getElementById('consultDetailModal');
+    const editModalEl = document.getElementById('consultEditModal');
+    const confirmModalEl = document.getElementById('consultEditConfirmModal');
+
+    const byRole = (root, role) => root?.querySelector(`[data-role="${role}"]`);
+
+    const formatDateTime = (value) => {
+      if (!value || value === 'null') return '-';
+      return String(value).replace('T', ' ').substring(0, 16);
+    };
+
+    const getStatusLabel = (status) => {
+      if (String(status) === '1') return '신청접수';
+      if (String(status) === '2') return '예약확정';
+      if (String(status) === '3') return '상담완료';
+      if (String(status) === '4') return '취소';
+      return status ?? '-';
+    };
+
+    const getActionTypeLabel = (value) => {
+      if (value === 'complete') return '답변 완료';
+      if (value === 'changeExpert') return '전문가 변경';
+      if (value === 'release') return '접수해제';
+      return '-';
+    };
+
+    let pendingEditPayload = null;
+    let currentConsultId = null;
+
+    if (detailModalEl) {
+      detailModalEl.addEventListener('show.bs.modal', (event) => {
+        const btn = event.relatedTarget;
+        if (!btn) return;
+
+        currentConsultId = btn.dataset.consultId ?? '';
+
+        byRole(detailModalEl, 'consultId').textContent = btn.dataset.consultId ?? '-';
+        byRole(detailModalEl, 'consultType').textContent = btn.dataset.consultType ?? '-';
+        byRole(detailModalEl, 'memberName').textContent = btn.dataset.memberName ?? '-';
+        byRole(detailModalEl, 'expertName').textContent = btn.dataset.expertName ?? '-';
+        byRole(detailModalEl, 'createdDate').textContent = formatDateTime(btn.dataset.createdDate);
+        byRole(detailModalEl, 'startDate').textContent = formatDateTime(btn.dataset.startDate);
+        byRole(detailModalEl, 'endDate').textContent = formatDateTime(btn.dataset.endDate);
+        byRole(detailModalEl, 'status').textContent = getStatusLabel(btn.dataset.status);
+        byRole(detailModalEl, 'delayed').textContent = btn.dataset.delayed ?? '-';
+        byRole(detailModalEl, 'content').textContent = btn.dataset.content ?? '-';
+        byRole(detailModalEl, 'answerContent').textContent = btn.dataset.answerContent ?? '-';
+        byRole(detailModalEl, 'adminReply').value = '';
+      });
+
+      byRole(detailModalEl, 'saveAdminReplyBtn')?.addEventListener('click', async () => {
+        const content = byRole(detailModalEl, 'adminReply')?.value?.trim() ?? '';
+
+        if (!currentConsultId) {
+          alert('상담 정보를 찾을 수 없습니다.');
+          return;
+        }
+
+        if (!content) {
+          alert('관리자 답변을 입력해 주세요.');
+          byRole(detailModalEl, 'adminReply')?.focus();
+          return;
+        }
+
+        try {
+          const res = await fetch('/admin/consulting/reply', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              consultId: Number(currentConsultId),
+              adminReplyContent: content,
+              adminId: 1
+            })
+          });
+
+          const text = await res.text();
+
+          if (!res.ok || text !== 'success') {
+            alert('관리자 답변 저장에 실패했습니다.');
+            return;
+          }
+
+          alert('관리자 답변이 저장되었습니다.');
+          location.reload();
+        } catch (e) {
+          console.error(e);
+          alert('관리자 답변 저장 중 오류가 발생했습니다.');
+        }
+      });
+    }
+
+    if (editModalEl) {
+      editModalEl.addEventListener('show.bs.modal', (event) => {
+        const btn = event.relatedTarget;
+        if (!btn) return;
+
+        byRole(editModalEl, 'editConsultId').textContent = btn.dataset.consultId ?? '-';
+        byRole(editModalEl, 'editConsultType').textContent = btn.dataset.consultType ?? '-';
+        byRole(editModalEl, 'editMemberName').textContent = btn.dataset.memberName ?? '-';
+        byRole(editModalEl, 'editExpertName').textContent = btn.dataset.expertName ?? '-';
+        byRole(editModalEl, 'editStatus').textContent = getStatusLabel(btn.dataset.status);
+
+        byRole(editModalEl, 'editActionType').value = '';
+        byRole(editModalEl, 'newExpertId').value = '';
+        byRole(editModalEl, 'editReason').value = '';
+        byRole(editModalEl, 'expertSelectWrap').classList.add('d-none');
+      });
+
+      byRole(editModalEl, 'editActionType')?.addEventListener('change', (e) => {
+        const value = e.target.value;
+        const expertWrap = byRole(editModalEl, 'expertSelectWrap');
+
+        if (value === 'changeExpert') {
+          expertWrap.classList.remove('d-none');
+        } else {
+          expertWrap.classList.add('d-none');
+          byRole(editModalEl, 'newExpertId').value = '';
+        }
+      });
+
+      byRole(editModalEl, 'openEditConfirmBtn')?.addEventListener('click', () => {
+        const consultId = byRole(editModalEl, 'editConsultId')?.textContent ?? '';
+        const actionType = byRole(editModalEl, 'editActionType')?.value ?? '';
+        const reason = byRole(editModalEl, 'editReason')?.value?.trim() ?? '';
+        const newExpertSelect = byRole(editModalEl, 'newExpertId');
+        const newExpertId = newExpertSelect?.value ?? '';
+        const newExpertName = newExpertSelect?.selectedOptions?.[0]?.text ?? '';
+
+        if (!actionType) {
+          alert('처리 유형을 선택해 주세요.');
+          byRole(editModalEl, 'editActionType')?.focus();
+          return;
+        }
+
+        if (actionType === 'changeExpert' && !newExpertId) {
+          alert('변경할 전문가를 선택해 주세요.');
+          newExpertSelect?.focus();
+          return;
+        }
+
+        if (!reason) {
+          alert('처리 사유를 입력해 주세요.');
+          byRole(editModalEl, 'editReason')?.focus();
+          return;
+        }
+
+        pendingEditPayload = {
+          consultId: Number(consultId),
+          actionType,
+          reason,
+          newExpertId: newExpertId ? Number(newExpertId) : null,
+          newExpertName
+        };
+
+        byRole(confirmModalEl, 'confirmConsultId').textContent = consultId;
+        byRole(confirmModalEl, 'confirmActionType').textContent = getActionTypeLabel(actionType);
+        byRole(confirmModalEl, 'confirmReason').textContent = reason;
+
+        const expertWrap = byRole(confirmModalEl, 'confirmExpertWrap');
+        if (actionType === 'changeExpert') {
+          expertWrap.classList.remove('d-none');
+          byRole(confirmModalEl, 'confirmExpertName').textContent = newExpertName;
+        } else {
+          expertWrap.classList.add('d-none');
+          byRole(confirmModalEl, 'confirmExpertName').textContent = '';
+        }
+
+        if (window.bootstrap && confirmModalEl) {
+          bootstrap.Modal.getOrCreateInstance(confirmModalEl).show();
+        }
+      });
+    }
+
+    if (confirmModalEl) {
+      byRole(confirmModalEl, 'confirmEditSubmitBtn')?.addEventListener('click', async () => {
+        if (!pendingEditPayload) {
+          alert('처리할 상담 정보가 없습니다.');
+          return;
+        }
+
+        try {
+          const res = await fetch('/admin/consulting/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              consultId: pendingEditPayload.consultId,
+              actionType: pendingEditPayload.actionType,
+              reason: pendingEditPayload.reason,
+              newExpertId: pendingEditPayload.newExpertId,
+              adminId: 1
+            })
+          });
+
+          const text = await res.text();
+
+          if (!res.ok || text !== 'success') {
+            alert('상담 수정 처리에 실패했습니다.');
+            return;
+          }
+
+          alert('상담 정보가 처리되었습니다.');
+          location.reload();
+        } catch (e) {
+          console.error(e);
+          alert('상담 수정 중 오류가 발생했습니다.');
+        }
+      });
+    }
+  })();
+</script>
+
+</th:block>
+</html>

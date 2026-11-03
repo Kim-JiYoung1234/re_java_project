@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>웹 전용 커뮤니티 - 상단 대시보드형</title>
+    <style>
+        /* 기본 초기화 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #f4f6f8; color: #333; line-height: 1.6; }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+
+        /* 전체 레이아웃 (세로형 배치) */
+        .wrapper { max-width: 1100px; margin: 40px auto; display: flex; flex-direction: column; gap: 30px; padding: 0 20px; }
+
+        /* --- 상단 대시보드 영역 (기존 사이드바) --- */
+        .top-dashboard { display: flex; gap: 20px; }
+        .dashboard-card { flex: 1; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        
+        /* 내 프로필 카드 */
+        .user-info h3 { font-size: 16px; margin-bottom: 10px; color: #222; }
+        .user-info p { font-size: 15px; color: #555; margin-bottom: 15px; }
+        .user-stats { display: flex; gap: 15px; font-size: 14px; background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        .user-stats div { flex: 1; text-align: center; border-right: 1px solid #ddd; }
+        .user-stats div:last-child { border-right: none; }
+        .user-stats strong { display: block; font-size: 18px; color: #007bff; margin-top: 5px; }
+
+        /* 주간 인기글 카드 */
+        .trending h3 { font-size: 16px; margin-bottom: 15px; color: #222; }
+        .trending ul { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+        .trending li { font-size: 14px; color: #444; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .trending li:hover { color: #007bff; text-decoration: underline; }
+
+        /* --- 메인 게시판 영역 --- */
+        .main-content { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+        /* 게시판 헤더 및 탭 (글쓰기 버튼 포함) */
+        .board-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+        .board-tabs { display: flex; gap: 20px; }
+        .tab { font-size: 20px; font-weight: bold; color: #aaa; cursor: pointer; border: none; background: none; padding: 0; }
+        .tab.active { color: #222; }
+        
+        /* 글쓰기 버튼 */
+        .btn-write { background-color: #333; color: white; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-write:hover { background-color: #555; }
+
+        /* 카테고리 필터 */
+        .category-filter { display: flex; gap: 10px; margin-bottom: 20px; }
+        .filter-btn { padding: 8px 16px; font-size: 14px; border: 1px solid #ddd; background: #fff; border-radius: 20px; cursor: pointer; color: #555; transition: 0.2s; }
+        .filter-btn:hover { background: #f8f9fa; }
+        .filter-btn.active { background: #007bff; color: #fff; border-color: #007bff; }
+
+        /* 게시글 리스트 테이블 */
+        .board-list { width: 100%; border-collapse: collapse; text-align: center; }
+        .board-list th, .board-list td { padding: 15px 10px; border-bottom: 1px solid #eee; }
+        .board-list th { background-color: #fafafa; color: #666; font-size: 14px; font-weight: 600; }
+        .board-list td.title-col { text-align: left; padding-left: 20px; }
+        .board-list tr:hover td { background-color: #fdfdfd; }
+
+        /* 뱃지와 제목 */
+        .badge { display: inline-block; padding: 4px 8px; font-size: 12px; border-radius: 4px; margin-right: 10px; background-color: #e9ecef; color: #495057; }
+        .badge.auth { background-color: #e3f2fd; color: #0d47a1; }
+        .post-title { font-weight: 500; cursor: pointer; }
+        .post-title:hover { text-decoration: underline; color: #0056b3; }
+        .comment-count { color: #f03e3e; font-size: 13px; font-weight: bold; margin-left: 5px; }
+
+        /* 하단 페이징 및 검색 영역 */
+        .board-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; }
+        .pagination { display: flex; gap: 5px; }
+        .pagination span { width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .pagination span.active { background: #333; color: white; border-color: #333; }
+        .pagination span:hover:not(.active) { background: #f1f1f1; }
+        
+        
+        .search-box { display: flex; gap: 5px; }
+        .search-box select, .search-box input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .search-box button { padding: 8px 15px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+	<header th:replace="~{header :: header}"></header>
+<div class="wrapper">
+    <div class="top-dashboard">
+        <div class="dashboard-card user-info">
+            <h3>내 프로필</h3>
+            <p><strong>개발하는득근이</strong>님, 오늘도 득근하세요! 💪</p>
+            <div class="user-stats">
+                <div>이번 주 출석 <strong>3일</strong></div>
+                <div>내 포인트 <strong>150P</strong></div>
+                <div>작성한 글 <strong>12개</strong></div>
+            </div>
+        </div>
+
+        <div class="dashboard-card trending">
+            <h3>🔥 주간 인기글</h3>
+            <ul>
+                <li>1. 3개월 -10kg 다이어트 식단</li>
+                <li>2. 헬스장 빌런 만난 썰 풉니다</li>
+                <li>3. 가성비 단백질 보충제 추천</li>
+                <li>4. 초보자를 위한 3분할 루틴</li>
+                <li>5. [오운완] 오늘 등 운동 완료!</li>
+                <li>6. 스트랩 꼭 써야 하나요?</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="board-header">
+            <div class="board-tabs">
+                <button class="tab active">자유게시판</button>
+                <button class="tab">시설 리뷰/톡</button>
+            </div>
+            <button class="btn-write">✏️ 새 글 작성하기</button>
+        </div>
+
+        <div class="category-filter">
+            <button class="filter-btn active">전체</button>
+            <button class="filter-btn">일상/잡담</button>
+            <button class="filter-btn">오운완/인증</button>
+            <button class="filter-btn">질문/고민</button>
+            <button class="filter-btn">정보/나눔</button>
+        </div>
+
+        <table class="board-list">
+            <thead>
+                <tr>
+                    <th style="width: 8%;">번호</th>
+                    <th style="width: 50%;">제목</th>
+                    <th style="width: 12%;">작성자</th>
+                    <th style="width: 15%;">작성일</th>
+                    <th style="width: 8%;">조회</th>
+                    <th style="width: 7%;">추천</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1024</td>
+                    <td class="title-col">
+                        <span class="badge auth">오운완/인증</span>
+                        <span class="post-title">오늘 하체 탈탈 털었습니다 (스쿼트 영상 첨부)</span>
+                        <span class="comment-count">[12]</span>
+                    </td>
+                    <td>헬린이탈출</td>
+                    <td>10:42</td>
+                    <td>45</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>1023</td>
+                    <td class="title-col">
+                        <span class="badge">질문/고민</span>
+                        <span class="post-title">식단 기록할 때 소스 칼로리도 다 적으시나요?</span>
+                        <span class="comment-count">[5]</span>
+                    </td>
+                    <td>다이어터</td>
+                    <td>09:15</td>
+                    <td>82</td>
+                    <td>1</td>
+                </tr>
+                <tr>
+                    <td>1022</td>
+                    <td class="title-col">
+                        <span class="badge">일상/잡담</span>
+                        <span class="post-title">비 와서 헬스장 가기 너무 귀찮네요 ㅠㅠ</span>
+                    </td>
+                    <td>득근득근</td>
+                    <td>2026.02.24</td>
+                    <td>110</td>
+                    <td>0</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="board-footer">
+            <div class="search-box">
+                <select>
+                    <option>제목+내용</option>
+                    <option>제목만</option>
+                    <option>작성자</option>
+                </select>
+                <input type="text" placeholder="검색어를 입력하세요">
+                <button>검색</button>
+            </div>
+            <div class="pagination">
+                <span>&lt;</span>
+                <span class="active">1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5</span>
+                <span>&gt;</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

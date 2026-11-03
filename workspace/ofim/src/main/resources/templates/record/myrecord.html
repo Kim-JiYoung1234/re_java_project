@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기록 보기 - OUT FAT IN MUSCLE</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+
+
+<style>
+body {
+	font-family: 'Noto Sans KR', sans-serif;
+	background-color: #f8f9fa;
+}
+
+/* 차트 컨테이너 - 모바일에서 패딩 조절 */
+.chart-container {
+	background: white;
+	border-radius: 15px;
+	border: 2px solid #00bbff;
+	padding: 20px;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	margin-bottom: 30px;
+}
+
+/* 목표 섹션 그리드 배치 */
+.goal-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr); /* 모바일 기본 2열 */
+	gap: 15px;
+	margin-bottom: 30px;
+}
+
+/* 태블릿 이상에서는 4열로 */
+@media ( min-width : 768px) {
+	.goal-grid {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.summary-card {
+	background: white;
+	border-radius: 12px;
+	padding: 15px;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	border: 1px solid #e0e0e0;
+	text-align: center;
+}
+
+.summary-label {
+	font-size: 13px;
+	color: #666;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+.summary-value {
+	font-size: 16px;
+	color: #007bff;
+	font-weight: bold;
+}
+
+.edit-input {
+	text-align: center;
+	font-weight: bold;
+	color: #007bff;
+	padding: 5px;
+	font-size: 14px;
+}
+
+.footer {
+	background: #343a40;
+	color: white;
+	padding: 30px 0;
+	margin-top: 50px;
+}
+
+/* 버튼 모바일 대응 */
+.btn-group-custom {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+@media ( min-width : 576px) {
+	.btn-group-custom {
+		flex-direction: row;
+		justify-content: center;
+	}
+}
+
+/* 표가 담긴 카드(chart-container) 사이의 간격과 여백 */
+.chart-container {
+	margin-left: 25px;
+	margin-right: 20px;
+	padding: 25px; /* 내부 여백을 늘려서 벽에서 떨어뜨림 */
+}
+
+/* 날짜 구분선 스타일 */
+.date-divider {
+	border-bottom: 2px solid #e9ecef;
+	margin-top: 20px;
+	margin-bottom: 10px;
+	padding-bottom: 5px;
+	color: #00bbff;
+	font-size: 0.9rem;
+}
+
+/* 테이블 내부 간격 조정 */
+.table td, .table th {
+	padding: 12px 8px;
+}
+
+/* 히스토리 섹션 고정 높이 설정 */
+.history-scroll-container {
+	height: 400px; /* 지영이가 원하는 적당한 높이로 조절해봐! */
+	overflow-y: auto;
+	background: white;
+	border-radius: 15px;
+	border: 1px solid #e0e0e0;
+	padding: 15px;
+}
+
+/* 스크롤바 디자인 (선택사항 - 깔끔해 보여!) */
+.history-scroll-container::-webkit-scrollbar {
+	width: 6px;
+}
+
+.history-scroll-container::-webkit-scrollbar-thumb {
+	background-color: #00bbff;
+	border-radius: 10px;
+}
+</style>
+</head>
+<body>
+
+	<div th:replace="~{header :: header}"></div>
+
+
+
+	<div class="container my-4 my-md-5">
+		<h2 class="fw-bold mb-4 text-center">나의 기록 보기</h2>
+
+		<div class="chart-container">
+
+
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h5 class="fw-bold mb-0">📈 체중 변화 기록</h5>
+				<button type="button" id="toggleViewBtn"
+					class="btn btn-sm btn-outline-primary px-3">표로 보기</button>
+			</div>
+
+			<div id="chartView"
+				style="position: relative; height: 300px; width: 100%;">
+				<canvas id="weightChart"></canvas>
+			</div>
+
+			<div id="tableView" class="d-none"
+				style="max-height: 300px; overflow-y: auto;">
+				<table class="table table-hover text-center align-middle">
+					<thead class="table-light" style="position: sticky; top: 0;">
+						<tr>
+							<th>날짜</th>
+							<th>체중(kg)</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="row : ${allWeights}">
+							<td th:text="${row.recordDate}">2026-03-17</td>
+							<td class="fw-bold text-primary" th:text="${row.weight} + ' kg'">70.5
+								kg</td>
+						</tr>
+						<tr th:if="${#lists.isEmpty(allWeights)}">
+							<td colspan="2" class="text-muted">데이터가 없어요.</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<form id="recordForm" th:action="@{/record/myrecord}" method="post">
+			<input type="hidden" name="memberId" th:value="${user.memberId}">
+
+			<section class="goal-section">
+				<h4 class="fw-bold mb-3 text-center text-md-start">🎯 나의 목표</h4>
+
+				<div class="goal-grid">
+
+
+					<div class="summary-card">
+						<span class="summary-label">키</span> <span
+							class="view-mode summary-value"> <th:block
+								th:text="${healthPlan?.height != null} ? ${healthPlan.height} + 'cm' : '--cm'"></th:block>
+						</span>
+
+						<div class="edit-mode d-none w-100">
+							<input type="number" step="0.1" name="height"
+								class="form-control edit-input" th:value="${healthPlan?.height}"
+								placeholder="0.0">
+						</div>
+					</div>
+
+
+					<div class="summary-card">
+						<span class="summary-label">목표 체중</span> <span
+							class="view-mode summary-value"> <th:block
+								th:text="${healthPlan?.goalWeight != null} ? ${healthPlan?.goalWeight} + 'kg' : '--kg'"></th:block>
+						</span>
+
+						<div class="edit-mode d-none w-100">
+							<input type="number" step="0.1" name="goalWeight"
+								class="form-control edit-input"
+								th:value="${healthPlan?.goalWeight}" placeholder="0.0">
+						</div>
+					</div>
+
+					<div class="summary-card">
+						<span class="summary-label">관리 기간</span> <span
+							class="view-mode summary-value"> <th:block
+								th:text="${healthPlan?.dietPeriod != null} ? ${healthPlan?.dietPeriod} + '개월' : '--개월'"></th:block>
+						</span>
+
+						<div class="edit-mode d-none w-100">
+							<input type="number" step="0.1" name="dietPeriod"
+								class="form-control edit-input"
+								th:value="${healthPlan?.dietPeriod}" placeholder="0.0">
+						</div>
+					</div>
+
+					<div class="summary-card">
+						<span class="summary-label">활동 수준</span> <span
+							class="view-mode summary-value"> <th:block
+								th:switch="${healthPlan?.baseActivityLevel}">
+								<span th:case="1">활동 안함 (1.2)</span>
+								<span th:case="2">약간 활동적 (1.375)</span>
+								<span th:case="3">보통 활동적 (1.55)</span>
+								<span th:case="4">매우 활동적 (1.725)</span>
+								<span th:case="*">--</span>
+							</th:block>
+						</span>
+
+						<div class="edit-mode d-none w-100">
+							<select name="baseActivityLevel" class="form-select edit-input">
+								<option value="1"
+									th:selected="${healthPlan?.baseActivityLevel == 1}">활동
+									안함</option>
+								<option value="2"
+									th:selected="${healthPlan?.baseActivityLevel == 2}">약간
+									활동적</option>
+								<option value="3"
+									th:selected="${healthPlan?.baseActivityLevel == 3}">보통
+									활동적</option>
+								<option value="4"
+									th:selected="${healthPlan?.baseActivityLevel == 4}">매우
+									활동적</option>
+							</select>
+						</div>
+					</div>
+
+				</div>
+			</section>
+
+			<div class="btn-group-custom">
+				<button type="button" id="editBtn"
+					class="btn btn-outline-dark px-5 py-2 fw-bold">수정</button>
+				<a th:href="@{/record/myhealth}"
+					class="btn btn-secondary px-5 py-2 fw-bold">돌아가기</a>
+			</div>
+		</form>
+	</div>
+
+	<section class="record-list-section mt-5">
+		<div class="row g-4">
+			<div class="col-12 col-md-6">
+				<h5 class="fw-bold mb-3">
+					<span class="me-2">🥗</span>식단 히스토리
+				</h5>
+				<div class="history-scroll-container">
+					<table class="table table-hover text-center align-middle">
+						<thead class="table-light"
+							style="position: sticky; top: 0; z-index: 1;">
+							<tr>
+								<th>날짜</th>
+								<th>음식명</th>
+								<th>칼로리</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="foodRecord : ${foodRecordAll}">
+								<td th:text="${foodRecord.recordDate}"
+									style="font-size: 12px; color: #888;"></td>
+								<td th:text="${foodRecord.foodName}" class="fw-bold"></td>
+								<td th:text="${foodRecord.intakeKcal + 'kcal'}"
+									class="text-success"></td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(foodRecordAll)}">
+								<td colspan="3" class="text-muted py-5">아직 기록된 식단이 없어요.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<div class="col-12 col-md-6">
+				<h5 class="fw-bold mb-3">
+					<span class="me-2">💪</span>운동 히스토리
+				</h5>
+				<div class="history-scroll-container">
+					<table class="table table-hover text-center align-middle">
+						<thead class="table-light"
+							style="position: sticky; top: 0; z-index: 1;">
+							<tr>
+								<th>날짜</th>
+								<th>운동명</th>
+								<th>소모 칼로리</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="exerciseRecord : ${exerciseRecordAll}">
+								<td th:text="${exerciseRecord.recordDate}"
+									style="font-size: 12px; color: #888;"></td>
+								<td th:text="${exerciseRecord.exerciseName}" class="fw-bold"></td>
+								<td th:text="${exerciseRecord.burnKcal + 'kcal'}"
+									class="text-primary"></td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(exerciseRecordAll)}">
+								<td colspan="3" class="text-muted py-5">아직 기록된 운동이 없어요.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div class="row g-4 mt-2">
+
+			<div class="col-12 col-md-4">
+				<h5 class="fw-bold mb-3">
+					<span class="me-2">😴</span>수면 기록
+				</h5>
+				<div class="history-scroll-container" style="height: 300px;">
+					<table class="table table-hover text-center align-middle">
+						<thead class="table-light"
+							style="position: sticky; top: 0; z-index: 1;">
+							<tr>
+								<th>날짜</th>
+								<th>시간</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="allHabit : ${allHabits}">
+								<td th:text="${allHabit.recordDate}"
+									style="font-size: 12px; color: #888;"></td>
+								<td th:text="${(allHabit.sleepHour ?: 0) + '시간'}"
+									class="fw-bold text-primary"></td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(allHabits)}">
+								<td colspan="2" class="text-muted py-4">기록이 없어요.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<div class="col-12 col-md-4">
+				<h5 class="fw-bold mb-3">
+					<span class="me-2">💧</span>수분 섭취
+				</h5>
+				<div class="history-scroll-container" style="height: 300px;">
+					<table class="table table-hover text-center align-middle">
+						<thead class="table-light"
+							style="position: sticky; top: 0; z-index: 1;">
+							<tr>
+								<th>날짜</th>
+								<th>섭취량</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="allHabit : ${allHabits}">
+								<td th:text="${allHabit.recordDate}"
+									style="font-size: 12px; color: #888;"></td>
+								<td th:text="${(allHabit.waterIntake ?: 0) + 'ml'}"
+									class="fw-bold text-info"></td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(allHabits)}">
+								<td colspan="2" class="text-muted py-4">기록이 없어요.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<div class="col-12 col-md-4">
+				<h5 class="fw-bold mb-3">
+					<span class="me-2">💩</span>배변 횟수
+				</h5>
+				<div class="history-scroll-container" style="height: 300px;">
+					<table class="table table-hover text-center align-middle">
+						<thead class="table-light"
+							style="position: sticky; top: 0; z-index: 1;">
+							<tr>
+								<th>날짜</th>
+								<th>횟수</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="allHabit : ${allHabits}">
+								<td th:text="${allHabit.recordDate}"
+									style="font-size: 12px; color: #888;"></td>
+								<td th:text="${(allHabit.bowelCount ?: 0) + '회'}"
+									class="fw-bold text-brown" style="color: #8B4513;"></td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(allHabits)}">
+								<td colspan="2" class="text-muted py-4">기록이 없어요.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+		</div>
+	</section>
+
+	<div th:replace="~{footer :: footer}"></div>
+
+
+
+
+
+	<script th:inline="javascript">
+	
+	//차트용
+		const chartRecordDate = [[${recordDates}]] || [];
+		const chartWeight = [[${weights}]] || [];
+	//표용
+		const tableData = [[${allWeights}]] || [];
+		console.log("날짜 데이터:", chartRecordDate);
+	    console.log("체중 데이터:", chartWeight);
+	    console.log("표 데이터: ", tableData);
+	</script>
+
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+	<script>
+    // --- [1] Chart.js 시각화 (반응형 옵션 강화) ---
+  
+    
+    const ctx = document.getElementById('weightChart').getContext('2d');
+    window.myWeightChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartRecordDate,
+            datasets: [{
+                label: '체중 (kg)',
+                data: chartWeight,
+                borderColor: '#00bbff',
+                backgroundColor: 'rgba(0, 187, 255, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // 컨테이너 높이에 맞춤
+            plugins: {
+                legend: { display: false } // 모바일은 좁으니 범례 생략 가능
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: false,
+                    ticks: { font: { size: 10 } }
+                },
+                x: {
+                    ticks: { font: { size: 10 } }
+                }
+            }
+        }
+    });
+
+    // --- [2] 폼 제어 로직 ---
+    document.getElementById('editBtn').addEventListener('click', function() {
+        const form = document.getElementById('recordForm'); // ← id 수정
+        const isEditing = this.innerText === '저장';
+        
+        document.querySelectorAll('.view-mode, .edit-mode').forEach(el => {
+            el.classList.toggle('d-none');
+        });
+
+        if (isEditing) {
+        	form.submit();
+        } else {
+            this.innerText = '저장';
+            this.classList.replace('btn-outline-dark', 'btn-success');
+            this.classList.add('text-white');
+        }
+    });
+    
+ // --- [3] 차트/표 토글 제어 수정본 ---
+    document.getElementById('toggleViewBtn').addEventListener('click', function() {
+        const chartView = document.getElementById('chartView');
+        const tableView = document.getElementById('tableView');
+        const btn = this;
+
+        if (chartView.classList.contains('d-none')) {
+            // 차트를 보여줄 때
+            chartView.classList.remove('d-none');
+            tableView.classList.add('d-none');
+            btn.innerText = '표로 보기';
+            
+            // 중요! 차트가 다시 나타날 때 크기를 재계산하게 해줌
+            if (window.chartWeight) { 
+    window.chartWeight.resize(); // 크기 재계산
+    window.chartWeight.update(); // 다시 그리기
+}
+        } else {
+            // 표를 보여줄 때
+            chartView.classList.add('d-none');
+            tableView.classList.remove('d-none');
+            btn.innerText = '차트로 보기';
+        }
+    });
+    </script>
+</body>
+</html>

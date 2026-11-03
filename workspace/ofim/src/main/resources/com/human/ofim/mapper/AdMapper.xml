@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.human.ofim.mapper.AdMapper">
+
+    <select id="getMyCenters" resultType="com.human.ofim.dto.FitnessCenterDto">
+        SELECT center_no as centerNo, center_name as centerName, type FROM fitness_center WHERE member_id = #{partnerId}
+    </select>
+
+    <insert id="insertAdvertisement">
+        INSERT INTO advertisement (
+            center_no, ad_title, ad_content, start_date, end_date, partner_id, ad_type, target_keyword, ad_status, bid_price
+        ) VALUES (
+            #{centerNo}, #{adTitle}, #{adContent}, NOW(), DATE_ADD(NOW(), INTERVAL #{durationDays} DAY), 
+            #{partnerId}, #{adType}, #{targetKeyword}, 0, #{paymentAmount}
+        )
+    </insert>
+
+    <insert id="insertPartnerPayment">
+        INSERT INTO partner_ad (member_id, payment_type, payment_amount, payment_at, package_name, prev_balance, after_amt) 
+        VALUES (#{partnerId}, #{paymentType}, #{paymentAmount}, NOW(), #{packageName}, 0, 0)
+    </insert>
+
+    <update id="updateCenterAdFlag">
+        UPDATE fitness_center SET is_ad = #{isAd} WHERE center_no = #{centerNo}
+    </update>
+
+    <select id="selectPartnerAdStatusList" resultType="com.human.ofim.dto.FitnessCenterDto">
+        SELECT c.center_name as centerName, 
+               CONCAT(a.ad_type, '|', IFNULL(a.billing_model, 'CPT')) as adType, 
+               a.start_date as adStartDate, a.end_date as adEndDate,
+               DATEDIFF(a.end_date, NOW()) as remainingDays,
+               (CASE 
+                  WHEN a.ad_status = 0 THEN 2 
+                  WHEN (a.ad_status = 1 OR a.ad_status IS NULL) AND NOW() BETWEEN a.start_date AND a.end_date THEN 1 
+                  ELSE 0 
+                END) as isAd
+        FROM advertisement a JOIN fitness_center c ON a.center_no = c.center_no
+        WHERE a.partner_id = #{partnerId} ORDER BY a.ad_id DESC
+    </select>
+
+    <select id="selectRevenueList" resultType="map">
+        SELECT p.partner_payments_id as paymentId, p.payment_type as paymentType, p.package_name as packageName, 
+               p.payment_amount as paymentAmount, DATE_FORMAT(p.payment_at, '%Y-%m-%d %H:%i') as paymentAt, 
+               IFNULL(u.user_name, '알수없음') as partnerName, 
+               IFNULL(u.login_id, '알수없음') as loginId
+        FROM partner_ad p LEFT JOIN user u ON p.member_id = u.member_id ORDER BY p.payment_at DESC
+    </select>
+
+    <select id="selectTotalRevenue" resultType="long">
+        SELECT IFNULL(SUM(payment_amount), 0) FROM partner_ad
+    </select>
+
+    <select id="selectPendingAds" resultType="map">
+        SELECT a.ad_id as adId, a.center_no as centerNo, c.center_name as centerName,
+               a.ad_title as adTitle, a.ad_content as adContent, a.ad_type as adType, 
+               IFNULL(a.target_keyword, '키워드 없음') as targetKeyword, 
+               a.bid_price as bidPrice, 
+               DATE_FORMAT(a.start_date, '%Y-%m-%d') as requestDate
+        FROM advertisement a JOIN fitness_center c ON a.center_no = c.center_no
+        WHERE a.ad_status = 0 ORDER BY a.bid_price DESC, a.start_date ASC
+    </select>
+
+    <update id="updateAdStatus">
+        UPDATE advertisement SET ad_status = #{status} WHERE ad_id = #{adId}
+    </update>
+
+    <select id="selectAdSummary" resultType="map">
+        SELECT 
+            /* 1. 정액제(CPT) 요약: 배너형은 보통 정액제 */
+            (SELECT IFNULL(SUM(bid_price), 0) FROM advertisement WHERE partner_id = #{partnerId} AND (billing_model = 'CPT' OR ad_type LIKE '%배너%')) as cptPrice,
+            (SELECT COUNT(*) FROM advertisement WHERE partner_id = #{partnerId} AND (billing_model = 'CPT' OR ad_type LIKE '%배너%') AND ad_status = 1) as cptActiveCount,
+
+            /* 2. 종량제(CPC) 요약: 상위노출은 보통 종량제 */
+            (SELECT IFNULL(SUM(remaining_budget), 0) FROM advertisement WHERE partner_id = #{partnerId} AND (billing_model = 'CPC' OR ad_type LIKE '%상위%')) as cpcBudget,
+            (SELECT COUNT(*) FROM advertisement WHERE partner_id = #{partnerId} AND (billing_model = 'CPC' OR ad_type LIKE '%상위%') AND ad_status = 1) as cpcActiveCount,
+
+            /* 3. 배너형 성과 (누적) */
+            (SELECT COUNT(*) FROM ad_impression WHERE ad_id IN (SELECT ad_id FROM advertisement WHERE partner_id = #{partnerId} AND ad_type LIKE '%배너%')) as bannerImp,
+            (SELECT COUNT(*) FROM ad_click WHERE ad_id IN (SELECT ad_id FROM advertisement WHERE partner_id = #{partnerId} AND ad_type LIKE '%배너%')) as bannerClick,
+
+            /* 4. 상위노출형 성과 (누적) */
+            (SELECT COUNT(*) FROM ad_impression WHERE ad_id IN (SELECT ad_id FROM advertisement WHERE partner_id = #{partnerId} AND ad_type LIKE '%상위%')) as keywordImp,
+            (SELECT COUNT(*) FROM ad_click WHERE ad_id IN (SELECT ad_id FROM advertisement WHERE partner_id = #{partnerId} AND ad_type LIKE '%상위%')) as keywordClick
+    </select>
+
+    <select id="selectDailyClickCounts" resultType="map">
+        SELECT 
+            DATE_FORMAT(click_date, '%m/%d') as dateLabel, 
+            COUNT(*) as clickCount
+        FROM ad_click
+        WHERE ad_id IN (SELECT ad_id FROM advertisement WHERE partner_id = #{partnerId})
+          AND click_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY dateLabel
+        ORDER BY dateLabel ASC
+    </select>
+
+    <select id="selectKeywordDistribution" resultType="map">
+        SELECT 
+            IFNULL(a.target_keyword, '기타') as keyword, 
+            COUNT(c.click_id) as cnt
+        FROM advertisement a
+        LEFT JOIN ad_click c ON a.ad_id = c.ad_id
+        WHERE a.partner_id = #{partnerId}
+        GROUP BY keyword
+        ORDER BY cnt DESC
+        LIMIT 5
+    </select>
+    
+    <select id="findActiveAdByCenterNo" resultType="com.human.ofim.dto.AdvertisementDto">
+        SELECT ad_id as adId, billing_model as billingModel, cost_per_action as costPerAction, remaining_budget as remainingBudget
+        FROM advertisement
+        WHERE center_no = #{centerNo} AND ad_status = 1 AND NOW() BETWEEN start_date AND end_date
+        LIMIT 1
+    </select>
+
+    <insert id="insertAdClickLog">
+        INSERT INTO ad_click (ad_id, center_no, click_date)
+        VALUES (#{adId}, #{centerNo}, NOW())
+    </insert>
+
+    <update id="deductAdBudget">
+        UPDATE advertisement 
+        SET remaining_budget = remaining_budget - cost_per_action,
+            ad_status = CASE WHEN remaining_budget - cost_per_action <![CDATA[<=]]> 0 THEN 2 ELSE ad_status END
+        WHERE ad_id = #{adId}
+    </update>
+    
+    <insert id="insertAdImpressionLog">
+        INSERT INTO ad_impression (ad_id, center_no)
+        VALUES (#{adId}, #{centerNo})
+    </insert>
+
+</mapper>

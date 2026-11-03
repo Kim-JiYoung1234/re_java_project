@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{admin/layout :: layout(~{::#main-content})}">
+    <div id="main-content" th:fragment="content">
+        <style>
+            .revenue-card-main { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 20px; padding: 40px 30px; position: relative; overflow: hidden; height: 100%; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);}
+            .revenue-card-main::after { content: '\F3E0'; font-family: 'bootstrap-icons'; position: absolute; right: -20px; bottom: -30px; font-size: 12rem; color: rgba(255,255,255,0.05); }
+            .stat-card { background: white; border-radius: 20px; border: none; padding: 30px; height: 100%; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 5px 20px rgba(0,0,0,0.03);}
+            .stat-title { font-size: 0.95rem; font-weight: 700; color: #6c757d; text-transform: uppercase; margin-bottom: 10px;}
+            .stat-value { font-size: 2.8rem; font-weight: 800; color: #111827; letter-spacing: -1px;}
+        </style>
+
+        <div class="mb-4">
+            <h3 class="fw-bold mb-1 text-dark"><i class="bi bi-graph-up-arrow text-primary me-2"></i>플랫폼 수익 정산 대시보드</h3>
+            <p class="text-muted">파트너사가 실제로 결제한 실시간 광고 수익 현황입니다.</p>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="revenue-card-main">
+                    <h6 class="text-secondary fw-bold mb-2" style="letter-spacing: 2px; z-index: 10;">TOTAL AD REVENUE</h6>
+                    <h1 class="display-4 fw-bold text-warning mb-0" style="z-index: 10; letter-spacing: -2px;">
+                        ₩ <span th:text="${totalRevenue != null ? #numbers.formatInteger(totalRevenue, 0, 'COMMA') : '0'}">0</span>
+                    </h1>
+                </div>
+            </div>
+            
+            <div class="col-lg-3">
+                <div class="stat-card border-bottom border-success border-4">
+                    <div class="stat-title"><i class="bi bi-receipt me-1"></i> 누적 결제 건수</div>
+                    <div class="stat-value text-success">
+                        <span th:text="${revenueList != null ? #lists.size(revenueList) : '0'}">0</span>건
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3">
+                <div class="stat-card border-bottom border-primary border-4">
+                    <div class="stat-title"><i class="bi bi-credit-card me-1"></i> 최근 신규 결제</div>
+                    <div class="stat-value text-primary">
+                        <span th:text="${revenueList != null ? #lists.size(revenueList) : '0'}">0</span>건
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <input type="month" id="searchMonth" class="form-control" style="width:180px;">
+                        <select class="form-select" style="width:180px;">
+                            <option selected>전체 정산 유형</option>
+                            <option value="PARTNER_AD">광고 결제 (PARTNER_AD)</option>
+                            <option value="EXPERT">전문가 정산 (EXPERT)</option>
+                        </select>
+                        <button class="btn btn-primary px-4 fw-bold" type="button" onclick="location.reload();">
+                            <i class="bi bi-search me-2"></i>조회
+                        </button>
+                        <button class="btn btn-light px-3 text-secondary fw-bold" type="button" onclick="location.href='/admin/settlements'">초기화</button>
+                    </div>
+                    <button class="btn btn-dark fw-bold px-4 rounded-pill shadow-sm" type="button">
+                        <i class="bi bi-file-earmark-excel-fill me-2"></i>엑셀 다운로드
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+            <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-list-stars me-2 text-secondary"></i>상세 결제 내역</h5>
+                <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill">
+                    <i class="bi bi-circle-fill small me-1" style="font-size: 0.5rem;"></i> Live Data Connected
+                </span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="py-3">번호</th>
+                            <th class="text-start ps-4 py-3">파트너 정보</th>
+                            <th class="py-3">유형</th>
+                            <th class="py-3">상품 및 패키지</th>
+                            <th class="py-3">결제 일시</th>
+                            <th class="text-end pe-4 py-3">금액</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="rev : ${revenueList}">
+                            <td class="text-muted fw-bold" th:text="'#' + ${rev.paymentId}"></td>
+                            <td class="text-start ps-4">
+                                <div class="fw-bold text-dark fs-6" th:text="${rev.partnerName != null ? rev.partnerName : '이름없음'}"></div>
+                                <small class="text-muted"><i class="bi bi-person-badge me-1"></i><span th:text="${rev.loginId}"></span></small>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill px-3 py-2" 
+                                      th:classappend="${rev.paymentType == 'PARTNER_AD' or rev.paymentType == '배너형' or rev.paymentType == '상위노출형' ? 'bg-danger text-white' : 'bg-info text-dark'}" 
+                                      th:text="${rev.paymentType}"></span>
+                            </td>
+                            <td class="fw-bold text-secondary" th:text="${rev.packageName}"></td>
+                            <td class="text-muted small" th:text="${rev.paymentAt}"></td>
+                            <td class="text-end pe-4 fw-bold text-success fs-5" th:text="'+ ₩' + ${#numbers.formatInteger(rev.paymentAmount, 0, 'COMMA')}"></td>
+                        </tr>
+                        
+                        <tr th:if="${#lists.isEmpty(revenueList)}">
+                            <td colspan="6" class="py-5 text-muted bg-light">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                                <span class="fw-bold fs-5 text-dark">아직 수집된 결제/정산 내역이 없습니다.</span>
+                                <p class="small mt-2 mb-0">파트너사가 광고를 결제하면 이곳에 실시간으로 표시됩니다.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</th:block>
+</html>

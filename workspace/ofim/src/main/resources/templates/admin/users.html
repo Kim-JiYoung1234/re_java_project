@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::content})}">
+<div th:fragment="content">
+
+  <!-- 검색/필터 -->
+  <div class="card card-soft mb-3">
+    <div class="card-body">
+      <form class="row g-2 align-items-center" method="get" th:action="@{/admin/users}">
+
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="type">
+            <option value="">가입유형(전체)</option>
+            <option value="일반회원" th:selected="${type == '일반회원'}">일반회원</option>
+            <option value="전문가회원" th:selected="${type == '전문가회원'}">전문가회원</option>
+            <option value="파트너회원" th:selected="${type == '파트너회원'}">파트너회원</option>
+            <option value="관리자" th:selected="${type == '관리자'}">관리자</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="grade">
+            <option value="">등급(전체)</option>
+            <option value="일반회원" th:selected="${grade == '일반회원'}">일반회원</option>
+            <option value="브론즈" th:selected="${grade == '브론즈'}">브론즈</option>
+            <option value="실버" th:selected="${grade == '실버'}">실버</option>
+            <option value="골드" th:selected="${grade == '골드'}">골드</option>
+            <option value="프리미엄" th:selected="${grade == '프리미엄'}">프리미엄</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-2">
+  <select class="form-select" name="status">
+    <option value="">상태(전체)</option>
+    <option value="가입중" th:selected="${status == '가입중'}">가입중</option>
+    <option value="징계정지" th:selected="${status == '징계정지'}">징계정지</option>
+    <option value="사고정지" th:selected="${status == '사고정지'}">사고정지</option>
+    <option value="자발적탈퇴" th:selected="${status == '자발적탈퇴'}">자발적탈퇴</option>
+    <option value="징계탈퇴" th:selected="${status == '징계탈퇴'}">징계탈퇴</option>
+    <option value="사고탈퇴" th:selected="${status == '사고탈퇴'}">사고탈퇴</option>
+  </select>
+</div>
+
+        <div class="col-12 col-md-4">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input class="form-control"
+                   name="keyword"
+                   placeholder="로그인ID / 이름 / 이메일 / 닉네임 검색"
+                   th:value="${keyword}">
+          </div>
+        </div>
+
+        <div class="col-12 col-md-2 d-grid d-md-flex gap-2">
+          <button class="btn btn-primary" type="submit">검색</button>
+          <a class="btn btn-outline-secondary" th:href="@{/admin/users}">초기화</a>
+        </div>
+
+        <div class="col-12 mt-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="small text-secondary">
+            * 삭제는 실제 DELETE가 아니라 탈퇴 처리입니다.
+          </div>
+          <div class="small text-secondary">
+            페이지당 10명씩 표시
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- 목록 -->
+  <div class="card card-soft">
+    <div class="card-body">
+
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <div class="fw-semibold">회원 관리</div>
+          <div class="small text-secondary">상세 조회 / 상태 수정</div>
+        </div>
+        <div class="small text-secondary">
+          총 <span class="fw-semibold" th:text="${totalCount}">0</span>명
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+          <tr>
+            <th style="width:100px;">mem_id</th>
+            <th style="width:150px;">로그인ID</th>
+            <th style="width:130px;">닉네임</th>
+            <th style="width:130px;">가입유형</th>
+            <th style="width:110px;">등급</th>
+            <th style="width:110px;">상태</th>
+            <th style="width:160px;">최종접속</th>
+            <th class="text-end" style="width:170px;">작업</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <tr th:if="${users == null or #lists.isEmpty(users)}">
+            <td colspan="8" class="text-center py-5 text-secondary">
+              조회된 회원이 없습니다.
+            </td>
+          </tr>
+
+          <tr th:each="user : ${users}">
+            <td th:text="${user.memberId}">1000</td>
+            <td class="fw-semibold" th:text="${user.loginId}">sniper123</td>
+            <td th:text="${user.nickname}">sniper1</td>
+            <td th:text="${user.memberType}">일반회원</td>
+            <td th:text="${user.gradeName != null ? user.gradeName : '-'}">실버</td>
+
+           <td>
+  <span class="badge bg-success" th:if="${user.memberStatus == '가입중'}">가입중</span>
+  <span class="badge bg-warning text-dark" th:if="${user.memberStatus == '징계정지'}">징계정지</span>
+  <span class="badge bg-danger" th:if="${user.memberStatus == '사고정지'}">사고정지</span>
+  <span class="badge bg-secondary" th:if="${user.memberStatus == '자발적탈퇴'}">자발적탈퇴</span>
+  <span class="badge bg-dark" th:if="${user.memberStatus == '징계탈퇴'}">징계탈퇴</span>
+  <span class="badge text-bg-light border" th:if="${user.memberStatus == '사고탈퇴'}">사고탈퇴</span>
+</td>
+
+            <td class="text-secondary"
+                th:text="${user.lastLoginDate != null ? #temporals.format(user.lastLoginDate, 'yyyy-MM-dd HH:mm') : '-'}">
+              2026-03-10 10:20
+            </td>
+
+            <td class="text-end">
+              <div class="d-flex justify-content-end gap-1 flex-wrap">
+                <button class="btn btn-sm btn-outline-secondary"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#userDetailModal"
+                        th:attr="data-member-id=${user.memberId}">
+                  상세
+                </button>
+
+                <button class="btn btn-sm btn-outline-primary"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#userEditModal"
+                        th:attr="data-member-id=${user.memberId},
+                                 data-login-id=${user.loginId},
+                                 data-name=${user.userName},
+                                 data-nickname=${user.nickname},
+                                 data-status=${user.memberStatus}">
+                  수정
+                </button>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 페이징 -->
+      <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+        <div class="small text-secondary">
+          페이지 <span th:text="${page}">1</span> / <span th:text="${totalPages}">1</span>
+        </div>
+
+        <nav th:if="${totalPages > 0}" aria-label="회원 목록 페이지">
+          <ul class="pagination pagination-sm mb-0">
+
+            <li class="page-item" th:classappend="${page <= 1} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/admin/users(page=${page - 1}, type=${type}, grade=${grade}, status=${status}, keyword=${keyword})}">
+                이전
+              </a>
+            </li>
+
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence((page - 2 > 1 ? page - 2 : 1), (page + 2 < totalPages ? page + 2 : totalPages))}"
+                th:classappend="${i == page} ? 'active'">
+              <a class="page-link"
+                 th:text="${i}"
+                 th:href="@{/admin/users(page=${i}, type=${type}, grade=${grade}, status=${status}, keyword=${keyword})}">
+                1
+              </a>
+            </li>
+
+            <li class="page-item" th:classappend="${page >= totalPages} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/admin/users(page=${page + 1}, type=${type}, grade=${grade}, status=${status}, keyword=${keyword})}">
+                다음
+              </a>
+            </li>
+
+          </ul>
+        </nav>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 상세 모달 -->
+  <div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header">
+          <h5 class="modal-title">회원 상세</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <div class="p-3 border rounded-4 bg-light h-100">
+                <div class="small text-secondary">기본 정보</div>
+                <div class="mt-2">
+                  <div><span class="text-secondary">mem_id:</span> <span data-role="memberId" class="fw-semibold"></span></div>
+                  <div><span class="text-secondary">로그인ID:</span> <span data-role="loginId"></span></div>
+                  <div><span class="text-secondary">이름:</span> <span data-role="name"></span></div>
+                  <div><span class="text-secondary">닉네임:</span> <span data-role="nickname"></span></div>
+                  <div><span class="text-secondary">이메일:</span> <span data-role="email"></span></div>
+                  <div><span class="text-secondary">연락처:</span> <span data-role="phone"></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="p-3 border rounded-4 bg-light h-100">
+                <div class="small text-secondary">가입 / 상태</div>
+                <div class="mt-2">
+                  <div><span class="text-secondary">가입유형:</span> <span data-role="type"></span></div>
+                  <div><span class="text-secondary">등급:</span> <span data-role="grade"></span></div>
+                  <div><span class="text-secondary">상태:</span> <span data-role="status"></span></div>
+                  <div><span class="text-secondary">가입일:</span> <span data-role="createdAt"></span></div>
+                  <div><span class="text-secondary">최종접속:</span> <span data-role="lastLogin"></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="p-3 border rounded-4 bg-light h-100">
+                <div class="small text-secondary">개인 정보</div>
+                <div class="mt-2">
+                  <div><span class="text-secondary">생년월일:</span> <span data-role="birth"></span></div>
+                  <div><span class="text-secondary">성별:</span> <span data-role="gender"></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="p-3 border rounded-4 bg-light h-100">
+                <div class="small text-secondary">주소</div>
+                <div class="mt-2">
+                  <div><span class="text-secondary">우편번호:</span> <span data-role="zipcode"></span></div>
+                  <div><span class="text-secondary">주소:</span> <span data-role="address1"></span></div>
+                  <div><span class="text-secondary">상세:</span> <span data-role="address2"></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="p-3 border rounded-4 bg-light">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div class="small text-secondary">작성 게시글</div>
+                </div>
+
+                <div class="table-responsive mt-2">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                    <tr>
+                      <th style="width:80px;">ID</th>
+                      <th>제목</th>
+                      <th style="width:140px;">작성일</th>
+                      <th style="width:80px;">조회</th>
+                    </tr>
+                    </thead>
+
+                    <tbody data-role="userPosts">
+                    <tr>
+                      <td colspan="4" class="text-center text-secondary">불러오는 중...</td>
+                    </tr>
+                    </tbody>
+
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 수정 모달 -->
+  <div class="modal fade" id="userEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header">
+          <h5 class="modal-title">회원 상태 수정</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="p-3 border rounded-4 bg-light mb-3">
+            <div><span class="text-secondary">mem_id:</span> <span data-role="memberId" class="fw-semibold"></span></div>
+            <div><span class="text-secondary">로그인ID:</span> <span data-role="loginId"></span></div>
+            <div><span class="text-secondary">이름:</span> <span data-role="name"></span></div>
+            <div><span class="text-secondary">닉네임:</span> <span data-role="nickname"></span></div>
+            <div><span class="text-secondary">현재 상태:</span> <span data-role="status" class="fw-semibold"></span></div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small text-secondary">처리 사유</label>
+			<textarea class="form-control" data-role="reason" rows="3"
+          placeholder="정지 또는 탈퇴 처리 사유를 입력하세요"></textarea>
+          </div>
+
+          <input type="hidden" data-role="memberIdInput">
+          <input type="hidden" data-role="rawStatus">
+        </div>
+
+        <div class="modal-footer d-flex justify-content-between">
+          <div class="d-flex gap-2 flex-wrap" data-role="actionButtons"></div>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- 최종 확인 모달 -->
+  <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header">
+          <h5 class="modal-title" data-role="confirmTitle">처리 확인</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-2 fw-semibold" data-role="confirmMessage">
+            정말 처리하시겠습니까?
+          </div>
+          <div class="small text-secondary mb-3" data-role="confirmSubMessage">
+            처리 후 상태가 변경됩니다.
+          </div>
+
+          <div class="p-3 border rounded-4 bg-light">
+            <div><span class="text-secondary">mem_id:</span> <span data-role="confirmMemberId"></span></div>
+            <div><span class="text-secondary">로그인ID:</span> <span data-role="confirmLoginId"></span></div>
+            <div><span class="text-secondary">이름:</span> <span data-role="confirmName"></span></div>
+            <div><span class="text-secondary">닉네임:</span> <span data-role="confirmNickname"></span></div>
+            <div><span class="text-secondary">처리 유형:</span> <span data-role="confirmActionLabel" class="fw-semibold"></span></div>
+            <div><span class="text-secondary">사유:</span> <span data-role="confirmReason"></span></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">취소</button>
+          <button class="btn btn-primary" type="button" data-role="confirmSubmitBtn">확인</button>
+        </div>
+      </div>
+    </div>
+    </div>
+
+   <script>
+(() => {
+  const qs = (root, sel) => root.querySelector(sel);
+  const byRole = (root, role) => qs(root, `[data-role="${role}"]`);
+
+  const setText = (root, role, value) => {
+    const el = byRole(root, role);
+    if (el) el.textContent = value ?? '';
+  };
+
+  const escapeHtml = (value) => {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) return '-';
+    return String(value).replace('T', ' ').substring(0, 16);
+  };
+
+  const getStatusLabel = (status) => {
+    if (status === '가입중') return '가입중';
+    if (status === '징계정지') return '징계정지';
+    if (status === '사고정지') return '사고정지';
+    if (status === '자발적탈퇴') return '자발적탈퇴';
+    if (status === '징계탈퇴') return '징계탈퇴';
+    if (status === '사고탈퇴') return '사고탈퇴';
+    return status ?? '-';
+  };
+
+  const getActionMeta = (targetStatus) => {
+    if (targetStatus === '징계정지') {
+      return {
+        title: '회원 징계정지 확인',
+        message: '이 회원을 징계정지 처리하시겠습니까?',
+        subMessage: '징계 사유로 회원 상태가 변경됩니다.',
+        label: '징계정지',
+        btnClass: 'btn btn-warning'
+      };
+    }
+    if (targetStatus === '사고정지') {
+      return {
+        title: '회원 사고정지 확인',
+        message: '이 회원을 사고정지 처리하시겠습니까?',
+        subMessage: '보안/사고 사유로 회원 상태가 변경됩니다.',
+        label: '사고정지',
+        btnClass: 'btn btn-danger'
+      };
+    }
+    if (targetStatus === '가입중') {
+      return {
+        title: '회원 상태 복구 확인',
+        message: '이 회원 상태를 가입중으로 변경하시겠습니까?',
+        subMessage: '정지 상태가 해제되고 정상 상태로 복구됩니다.',
+        label: '정지해제',
+        btnClass: 'btn btn-success'
+      };
+    }
+    if (targetStatus === '징계탈퇴') {
+      return {
+        title: '회원 징계탈퇴 확인',
+        message: '이 회원을 징계탈퇴 처리하시겠습니까?',
+        subMessage: '징계 사유로 탈퇴 상태로 변경됩니다.',
+        label: '징계탈퇴',
+        btnClass: 'btn btn-dark'
+      };
+    }
+    if (targetStatus === '사고탈퇴') {
+      return {
+        title: '회원 사고탈퇴 확인',
+        message: '이 회원을 사고탈퇴 처리하시겠습니까?',
+        subMessage: '보안/사고 사유로 탈퇴 상태로 변경됩니다.',
+        label: '사고탈퇴',
+        btnClass: 'btn btn-dark'
+      };
+    }
+    return null;
+  };
+
+  // 상세 모달
+  const detailModalEl = document.querySelector('#userDetailModal');
+  if (detailModalEl) {
+    detailModalEl.addEventListener('show.bs.modal', async (event) => {
+      const btn = event.relatedTarget;
+      if (!btn) return;
+
+      const memberId = btn.dataset.memberId;
+      if (!memberId) return;
+
+      const postArea = byRole(detailModalEl, 'userPosts');
+      postArea.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center text-secondary">불러오는 중...</td>
+        </tr>
+      `;
+
+      try {
+        const response = await fetch(`/admin/users/${memberId}`);
+        if (!response.ok) throw new Error('user fetch fail');
+
+        const user = await response.json();
+
+        setText(detailModalEl, 'memberId', user.memberId);
+        setText(detailModalEl, 'loginId', user.loginId);
+        setText(detailModalEl, 'name', user.userName);
+        setText(detailModalEl, 'nickname', user.nickname);
+        setText(detailModalEl, 'email', user.email);
+        setText(detailModalEl, 'phone', user.phone);
+        setText(detailModalEl, 'type', user.memberType);
+        setText(detailModalEl, 'grade', user.gradeName ?? '-');
+        setText(detailModalEl, 'status', getStatusLabel(user.memberStatus));
+        setText(detailModalEl, 'createdAt', formatDateTime(user.createdDate));
+        setText(detailModalEl, 'lastLogin', formatDateTime(user.lastLoginDate));
+        setText(detailModalEl, 'birth', user.birthDate ?? '-');
+        setText(detailModalEl, 'gender', user.gender ?? '-');
+        setText(detailModalEl, 'zipcode', user.zipcode ?? '-');
+        setText(detailModalEl, 'address1', user.address ?? '-');
+        setText(detailModalEl, 'address2', user.address2 ?? '-');
+
+        const postResponse = await fetch(`/admin/users/${memberId}/posts`);
+        if (!postResponse.ok) throw new Error('post fetch fail');
+
+        const posts = await postResponse.json();
+        postArea.innerHTML = '';
+
+        if (!posts || posts.length === 0) {
+          postArea.innerHTML = `
+            <tr>
+              <td colspan="4" class="text-center text-secondary">
+                작성한 게시글이 없습니다.
+              </td>
+            </tr>
+          `;
+        } else {
+          posts.forEach((p) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${p.postId ?? '-'}</td>
+              <td>
+                <a href="/community/detail/${p.postId}" target="_blank">
+                  ${escapeHtml(p.title ?? '-')}
+                </a>
+              </td>
+              <td>${formatDateTime(p.createdDate)}</td>
+              <td>${p.viewCount ?? 0}</td>
+            `;
+            postArea.appendChild(tr);
+          });
+        }
+
+      } catch (e) {
+        postArea.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center text-danger">
+              게시글 정보를 불러오지 못했습니다.
+            </td>
+          </tr>
+        `;
+        alert('회원 상세 정보를 불러오지 못했습니다.');
+      }
+    });
+  }
+
+  // 수정 모달 + 확인 모달
+  const editModalEl = document.querySelector('#userEditModal');
+  const confirmModalEl = document.querySelector('#confirmActionModal');
+
+  let editModalInstance = null;
+  let confirmModalInstance = null;
+  let pendingAction = null;
+
+  if (editModalEl) {
+    editModalEl.addEventListener('show.bs.modal', (event) => {
+      const btn = event.relatedTarget;
+      if (!btn) return;
+
+      const memberId = btn.dataset.memberId ?? '';
+      const loginId = btn.dataset.loginId ?? '';
+      const name = btn.dataset.name ?? '';
+      const nickname = btn.dataset.nickname ?? '';
+      const status = btn.dataset.status ?? '';
+
+      setText(editModalEl, 'memberId', memberId);
+      setText(editModalEl, 'loginId', loginId);
+      setText(editModalEl, 'name', name);
+      setText(editModalEl, 'nickname', nickname);
+      setText(editModalEl, 'status', getStatusLabel(status));
+
+      byRole(editModalEl, 'memberIdInput').value = memberId;
+      byRole(editModalEl, 'rawStatus').value = status;
+      byRole(editModalEl, 'reason').value = '';
+
+      const actionButtons = byRole(editModalEl, 'actionButtons');
+      if (!actionButtons) return;
+      actionButtons.innerHTML = '';
+
+      if (status === '가입중') {
+        actionButtons.innerHTML = `
+          <button type="button" class="btn btn-warning btn-sm" data-target-status="징계정지">징계정지</button>
+          <button type="button" class="btn btn-danger btn-sm" data-target-status="사고정지">사고정지</button>
+          <button type="button" class="btn btn-dark btn-sm" data-target-status="징계탈퇴">징계탈퇴</button>
+          <button type="button" class="btn btn-dark btn-sm" data-target-status="사고탈퇴">사고탈퇴</button>
+        `;
+      } else if (status === '징계정지' || status === '사고정지') {
+        actionButtons.innerHTML = `
+          <button type="button" class="btn btn-success btn-sm" data-target-status="가입중">정지해제</button>
+          <button type="button" class="btn btn-dark btn-sm" data-target-status="징계탈퇴">징계탈퇴</button>
+          <button type="button" class="btn btn-dark btn-sm" data-target-status="사고탈퇴">사고탈퇴</button>
+        `;
+      } else {
+        actionButtons.innerHTML = `
+          <button type="button" class="btn btn-secondary btn-sm" disabled>처리 완료 상태</button>
+        `;
+      }
+    });
+
+    editModalEl.addEventListener('click', (e) => {
+      const actionBtn = e.target.closest('[data-target-status]');
+      if (!actionBtn || !confirmModalEl) return;
+
+      const targetStatus = actionBtn.dataset.targetStatus;
+      const meta = getActionMeta(targetStatus);
+      if (!meta) return;
+
+      const memberId = byRole(editModalEl, 'memberIdInput')?.value ?? '';
+      const loginId = byRole(editModalEl, 'loginId')?.textContent ?? '';
+      const name = byRole(editModalEl, 'name')?.textContent ?? '';
+      const nickname = byRole(editModalEl, 'nickname')?.textContent ?? '';
+      const reason = byRole(editModalEl, 'reason')?.value?.trim() ?? '';
+
+      if (targetStatus !== '가입중' && !reason) {
+        alert('처리 사유를 입력해 주세요.');
+        byRole(editModalEl, 'reason')?.focus();
+        return;
+      }
+
+      pendingAction = {
+        memberId,
+        loginId,
+        name,
+        nickname,
+        reason,
+        memberStatus: targetStatus
+      };
+
+      setText(confirmModalEl, 'confirmTitle', meta.title);
+      setText(confirmModalEl, 'confirmMessage', meta.message);
+      setText(confirmModalEl, 'confirmSubMessage', meta.subMessage);
+      setText(confirmModalEl, 'confirmMemberId', memberId);
+      setText(confirmModalEl, 'confirmLoginId', loginId);
+      setText(confirmModalEl, 'confirmName', name);
+      setText(confirmModalEl, 'confirmNickname', nickname);
+      setText(confirmModalEl, 'confirmActionLabel', meta.label);
+      setText(confirmModalEl, 'confirmReason', reason || '-');
+
+      const confirmSubmitBtn = byRole(confirmModalEl, 'confirmSubmitBtn');
+      confirmSubmitBtn.textContent = meta.label;
+      confirmSubmitBtn.className = meta.btnClass;
+
+      if (window.bootstrap && confirmModalEl) {
+        confirmModalInstance = bootstrap.Modal.getOrCreateInstance(confirmModalEl);
+        confirmModalInstance.show();
+      } else {
+        alert('확인 모달을 불러오지 못했습니다.');
+      }
+    });
+  }
+
+  if (confirmModalEl) {
+    byRole(confirmModalEl, 'confirmSubmitBtn')?.addEventListener('click', async () => {
+      if (!pendingAction) return;
+
+      const body = new URLSearchParams();
+      body.append('memberId', pendingAction.memberId);
+      body.append('memberStatus', pendingAction.memberStatus);
+      body.append('reason', pendingAction.reason);
+
+      try {
+        const response = await fetch('/admin/users/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString()
+        });
+
+        if (!response.ok) throw new Error();
+
+        if (window.bootstrap && confirmModalEl) {
+          confirmModalInstance = bootstrap.Modal.getOrCreateInstance(confirmModalEl);
+          confirmModalInstance.hide();
+        }
+        if (window.bootstrap && editModalEl) {
+          editModalInstance = bootstrap.Modal.getOrCreateInstance(editModalEl);
+          editModalInstance.hide();
+        }
+
+        alert('회원 상태가 변경되었습니다.');
+        location.reload();
+      } catch (err) {
+        alert('처리에 실패했습니다.');
+      }
+    });
+  }
+})();
+</script>
+</div>
+</html>

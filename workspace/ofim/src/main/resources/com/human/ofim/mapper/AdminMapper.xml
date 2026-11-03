@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.AdminMapper">
+
+    <!-- 회원 유형별 카운트 -->
+    <select id="selectUserTypeCounts" resultType="map">
+        SELECT
+            COUNT(*) AS totalUserCount,
+            SUM(CASE WHEN member_type = '일반회원' THEN 1 ELSE 0 END) AS totalPersonalCount,
+            SUM(CASE WHEN member_type = '파트너회원' THEN 1 ELSE 0 END) AS totalPartnerCount,
+            SUM(CASE WHEN member_type = '전문가회원' THEN 1 ELSE 0 END) AS totalExpertCount,
+            SUM(CASE WHEN member_type = '관리자' THEN 1 ELSE 0 END) AS totalAdminCount,
+            SUM(CASE WHEN DATE(created_date) = CURDATE() THEN 1 ELSE 0 END) AS todayJoinCount
+        FROM user
+    </select>
+
+    <!-- 최근 6개월 가입자 추이 -->
+    <select id="selectMonthlySignup" resultType="map">
+        WITH RECURSIVE months AS (
+            SELECT DATE_FORMAT(
+                       DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 5 MONTH),
+                       '%Y-%m-01'
+                   ) AS month_start
+            UNION ALL
+            SELECT DATE_FORMAT(DATE_ADD(month_start, INTERVAL 1 MONTH), '%Y-%m-01')
+            FROM months
+            WHERE month_start &lt; DATE_FORMAT(CURDATE(), '%Y-%m-01')
+        ),
+        agg AS (
+            SELECT
+                DATE_FORMAT(created_date, '%Y-%m-01') AS month_start,
+                COUNT(*) AS cnt
+            FROM user
+            WHERE
+                #{memberScope} = 'ALL'
+                OR (#{memberScope} = 'PERSONAL' AND member_type = '일반회원')
+                OR (#{memberScope} = 'PARTNER' AND member_type = '파트너회원')
+                OR (#{memberScope} = 'EXPERT' AND member_type = '전문가회원')
+                OR (#{memberScope} = 'ADMIN' AND member_type = '관리자')
+            GROUP BY DATE_FORMAT(created_date, '%Y-%m-01')
+        )
+        SELECT
+            DATE_FORMAT(m.month_start, '%Y-%m') AS label,
+            IFNULL(a.cnt, 0) AS value
+        FROM months m
+        LEFT JOIN agg a ON a.month_start = m.month_start
+        ORDER BY m.month_start
+    </select>
+
+    <!-- 1:1 문의 요약 -->
+    <!-- 기존 comment 테이블 -> 실제 board_reply 테이블 기준으로 수정 -->
+    <select id="selectInquirySummary" parameterType="int" resultType="map">
+        SELECT
+            COUNT(*) AS inquiryTotalCount,
+            SUM(CASE WHEN DATE(b.created_date) = CURDATE() THEN 1 ELSE 0 END) AS inquiryNewCount,
+            SUM(CASE WHEN r.reply_count IS NULL OR r.reply_count = 0 THEN 1 ELSE 0 END) AS inquiryUnreadCount,
+            SUM(CASE WHEN r.reply_count IS NOT NULL AND r.reply_count &gt; 0 THEN 1 ELSE 0 END) AS inquiryInProgressCount
+        FROM board b
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) AS reply_count
+            FROM board_reply
+            GROUP BY post_id
+        ) r ON r.post_id = b.post_id
+        WHERE b.deleted = 0
+          AND b.category_id = #{inquiryCategoryId}
+    </select>
+
+    <!-- 게시판 통계 -->
+    <select id="selectBoardStats" resultType="map">
+        SELECT
+            COUNT(CASE WHEN b.deleted = 0 THEN 1 END) AS totalPostCount,
+
+            COUNT(CASE WHEN b.deleted = 0 AND c.category_name = '자유게시판' THEN 1 END) AS freeCount,
+            COUNT(CASE WHEN b.deleted = 0 AND c.category_name = '자유게시판'
+                       AND DATE(b.created_date) = CURDATE() THEN 1 END) AS freeTodayCount,
+
+            COUNT(CASE WHEN b.deleted = 0 AND c.category_name = '건강 Q&amp;A' THEN 1 END) AS qnaCount,
+            COUNT(CASE WHEN b.deleted = 0 AND c.category_name = '건강 Q&amp;A'
+                       AND DATE(b.created_date) = CURDATE() THEN 1 END) AS qnaTodayCount,
+
+            COUNT(CASE WHEN b.deleted = 0 AND c.category_name = '카드뉴스' THEN 1 END) AS cardnewsCount,
+            COUNT(CASE WHEN b.deleted = 0 AND c.category_name = '카드뉴스'
+                       AND DATE(b.created_date) = CURDATE() THEN 1 END) AS cardnewsTodayCount,
+
+            COUNT(CASE WHEN b.deleted = 0 AND c.category_name = '관리자에게' THEN 1 END) AS inquiryPostCount,
+            COUNT(CASE WHEN b.deleted = 0 AND c.category_name = '관리자에게'
+                       AND DATE(b.created_date) = CURDATE() THEN 1 END) AS inquiryTodayPostCount
+        FROM board b
+        JOIN category c ON b.category_id = c.category_id
+    </select>
+
+    <!-- 인기 게시글 -->
+    <!-- board_like.like_id 없음 -> member_id 기준 COUNT -->
+    <select id="selectPopularContents" resultType="com.human.ofim.dto.AdminBoardItemDto">
+        SELECT
+            b.post_id AS postId,
+            b.title AS title,
+            b.view_count AS viewCount,
+            COUNT(bl.member_id) AS likeCount,
+            c.category_name AS categoryName,
+            DATE_FORMAT(b.created_date, '%Y-%m-%d') AS createdDate
+        FROM board b
+        JOIN category c
+            ON b.category_id = c.category_id
+        LEFT JOIN board_like bl
+            ON b.post_id = bl.post_id
+        WHERE b.deleted = 0
+        GROUP BY b.post_id, b.title, b.view_count, c.category_name, b.created_date
+        ORDER BY b.view_count DESC, likeCount DESC, b.created_date DESC
+        LIMIT 5
+    </select>
+
+    <!-- 최신 게시글 -->
+    <select id="selectLatestPosts" resultType="com.human.ofim.dto.AdminBoardItemDto">
+        SELECT
+            b.post_id AS postId,
+            b.title AS title,
+            b.view_count AS viewCount,
+            COUNT(bl.member_id) AS likeCount,
+            c.category_name AS categoryName,
+            DATE_FORMAT(b.created_date, '%Y-%m-%d %H:%i') AS createdDate
+        FROM board b
+        JOIN category c
+            ON b.category_id = c.category_id
+        LEFT JOIN board_like bl
+            ON b.post_id = bl.post_id
+        WHERE b.deleted = 0
+        GROUP BY b.post_id, b.title, b.view_count, c.category_name, b.created_date
+        ORDER BY b.created_date DESC
+        LIMIT 5
+    </select>
+
+    <!-- 승인 대기 전문가 수 -->
+    <select id="selectPendingExpertCount" resultType="long">
+        SELECT COUNT(*)
+        FROM expert_user
+        WHERE approve_status = 0
+    </select>
+
+</mapper>

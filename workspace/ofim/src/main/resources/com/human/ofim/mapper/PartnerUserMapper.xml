@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.human.ofim.mapper.PartnerUserMapper">
+    <insert id="insertPartner" parameterType="com.human.ofim.dto.PartnerUserDto">
+        INSERT INTO partner_user (
+            member_id, business_no, ceo_name, open_date, approve_status,
+            approve_date, company_name, mail_order_no, business_docs_path, mail_order_docs_path
+        ) VALUES (
+            #{memberId}, #{businessNo}, #{ceoName}, #{openDate}, 0,
+            NULL, #{companyName}, #{mailOrderNo}, #{businessDocsPath}, #{mailOrderDocsPath}
+        )
+    </insert>
+
+    <!-- 파트너 계정 승인 여부 조회 -->
+    <select id="selectApproveStatus" resultType="java.lang.Integer">
+        SELECT approve_status FROM partner_user WHERE member_id = #{memberId}
+    </select>
+</mapper>

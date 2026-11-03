@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.human.ofim.mapper.BookmarkMapper">
+
+	<select id="checkBookmark" resultType="int">
+		SELECT COUNT(*)
+		FROM board_bookmark
+		WHERE member_id = #{memberId} AND post_id = #{postId}
+	</select>
+
+	<insert id="insertBookmark">
+		INSERT INTO board_bookmark (member_id, post_id, regi_date)
+		VALUES (#{memberId}, #{postId}, NOW())
+	</insert>
+
+	<delete id="deleteBookmark">
+		DELETE FROM board_bookmark
+		WHERE member_id = #{memberId} AND post_id = #{postId}
+	</delete>
+
+	<select id="getMyBookmarks"
+		resultType="com.human.ofim.dto.BoardDto">
+		SELECT b.*, bm.regi_date
+		FROM board b
+		JOIN board_bookmark bm ON b.post_id = bm.post_id
+		WHERE bm.member_id = #{memberId}
+		ORDER BY bm.regi_date DESC
+	</select>
+	
+	<select id="getMyBookmarksPaging" resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+			b.post_id AS postId,
+			b.title AS title,
+			b.content AS content,
+			b.created_date AS createdDate,
+			b.view_count AS viewCount,
+			b.sub_category AS subCategory,
+			c.category_name AS categoryName,
+			(SELECT COUNT(*) FROM board_like bl WHERE bl.post_id = b.post_id) AS likeCount,
+			(SELECT COUNT(*) FROM board_reply br WHERE br.post_id = b.post_id) AS replyCount
+		FROM board_bookmark bm
+		JOIN board b ON bm.post_id = b.post_id
+		LEFT JOIN category c ON b.category_id = c.category_id
+		WHERE bm.member_id = #{memberId}
+		  AND b.deleted = 0
+
+		<if test="keyword != null and keyword != ''">
+			AND (b.title LIKE CONCAT('%', #{keyword}, '%') OR b.content LIKE CONCAT('%', #{keyword}, '%'))
+		</if>
+
+		ORDER BY bm.regi_date DESC 
+		
+		LIMIT #{offset}, #{amount}
+	</select>
+
+	<select id="countMyBookmarks" resultType="int">
+		SELECT COUNT(*)
+		FROM board_bookmark bm
+		JOIN board b ON bm.post_id = b.post_id
+		WHERE bm.member_id = #{memberId}
+		  AND b.deleted = 0
+
+		<if test="keyword != null and keyword != ''">
+			AND (b.title LIKE CONCAT('%', #{keyword}, '%') OR b.content LIKE CONCAT('%', #{keyword}, '%'))
+		</if>
+	</select>
+
+</mapper>

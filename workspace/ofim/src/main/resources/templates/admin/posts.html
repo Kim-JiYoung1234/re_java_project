@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::content})}">
+<div th:fragment="content">
+
+  <div class="card card-soft mb-3">
+    <div class="card-body">
+      <form method="get" th:action="@{/admin/posts}" class="row g-2">
+        <div class="col-12 col-md-4">
+          <div class="input-group">
+            <input type="text"
+                   class="form-control"
+                   name="keyword"
+                   placeholder="제목 / 작성자 검색"
+                   th:value="${keyword}">
+            <button class="btn btn-primary" type="submit">검색</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card card-soft">
+    <div class="card-body">
+
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <div class="fw-semibold">게시글 관리</div>
+          <div class="small text-secondary">전체 게시글 조회 및 삭제</div>
+        </div>
+
+        <div class="small text-secondary">
+          총 <span class="fw-semibold" th:text="${totalCount}">0</span>개
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+          <tr>
+            <th style="width:90px;">ID</th>
+            <th style="min-width:240px;">제목</th>
+            <th style="width:120px;">작성자</th>
+            <th style="width:120px;">카테고리</th>
+            <th style="width:90px;">조회</th>
+            <th style="width:90px;">댓글</th>
+            <th style="width:90px;">신고</th>
+            <th style="width:160px;">작성일</th>
+            <th class="text-end" style="width:140px;">작업</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <tr th:if="${boards == null or #lists.isEmpty(boards)}">
+            <td colspan="9" class="text-center py-5 text-secondary">
+              게시글이 없습니다.
+            </td>
+          </tr>
+
+          <tr th:each="b : ${boards}">
+            <td th:text="${b.postId}">1</td>
+
+            <td>
+              <a th:href="@{/community/detail/{id}(id=${b.postId})}"
+                 target="_blank"
+                 class="fw-semibold text-decoration-none"
+                 th:text="${b.title}">
+                게시글 제목
+              </a>
+            </td>
+
+            <td th:text="${b.writerName}">작성자</td>
+            <td th:text="${b.categoryName != null ? b.categoryName : '-'}">카테고리</td>
+            <td th:text="${b.viewCount}">10</td>
+            <td th:text="${b.replyCount}">3</td>
+
+            <td>
+              <span class="badge bg-danger" th:if="${b.reportCount > 0}" th:text="${b.reportCount}">1</span>
+              <span th:if="${b.reportCount == 0}">-</span>
+            </td>
+
+            <td th:text="${b.createdDate != null ? #dates.format(b.createdDate, 'yyyy-MM-dd HH:mm') : '-'}">
+              2026-03-11
+            </td>
+
+            <td class="text-end">
+              <div class="d-flex justify-content-end gap-1">
+                <a class="btn btn-sm btn-outline-secondary"
+                   th:href="@{/community/detail/{id}(id=${b.postId})}"
+                   target="_blank">
+                  보기
+                </a>
+
+                <button class="btn btn-sm btn-danger"
+                        type="button"
+                        th:attr="data-post-id=${b.postId}"
+                        onclick="deletePost(this)">
+                  삭제
+                </button>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+        <div class="small text-secondary">
+          페이지 <span th:text="${page}">1</span> / <span th:text="${totalPages}">1</span>
+        </div>
+
+        <nav th:if="${totalPages > 0}" aria-label="게시글 목록 페이지">
+          <ul class="pagination pagination-sm mb-0">
+
+            <li class="page-item" th:classappend="${page <= 1} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/admin/posts(page=${page - 1}, keyword=${keyword})}">
+                이전
+              </a>
+            </li>
+
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence((page - 2 > 1 ? page - 2 : 1), (page + 2 < totalPages ? page + 2 : totalPages))}"
+                th:classappend="${i == page} ? 'active'">
+              <a class="page-link"
+                 th:text="${i}"
+                 th:href="@{/admin/posts(page=${i}, keyword=${keyword})}">
+                1
+              </a>
+            </li>
+
+            <li class="page-item" th:classappend="${page >= totalPages} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/admin/posts(page=${page + 1}, keyword=${keyword})}">
+                다음
+              </a>
+            </li>
+
+          </ul>
+        </nav>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function deletePost(button) {
+      const postId = button.dataset.postId;
+
+      if (!confirm("게시글을 삭제하시겠습니까?")) {
+        return;
+      }
+
+      fetch(`/admin/posts/delete/${postId}`, {
+        method: "POST"
+      })
+      .then(response => {
+        if (!response.ok) throw new Error();
+        return response.json();
+      })
+      .then(data => {
+        alert(data.message ?? "삭제되었습니다.");
+        location.reload();
+      })
+      .catch(() => {
+        alert("게시글 삭제에 실패했습니다.");
+      });
+    }
+  </script>
+
+</div>
+</html>

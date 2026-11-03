@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{admin/layout :: layout(~{::content})}">
+
+<div th:fragment="content">
+
+	<div class="container-fluid py-4">
+
+		<!-- 상단 타이틀 -->
+		<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+			<div>
+				<h4 class="fw-bold mb-1">전문가 관리</h4>
+				<div class="text-muted small">전문가 운영 현황과 기본 정보를 관리합니다.</div>
+			</div>
+
+			<div class="d-flex gap-2">
+				<a th:href="@{/admin/expert/list(keyword=${keyword}, minConsult=${minConsult}, sort=${sort})}"
+				   class="btn btn-outline-secondary btn-sm"> 전체보기 </a>
+			</div>
+		</div>
+
+		<!-- ✅ 퀵필터 -->
+		<div class="d-flex flex-wrap gap-2 mb-3">
+			<a th:href="@{/admin/expert/list(keyword=${keyword}, minConsult=${minConsult}, sort=${sort})}"
+			   class="btn btn-sm" th:classappend="${status == null} ? ' btn-primary' : ' btn-outline-primary'">
+			   전체 </a> 
+			<a th:href="@{/admin/expert/list(status=0, keyword=${keyword}, minConsult=${minConsult}, sort=${sort})}"
+			   class="btn btn-sm" th:classappend="${status != null and status == 0} ? ' btn-warning' : ' btn-outline-warning'">
+			   승인대기 </a> 
+			<a th:href="@{/admin/expert/list(status=1, keyword=${keyword}, minConsult=${minConsult}, sort=${sort})}"
+			   class="btn btn-sm" th:classappend="${status != null and status == 1} ? ' btn-success' : ' btn-outline-success'">
+			   승인 </a> 
+			<a th:href="@{/admin/expert/list(status=2, keyword=${keyword}, minConsult=${minConsult}, sort=${sort})}"
+			   class="btn btn-sm" th:classappend="${status != null and status == 2} ? ' btn-danger' : ' btn-outline-danger'">
+		       반려 </a>
+		</div>
+
+		<!-- 메시지 -->
+		<div th:if="${errorMessage != null}" class="alert alert-danger shadow-sm">
+			<i class="bi bi-exclamation-triangle me-1"></i> 
+			<span th:text="${errorMessage}"></span>
+		</div>
+		<div th:if="${successMessage != null}" class="alert alert-success shadow-sm">
+			<i class="bi bi-check-circle me-1"></i> 
+			<span th:text="${successMessage}"></span>
+		</div>
+
+		<!-- 검색/필터 -->
+		<div class="card shadow-sm mb-4">
+			<div class="card-body">
+				<form method="get" th:action="@{/admin/expert/list}" class="row g-2 align-items-end">
+					<div class="col-12 col-md-3">
+						<label class="form-label mb-1">검색</label> 
+						<input type="text" name="keyword" class="form-control"
+							placeholder="이름 / 로그인ID / 이메일 / 전문분야" th:value="${keyword}">
+					</div>
+
+					<div class="col-6 col-md-2">
+						<label class="form-label mb-1">승인상태</label> 
+						<select name="status" class="form-select">
+							<option value="" th:selected="${status == null}">전체</option>
+							<option value="0" th:selected="${status != null and status == 0}">승인대기</option>
+							<option value="1" th:selected="${status != null and status == 1}">승인</option>
+							<option value="2" th:selected="${status != null and status == 2}">반려</option>
+						</select>
+					</div>
+
+					<!-- 최소 상담수 -->
+					<div class="col-6 col-md-2">
+						<label class="form-label mb-1">최소 상담수</label> 
+						<input type="number" name="minConsult" class="form-control" min="0"
+							placeholder="예: 10" th:value="${minConsult}">
+					</div>
+
+					<!-- 정렬 -->
+					<div class="col-12 col-md-3">
+						<label class="form-label mb-1">정렬</label> 
+						<select name="sort" class="form-select">
+							<option value="CREATED_DESC"
+								th:selected="${sort == null or sort == 'CREATED_DESC'}">신청일 최신순</option>
+							<option value="CONSULT_DESC"
+								th:selected="${sort == 'CONSULT_DESC'}">상담수 많은순</option>
+							<option value="CONSULT_ASC"
+								th:selected="${sort == 'CONSULT_ASC'}">상담수 적은순</option>
+							<option value="MINUTES_DESC"
+								th:selected="${sort == 'MINUTES_DESC'}">상담시간 긴순</option>
+							<option value="MINUTES_ASC"
+								th:selected="${sort == 'MINUTES_ASC'}">상담시간 짧은순</option>
+							<option value="RATING_DESC"
+								th:selected="${sort == 'RATING_DESC'}">추천점수 높은순</option>
+							<option value="RATING_ASC" th:selected="${sort == 'RATING_ASC'}">추천점수 	낮은순</option>
+							<option value="APPROVED_DESC"
+								th:selected="${sort == 'APPROVED_DESC'}">승인일 최신순</option>
+						</select>
+					</div>
+
+					<div class="col-12 col-md-2">
+						<button class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>검색</button>
+					</div>
+
+					<div class="col-12">
+						<div class="text-muted small mt-2">
+							<span th:if="${list != null}"> 총 <b th:text="${#lists.size(list)}">0</b>명 <span class="mx-2">·</span>
+								<span th:if="${minConsult != null}"> 최소 상담수 <b th:text="${minConsult}">0</b> 이상</span>
+							</span>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- 목록 -->
+		<div class="card shadow-sm">
+			<div class="card-header bg-white d-flex justify-content-between align-items-center">
+				<div class="fw-semibold">전문가 목록</div>
+				<div class="text-muted small">가입중 + 승인대기 상태에서만 승인/반려 버튼이 표시됩니다.</div>
+			</div>
+
+			<div class="card-body p-0">
+				<div class="table-responsive">
+					<table class="table table-hover mb-0 align-middle text-center">
+						<thead class="table-light">
+							<tr>
+								<th style="width: 90px;">전문가ID</th>
+								<th style="width: 180px;">로그인ID</th>
+								<th style="width: 130px;">이름</th>
+								<th style="width: 140px;">전문분야</th>
+								<th style="width: 90px;">상담수</th>
+								<th style="width: 120px;">추천점수</th>
+								<th style="width: 100px;">온라인</th>
+								<th style="width: 100px;">승인상태</th>
+								<th style="width: 120px;">회원상태</th>
+								<th style="width: 120px;">신청일</th>
+								<th style="width: 240px;">작업</th>
+							</tr>
+						</thead>
+
+						<tbody>
+							<tr th:each="expert : ${list}"
+								th:classappend="${expert.memberStatus != null and #strings.contains(expert.memberStatus, '탈퇴')} ? ' table-secondary text-muted' : ''">
+
+								<!-- 전문가ID -->
+								<td class="fw-semibold" th:text="${expert.memberId}">0</td>
+
+								<!-- 로그인ID: 탈퇴면 _WD_ 앞까지만 표시 -->
+								<td class="text-nowrap"><span
+									th:if="${expert.memberStatus != null and #strings.contains(expert.memberStatus, '탈퇴')
+                                             and expert.loginId != null and #strings.contains(expert.loginId, '_WD_')}"
+									th:text="${#strings.arraySplit(expert.loginId, '_WD_')[0]}">
+										원래아이디 </span> <span
+									th:unless="${expert.memberStatus != null and #strings.contains(expert.memberStatus, '탈퇴')
+                                               and expert.loginId != null and #strings.contains(expert.loginId, '_WD_')}"
+									th:text="${expert.loginId}"> loginId </span></td>
+
+								<!-- 이름 -->
+								<td class="text-nowrap"><span th:text="${expert.userName}">-</span>
+									<span
+									th:if="${expert.memberStatus != null and #strings.contains(expert.memberStatus, '탈퇴')}"
+									class="badge text-bg-secondary ms-1">탈퇴</span></td>
+
+								<!-- 전문분야 -->
+								<td th:text="${expert.specialty}">-</td>
+
+								<!-- 상담수 -->
+								<td><span class="fw-semibold"
+									th:text="${expert.totalConsultCount != null ? expert.totalConsultCount : 0}">0</span>
+								</td>
+
+								<!-- 추천점수 -->
+								<td>
+									<div
+										th:if="${expert.reviewCount != null and expert.reviewCount > 0}">
+										<div class="fw-semibold">
+											<span th:text="${expert.avgRating != null ? expert.avgRating : 0.0}">0.0</span>
+											<span class="text-warning">★</span>
+										</div>
+										<div class="small text-muted">
+											리뷰 <span th:text="${expert.reviewCount}">0</span>건
+										</div>
+									</div>
+
+									<div
+										th:if="${expert.reviewCount == null or expert.reviewCount == 0}"
+										class="text-muted small">평가 없음</div>
+								</td>
+
+								<!-- 온라인 -->
+								<td><span th:if="${expert.isOnline != null and expert.isOnline}" class="badge text-bg-primary">
+										<i class="bi bi-wifi me-1"></i>ON
+									</span>
+									<span th:unless="${expert.isOnline != null and expert.isOnline}"
+										  class="badge text-bg-secondary"> OFF </span>
+								</td>
+
+								<!-- 승인상태: 탈퇴면 - -->
+								<td><span
+									th:if="${expert.memberStatus != null and #strings.contains(expert.memberStatus, '탈퇴')}"
+									class="text-muted">-</span> <span
+									th:if="${expert.memberStatus == null or !#strings.contains(expert.memberStatus, '탈퇴')}">
+										<span th:if="${expert.approveStatus == 0}"
+										class="badge text-bg-warning">대기</span> <span
+										th:if="${expert.approveStatus == 1}"
+										class="badge text-bg-success">승인</span> <span
+										th:if="${expert.approveStatus == 2}"
+										class="badge text-bg-danger">반려</span> <span
+										th:if="${expert.approveStatus == null}"
+										class="badge text-bg-secondary">미정</span>
+								</span></td>
+
+								<!-- 회원상태 -->
+								<td><span th:if="${expert.memberStatus == '가입중'}"
+									class="badge text-bg-success">가입중</span> <span
+									th:if="${expert.memberStatus == '징계정지'}"
+									class="badge text-bg-warning text-dark">징계정지</span> <span
+									th:if="${expert.memberStatus == '사고정지'}"
+									class="badge text-bg-warning text-dark">사고정지</span> <span
+									th:if="${expert.memberStatus == '자발적탈퇴'}"
+									class="badge text-bg-secondary">자발적탈퇴</span> <span
+									th:if="${expert.memberStatus == '징계탈퇴'}"
+									class="badge text-bg-danger">징계탈퇴</span> <span
+									th:if="${expert.memberStatus == '사고탈퇴'}"
+									class="badge text-bg-danger">사고탈퇴</span> <span
+									th:if="${expert.memberStatus == null}"
+									class="badge text-bg-light text-dark">-</span></td>
+
+								<!-- 신청일 -->
+								<td><span th:if="${expert.createdDate != null}"
+									th:text="${#temporals.format(expert.createdDate, 'yyyy-MM-dd')}"></span>
+									<span th:if="${expert.createdDate == null}" class="text-muted">-</span>
+								</td>
+
+								<!-- 작업 -->
+								<td><a
+									th:href="@{/admin/expert/detail(memberId=${expert.memberId})}"
+									class="btn btn-sm btn-outline-primary"> 상세 </a> <a
+									th:href="@{|/admin/expert/detail?memberId=${expert.memberId}#certs|}"
+									class="btn btn-sm btn-outline-secondary ms-1"> 서류 </a> <!-- 승인/반려: 가입중 + 대기일 때만 -->
+									<button type="button" class="btn btn-sm btn-success ms-1"
+										th:if="${expert.approveStatus == 0 and expert.memberStatus == '가입중'}"
+										th:attr="data-member-id=${expert.memberId},
+                               data-name=${expert.userName},
+                               data-action=@{/admin/expert/approve}"
+										onclick="openConfirm(this,'approve')">승인</button>
+
+									<button type="button"
+										class="btn btn-sm btn-outline-danger ms-1"
+										th:if="${expert.approveStatus == 0 and expert.memberStatus == '가입중'}"
+										th:attr="data-member-id=${expert.memberId},
+                               data-name=${expert.userName},
+                               data-action=@{/admin/expert/reject}"
+										onclick="openConfirm(this,'reject')">반려</button></td>
+							</tr>
+
+							<!-- empty -->
+							<tr th:if="${list == null or #lists.isEmpty(list)}">
+								<td colspan="11" class="py-5 text-muted text-center">검색 결과가
+									없습니다.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- 승인/반려 확인 모달 -->
+		<div class="modal fade" id="confirmModal" tabindex="-1"
+			aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+
+					<div class="modal-header">
+						<h5 class="modal-title" id="confirmTitle">확인</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"
+							aria-label="닫기"></button>
+					</div>
+
+					<div class="modal-body">
+						<div id="confirmMessage"></div>
+					</div>
+
+					<div class="modal-footer">
+						<button type="button" class="btn btn-outline-secondary"
+							data-bs-dismiss="modal">취소</button>
+
+						<form id="confirmForm" method="post" class="d-inline">
+							<!-- CSRF 사용 시 주석 해제 -->
+							<!-- <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"> -->
+							<input type="hidden" name="memberId" id="confirmMemberId">
+							<button type="submit" class="btn" id="confirmSubmitBtn">확인</button>
+						</form>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<script>
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+
+    function openConfirm(btn, type) {
+      const memberId = btn.getAttribute('data-member-id');
+      const name = btn.getAttribute('data-name') || '';
+      const action = btn.getAttribute('data-action');
+
+      document.getElementById('confirmMemberId').value = memberId;
+      document.getElementById('confirmForm').action = action;
+
+      const titleEl = document.getElementById('confirmTitle');
+      const msgEl = document.getElementById('confirmMessage');
+      const submitBtn = document.getElementById('confirmSubmitBtn');
+
+      if (type === 'approve') {
+        titleEl.textContent = '전문가 승인';
+        msgEl.innerHTML = `<b>${name}</b> 전문가를 승인할까요?`;
+        submitBtn.className = 'btn btn-success';
+        submitBtn.textContent = '승인';
+      } else {
+        titleEl.textContent = '전문가 반려';
+        msgEl.innerHTML = `<b>${name}</b> 전문가를 반려할까요?`;
+        submitBtn.className = 'btn btn-outline-danger';
+        submitBtn.textContent = '반려';
+      }
+
+      confirmModal.show();
+    }
+  </script>
+
+</div>
+</html>

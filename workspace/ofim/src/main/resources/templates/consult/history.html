@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>상담 예약 내역 | OFIM</title>
+
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+	rel="stylesheet">
+<link
+	href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap"
+	rel="stylesheet">
+
+<style>
+body {
+	font-family: 'Noto Sans KR', sans-serif;
+	background-color: #f8f9fa;
+}
+
+.card {
+	border: none;
+	border-radius: 15px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.page-title-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.filter-card {
+	padding: 1.15rem;
+	margin-bottom: 1.25rem;
+}
+
+.filter-label {
+	font-size: 0.82rem;
+	color: #6c757d;
+	margin-bottom: 0.35rem;
+	font-weight: 600;
+}
+
+.reservation-card {
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.reservation-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.meta-line {
+	color: #6c757d;
+	font-size: 0.92rem;
+}
+
+.btn-sm2 {
+	padding: 0.42rem 0.75rem;
+	font-size: 0.86rem;
+	border-radius: 0.65rem;
+}
+
+.empty-wrap {
+	padding: 3.2rem 1.2rem;
+}
+
+.type-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border-radius: 999px;
+	padding: 6px 12px;
+	font-weight: 700;
+	font-size: 0.95rem;
+}
+
+.type-chat {
+	background: rgba(25, 135, 84, 0.12);
+	color: #198754;
+}
+
+.type-call {
+	background: rgba(13, 110, 253, 0.12);
+	color: #0d6efd;
+}
+
+.type-message {
+	background: rgba(255, 193, 7, 0.18);
+	color: #b58100;
+}
+
+.type-today {
+	background: rgba(220, 53, 69, 0.12);
+	color: #dc3545;
+}
+
+.preview {
+	color: #343a40;
+	background: #f8f9fb;
+	border: 1px solid #eef0f4;
+	border-radius: 12px;
+	padding: 10px 12px;
+	margin-top: 10px;
+	line-height: 1.45;
+	font-size: 0.95rem;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	white-space: normal;
+}
+
+.action-wrap {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+.action-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.result-count {
+	font-size: 0.92rem;
+	color: #6c757d;
+	margin-bottom: 0.8rem;
+}
+
+@media ( max-width : 767.98px) {
+	.action-wrap, .action-group {
+		align-items: stretch;
+		justify-content: flex-start;
+	}
+}
+</style>
+</head>
+
+<body>
+	<div th:replace="~{header :: header}"></div>
+
+	<div class="container mt-5 mb-5">
+
+		<div class="page-title-row mb-4">
+			<h3 class="fw-bold mb-0">
+				<i class="bi bi-calendar-check text-primary me-2"></i>상담 예약 내역
+			</h3>
+			<a href="/consult/list" class="btn btn-outline-primary"> <i
+				class="bi bi-search me-1"></i>전문가 찾기
+			</a>
+		</div>
+
+		<form th:action="@{/consult/history}" method="get"
+			class="card filter-card">
+			<div class="row g-3 align-items-end">
+				<div class="col-md-3">
+					<label class="filter-label">전문가명</label> <input type="text"
+						name="expertName" class="form-control"
+						th:value="${param.expertName}" placeholder="전문가 이름 검색">
+				</div>
+
+				<div class="col-md-2">
+					<label class="filter-label">상담 종류</label> <select
+						name="consultType" class="form-select">
+						<option value="">전체</option>
+						<option value="채팅"
+							th:selected="${param.consultType != null and param.consultType[0] == '채팅'}">채팅
+							상담</option>
+						<option value="전화"
+							th:selected="${param.consultType != null and param.consultType[0] == '전화'}">전화
+							상담</option>
+						<option value="문의"
+							th:selected="${param.consultType != null and param.consultType[0] == '문의'}">1:1
+							문의</option>
+					</select>
+				</div>
+
+				<div class="col-md-2">
+					<label class="filter-label">상태</label> <select name="status"
+						class="form-select">
+						<option value="">전체</option>
+						<option value="1"
+							th:selected="${param.status != null and param.status[0] == '1'}">예약
+							신청</option>
+						<option value="2"
+							th:selected="${param.status != null and param.status[0] == '2'}">예약
+							확정</option>
+						<option value="3"
+							th:selected="${param.status != null and param.status[0] == '3'}">상담
+							완료</option>
+						<option value="4"
+							th:selected="${param.status != null and param.status[0] == '4'}">취소됨</option>
+					</select>
+				</div>
+
+				<div class="col-md-2">
+					<label class="filter-label">조회 시작일</label> <input type="date"
+						name="dateFrom" class="form-control" th:value="${param.dateFrom}">
+				</div>
+
+				<div class="col-md-2">
+					<label class="filter-label">조회 종료일</label> <input type="date"
+						name="dateTo" class="form-control" th:value="${param.dateTo}">
+				</div>
+
+				<div class="col-md-1 d-grid">
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-search"></i>
+					</button>
+				</div>
+			</div>
+
+			<div class="d-flex justify-content-end gap-2 mt-3">
+				<a th:href="@{/consult/history}"
+					class="btn btn-outline-secondary btn-sm2"> <i
+					class="bi bi-arrow-counterclockwise me-1"></i>초기화
+				</a>
+			</div>
+		</form>
+
+		<div class="result-count" th:if="${reservations != null}">
+			총 <span class="fw-bold" th:text="${#lists.size(reservations)}">0</span>건의
+			상담 내역
+		</div>
+
+		<div th:if="${#lists.isEmpty(reservations)}"
+			class="card text-center empty-wrap">
+			<div class="mb-3">
+				<i class="bi bi-calendar-x fs-1 text-muted"></i>
+			</div>
+			<h5 class="fw-bold">예약 내역이 없습니다.</h5>
+			<p class="text-muted mt-2 mb-0">
+				조회 조건에 맞는 상담 내역이 없어요.<br> 필터를 변경하거나 전문가를 찾아 상담을 예약해보세요.
+			</p>
+			<div class="mt-4 d-flex justify-content-center gap-2 flex-wrap">
+				<a th:href="@{/consult/history}"
+					class="btn btn-outline-secondary px-4">필터 초기화</a> <a
+					href="/consult/list" class="btn btn-primary px-4">전문가 보러가기</a>
+			</div>
+		</div>
+
+		<div th:each="r : ${reservations}"
+			class="card reservation-card p-4 mb-3">
+			<div class="row align-items-start">
+				<div class="col-md-8">
+
+					<div class="mb-2 d-flex gap-2 flex-wrap">
+						<span th:if="${r['consult_type'] == '채팅'}"
+							class="type-chip type-chat"> <i
+							class="bi bi-chat-dots-fill"></i> 채팅 상담
+						</span> <span th:if="${r['consult_type'] == '전화'}"
+							class="type-chip type-call"> <i
+							class="bi bi-telephone-fill"></i> 전화 상담
+						</span> <span th:if="${r['consult_type'] == '1:1문의' or r['consult_type'] == '문의' 
+          										or r['consult_type'] == '메세지' or r['consult_type'] == 'message'}"
+      									class="type-chip type-message"><i class="bi bi-envelope-fill"></i> 1:1 문의
+								</span> <span class="type-chip type-today"
+							th:if="${#temporals.format(r['consult_start_date'], 'yyyy-MM-dd') == #temporals.format(#temporals.createNow(), 'yyyy-MM-dd')
+								  and (r['status'] == 1 or r['status'] == 2)}">
+							<i class="bi bi-calendar-event"></i> 오늘 상담
+						</span>
+					</div>
+
+					<div class="d-flex align-items-center gap-2 flex-wrap">
+						<div class="fw-bold fs-5" th:text="${r['expertName']}">전문가
+							이름</div>
+
+						<span th:switch="${r['status']}"> <span th:case="1"
+							class="badge bg-warning text-dark">예약 신청</span> <span th:case="2"
+							class="badge bg-primary">예약 확정</span> <span th:case="3"
+							class="badge bg-success">상담 완료</span> <span th:case="4"
+							class="badge bg-secondary">취소됨</span>
+						</span>
+					</div>
+
+					<div class="meta-line mt-2">
+						<i class="bi bi-clock me-1"></i> <span
+							th:text="${#temporals.format(r['consult_start_date'], 'yyyy-MM-dd HH:mm')}"></span>
+						<span th:if="${r['consult_end_date'] != null}"> ~ <span
+							th:text="${#temporals.format(r['consult_end_date'], 'HH:mm')}"></span>
+						</span>
+					</div>
+
+					<div class="meta-line mt-1">
+						예약 신청일 : <span
+							th:text="${#temporals.format(r['created_date'], 'yyyy-MM-dd')}"></span>
+					</div>
+
+					<div class="meta-line mt-1"
+						th:if="${r['consult_type'] == '전화' and r['contact_phone'] != null and r['contact_phone'] != ''}">
+						연락처 : <span th:text="${r['contact_phone']}"></span>
+					</div>
+
+					<div class="preview"
+						th:text="${(r['consult_content'] != null and r['consult_content'] != '') ? r['consult_content'] : '요청 내용 없음'}">
+						요청 내용 미리보기</div>
+
+				</div>
+
+				<div class="col-md-4 text-md-end mt-3 mt-md-0">
+					<div class="action-wrap">
+
+						<div class="action-group">
+							<a th:if="${r['consult_type'] == '채팅' and (r['status'] == 1 or r['status'] == 2)}"
+							   th:href="@{/consult/chat/room/{consultId}(consultId=${r['consult_id']})}"
+							   class="btn btn-success btn-sm2">
+							   <i class="bi bi-chat-dots me-1"></i>채팅 이어보기
+							</a>
+
+							<a th:if="${r['consult_type'] == '채팅' and (r['status'] == 3 or r['status'] == 4)}"
+							   th:href="@{/consult/chat/history/{consultId}(consultId=${r['consult_id']})}"
+							   class="btn btn-outline-success btn-sm2">
+							   <i class="bi bi-chat-square-text me-1"></i>내역 보기
+							</a> <a
+								th:if="${r['consult_type'] == '1:1문의' or r['consult_type'] == '문의' 
+        								or r['consult_type'] == '메세지' or r['consult_type'] == 'message'}"
+								th:href="@{/consult/inquiry/detail/{consultId}(consultId=${r['consult_id']})}"
+								class="btn btn-outline-warning btn-sm2"> <i
+								class="bi bi-envelope-open me-1"></i>내역 보기
+							</a> 
+							<button type="button" th:if="${r['consult_type'] == '전화'}" class="btn btn-outline-primary btn-sm2"
+       								data-bs-toggle="modal" data-bs-target="#callHistoryModal" th:data-consult-id="${r['consult_id']}"
+       								th:data-expert-name="${r['expertName']}"
+        							th:data-consult-date="${#temporals.format(r['consult_start_date'], 'yyyy-MM-dd HH:mm')}"
+        							th:data-call-note="${r['callNoteContent']}">
+    								<i class="bi bi-file-earmark-text me-1"></i>내역 보기
+							</button>
+						</div>
+
+						<div class="action-group"
+							th:if="${r['status'] == 1 or r['status'] == 2}">
+							<a
+								th:href="@{/consult/reserve/edit(consultId=${r['consult_id']})}"
+								class="btn btn-outline-secondary btn-sm2"> <i
+								class="bi bi-arrow-repeat me-1"></i>변경
+							</a>
+
+							<form th:action="@{/consult/cancel}" method="post"
+								class="d-inline" onsubmit="return confirm('예약을 취소하시겠습니까?');">
+								<input type="hidden" name="consultId"
+									th:value="${r['consult_id']}">
+								<button type="submit" class="btn btn-outline-danger btn-sm2">
+									<i class="bi bi-x-circle me-1"></i>취소
+								</button>
+							</form>
+						</div>
+
+						<div th:if="${r['status'] == 3}" class="text-muted small">
+							<i class="bi bi-info-circle me-1"></i>상담이 완료된 예약입니다.
+						</div>
+
+						<div th:if="${r['status'] == 4}" class="text-muted small">
+							<i class="bi bi-info-circle me-1"></i>취소된 예약입니다.
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+	<div class="modal fade" id="callHistoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 bg-light rounded-top-4">
+                <h5 class="modal-title fw-bold">전화 상담 기록</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <div class="text-secondary small fw-bold mb-1">전문가</div>
+                    <div class="fs-6 fw-bold" id="modalCallExpertName">-</div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-secondary small fw-bold mb-1">상담 일시</div>
+                    <div class="fs-6" id="modalCallDate">-</div>
+                </div>
+
+                <div>
+                    <div class="text-secondary small fw-bold mb-2">상담 기록</div>
+                    <div class="p-3 bg-light rounded-3 border"
+                         id="modalCallNote"
+                         style="min-height: 140px; white-space: pre-wrap;">
+                        아직 등록된 전화 상담 기록이 없습니다.
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+	<div th:replace="~{footer :: footer}"></div>
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+		
+		<script>
+				document.addEventListener('DOMContentLoaded', function() {
+			    const callHistoryModal = document.getElementById('callHistoryModal');
+					
+			    if (callHistoryModal) {
+			        callHistoryModal.addEventListener('show.bs.modal', function(event) {
+			            const btn = event.relatedTarget;
+			            const expertName = btn.getAttribute('data-expert-name') || '-';
+			            const consultDate = btn.getAttribute('data-consult-date') || '-';
+			            const callNote = btn.getAttribute('data-call-note') || '아직 등록된 전화 상담 기록이 없습니다.';
+			
+			            document.getElementById('modalCallExpertName').innerText = expertName;
+			            document.getElementById('modalCallDate').innerText = consultDate;
+			            document.getElementById('modalCallNote').innerText = callNote;
+			        });
+			    }
+			});
+		</script>
+</body>
+</html>

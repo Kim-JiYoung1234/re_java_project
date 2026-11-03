@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+	<div th:fragment="header">
+
+		<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+			<div class="container">
+				<a class="navbar-brand fw-bold text-primary" th:href="@{/home}">OUT FAT IN MUSCLE</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+
+				<div class="collapse navbar-collapse" id="navbarNav">
+					<ul class="navbar-nav ms-auto align-items-center">
+
+						<li class="nav-item" th:if="${session.user != null && session.user.memberType == '파트너회원'}"><a
+							class="nav-link text-danger fw-bold" th:href="@{/fitness/register}"> <i class="bi bi-shop me-1"></i>시설등록
+						</a></li>
+
+						<li class="nav-item" th:if="${session.user != null && session.user.memberType == '파트너회원'}"><a
+							class="nav-link fw-bold" style="color: #ff9900;" th:href="@{/ad/register}"> <i
+								class="bi bi-megaphone-fill me-1"></i>광고등록
+						</a></li>
+
+						<li class="nav-item"><a class="nav-link" th:href="@{/home}">홈</a></li>
+
+
+						<li class="nav-item" th:if="${session.user != null && session.user.memberType == '일반회원'}"><a class="nav-link"
+							th:href="@{/record/myhealth}">마이헬스</a></li>
+
+						<li class="nav-item"><a class="nav-link" th:href="@{/fitness_list}">피트니스</a></li>
+						<li class="nav-item"><a class="nav-link" th:href="@{/consult/list}">상담</a></li>
+						<li class="nav-item"><a class="nav-link" th:href="@{/community/main}">커뮤니티</a></li>
+
+
+						<li class="nav-item ms-lg-3 border-start ps-lg-3">
+							<div th:if="${session.user == null}">
+								<a class="nav-link" href="javascript:void(0)" onclick="openLoginModalWithBackPath()" style="cursor: pointer;">
+									<i class="bi bi-box-arrow-in-right me-1"></i>로그인이 필요합니다
+								</a>
+							</div>
+
+							<div th:if="${session.user != null}" class="d-flex align-items-center">
+								<a th:href="@{/mypage/main}" class="text-decoration-none me-2"> <span class="small text-secondary"> <strong
+										class="text-dark" th:text="${session.user.nickname}">사용자</strong>님 안녕하세요
+								</span>
+								</a> 
+
+                                <!-- 🌟 [추가] 장바구니 아이콘 (전역 동기화) -->
+                                <a th:href="@{/payment/checkout}" class="position-relative me-3 text-dark">
+                                    <i class="bi bi-cart3 fs-4"></i>
+                                    <span id="headerCartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                          style="display:none; font-size: 0.65rem; padding: 0.35em 0.5em;">0</span>
+                                </a>
+
+								<a th:href="@{/mypage/main}" class="btn btn-sm btn-outline-primary me-2 px-2 py-0 position-relative"
+  									style="font-size: 0.75rem;" id="mypageAlertBtn">마이페이지
+									<span id="mypageChatBadge" 
+										 class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+	     								 style="display:none; font-size:0.6rem;">0</span>
+								</a> <a href="javascript:void(0);"
+									onclick="location.href='/auth/logout?redirect=' + encodeURIComponent(window.location.href)"
+									class="btn btn-sm btn-link text-muted p-0 text-decoration-none small">로그아웃</a>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+
+		<div class="modal fade" id="headerAuthModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+			<div class="modal-dialog modal-dialog-centered modal-sm">
+				<div class="modal-content shadow text-center border-0" style="border-radius: 15px;">
+					<div class="modal-body p-4">
+						<div class="mb-3 text-warning">
+							<i class="bi bi-exclamation-circle" style="font-size: 3rem;"></i>
+						</div>
+						<h6 class="fw-bold mb-3" id="headerAuthMsg">권한이 없습니다.</h6>
+						<button type="button" class="btn btn-dark btn-sm px-4" data-bs-dismiss="modal">확인</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content border-0" style="border-radius: 20px; overflow: hidden;">
+					<div class="modal-body p-0">
+						<div class="login-card p-5 shadow-sm bg-white">
+							<div class="d-flex justify-content-end">
+								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+							</div>
+							<h5 class="fw-bold mb-4 text-center">로그인 하세요.</h5>
+							<form th:action="@{/auth/login}" method="post">
+								<input type="hidden" name="redirect" id="headerRedirectInput">
+								<div class="form-floating mb-3">
+									<input type="text" class="form-control bg-light border-0" name="loginId" placeholder="아이디" required> <label>아이디</label>
+								</div>
+								<div class="form-floating mb-3">
+									<input type="password" class="form-control bg-light border-0" name="password" placeholder="비밀번호" required>
+									<label>비밀번호</label>
+								</div>
+								<button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm">로그인</button>
+							</form>
+							<div class="mt-4 d-flex justify-content-center gap-3">
+								<a th:href="@{/auth/register}" class="text-decoration-none text-muted small">회원가입</a> <span class="text-light">|</span>
+								<a href="#" data-bs-toggle="modal" data-bs-target="#findAccountModal" class="text-decoration-none text-muted small">아이디/비밀번호 찾기</a>
+							</div>
+						</div>
+					</div>
+				</div>
+            </div>
+		</div>
+		
+		<style>
+        /* 통합 모달 뉴모피즘 스타일 */
+        #findAccountModal .modal-content { border: none; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); overflow: hidden; }
+        #findAccountModal .modal-header { border: none; padding: 20px 20px 0; }
+        #findAccountModal .modal-body { padding: 0 35px 45px; }
+        #findAccountModal .nav-tabs { border: none; background-color: #f1f5f9; border-radius: 14px; padding: 5px; margin-bottom: 35px; }
+        #findAccountModal .nav-item { margin: 0; }
+        #findAccountModal .nav-link { border: none; color: #94a3b8; font-size: 15px; font-weight: 700; padding: 12px 20px; border-radius: 10px; background: none; transition: all 0.3s ease; }
+        #findAccountModal .nav-link.active { color: #3b82f6; background-color: #fff; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.1); }
+        #findAccountModal .input-group-text { background-color: #f8fafc; border: 2px solid #f1f5f9; border-right: none; border-radius: 14px 0 0 14px; color: #cbd5e1; padding-left: 18px; }
+        #findAccountModal .form-control { border: 2px solid #f1f5f9; border-left: none; border-radius: 0 14px 14px 0; padding: 14px 18px 14px 10px; font-size: 14px; transition: all 0.3s; }
+        #findAccountModal .form-control:focus { border-color: #93c5fd; box-shadow: none; }
+        #findAccountModal .form-control:focus + .input-group-text { border-color: #93c5fd; }
+        #findAccountModal .btn-gradient { border-radius: 14px; padding: 15px; font-weight: 700; font-size: 16px; background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); border: none; color: white; transition: all 0.3s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
+        #findAccountModal .btn-gradient:hover { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(59, 130, 246, 0.3); }
+        #idResultArea { border: none; border-radius: 16px; background-color: #eff6ff; color: #1e40af; font-size: 15px; padding: 20px; margin-top: 30px; }
+        @keyframes fadeInDown { from { opacity: 0; transform: translate3d(0, -10px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+        #findTabContent .tab-pane.active { animation: fadeInDown 0.4s ease-out; }
+        </style>
+
+        <div class="modal fade" id="findAccountModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn btn-sm btn-light rounded-circle" data-bs-toggle="modal" data-bs-target="#loginModal" style="width: 32px; height: 32px; padding: 0;">
+                            <i class="bi bi-arrow-left"></i>
+                        </button>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs nav-justified" id="findTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#findIdArea" type="button" role="tab"><i class="bi bi-person-badge me-2"></i>아이디 찾기</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#findPwArea" type="button" role="tab"><i class="bi bi-key me-2"></i>비밀번호 찾기</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="findTabContent">
+                            <div class="tab-pane fade show active" id="findIdArea" role="tabpanel">
+                                <p class="text-muted small text-center mb-4">가입 시 등록한 이름과 이메일을 입력해 주세요.</p>
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input type="text" id="findIdName" class="form-control" placeholder="성함을 입력하세요">
+                                </div>
+                                <div class="input-group mb-4">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" id="findIdEmail" class="form-control" placeholder="가입한 이메일을 입력하세요">
+                                </div>
+                                <button type="button" class="btn w-100 btn-gradient" onclick="findMyId()">아이디 확인하기</button>
+                                
+                                <div id="idResultArea" class="text-center" style="display:none;">
+								    <i class="bi bi-check-circle-fill text-primary me-2"></i>
+								    회원님의 아이디는 <strong id="foundId" class="text-primary text-decoration-underline fs-5"></strong> 입니다.
+								    
+								    <div class="mt-3">
+								        <button type="button" id="btnSendFullId" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="sendFullIdEmail()">
+								            <i class="bi bi-envelope-paper me-1"></i> 전체 아이디 이메일로 받기
+								        </button>
+								    </div>
+								</div>
+                            </div>
+
+                            <div class="tab-pane fade" id="findPwArea" role="tabpanel">
+							    <p class="text-muted small text-center mb-4">가입 시 등록한 이메일로 비밀번호 재설정 링크를 보내드립니다.</p>
+							    <div class="input-group mb-4">
+							        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+							        <input type="email" id="resetEmailInput" class="form-control" placeholder="가입한 이메일을 입력하세요">
+							    </div>
+							    
+							    <button type="button" id="btnSendResetEmail" class="btn w-100 btn-gradient" onclick="sendResetEmail()">
+							        재설정 링크 받기 <i class="bi bi-send ms-1"></i>
+							    </button>
+							</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 9999;">
+            <div id="globalLiveToast" class="toast align-items-center text-bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="cursor: pointer; transition: 0.2s;" onclick="goToConsultTab()" onmouseover="this.classList.add('bg-secondary')" onmouseout="this.classList.remove('bg-secondary')">
+                <div class="d-flex">
+                    <div class="toast-body fw-bold" id="globalToastMessage" style="width: 100%;"></div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close" onclick="event.stopPropagation();"></button>
+                </div>
+            </div>
+        </div>
+
+		<script th:inline="javascript">
+			/*<![CDATA[*/
+			var user = /*[[${session.user}]]*/null;
+			/*]]>*/
+
+            // 🌟 [추가] 전역 장바구니 개수 동기화 함수
+            function updateHeaderCartCount() {
+                if (!user) return;
+                fetch('/api/cart/count')
+                    .then(res => res.json())
+                    .then(count => {
+                        const badge = document.getElementById('headerCartBadge');
+                        if (count > 0) {
+                            badge.innerText = count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    })
+                    .catch(err => console.error('장바구니 개수 로드 실패', err));
+            }
+
+			function openLoginModalWithBackPath() {
+				const currentUrl = window.location.href;
+				const redirectInput = document.getElementById('headerRedirectInput');
+
+				if (redirectInput) {
+					redirectInput.value = currentUrl;
+				}
+
+				const loginModalElement = document.getElementById('loginModal');
+				if (loginModalElement) {
+					const modal = new bootstrap.Modal(loginModalElement);
+					modal.show();
+				}
+			}
+
+			function checkFitnessRegister(e) {
+				e.preventDefault();
+				if (user === null) {
+					openLoginModalWithBackPath();
+					return;
+				}
+				if (user.memberType !== '파트너회원') {
+					showHeaderAuthModal('파트너회원만 이용 가능합니다.');
+					return;
+				}
+				window.location.href = '/fitness/register';
+			}
+
+			function showHeaderAuthModal(msg) {
+				const msgElement = document.getElementById('headerAuthMsg');
+				if (msgElement) msgElement.innerText = msg;
+
+				if (typeof bootstrap !== 'undefined') {
+					const modalElement = document.getElementById('headerAuthModal');
+					if (modalElement) {
+						const modal = new bootstrap.Modal(modalElement);
+						modal.show();
+					}
+				} else {
+					alert(msg);
+				}
+			}
+
+            function executeScrollToConsultList() {
+                const target = document.getElementById('partnerConsultTbody');
+                if (target) {
+                    const headerOffset = 120;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    
+                    window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                    sessionStorage.removeItem('scrollToConsultList');
+                }
+            }
+
+            function goToConsultTab() {
+                sessionStorage.setItem('activeMyPageTab', 'section-partner-consults');
+                sessionStorage.setItem('scrollToConsultList', 'true'); 
+                
+                if (window.location.pathname.includes('/mypage/main')) {
+                    const tabBtn = document.querySelector('.n-link[onclick*="section-partner-consults"]');
+                    if (tabBtn) tabBtn.click();
+                    setTimeout(executeScrollToConsultList, 300);
+                    const toastEl = document.getElementById('globalLiveToast');
+                    if(toastEl && typeof bootstrap !== 'undefined') {
+                        const toast = bootstrap.Toast.getInstance(toastEl);
+                        if(toast) toast.hide();
+                    }
+                } else {
+                    window.location.href = '/mypage/main';
+                }
+            }
+
+            function showGlobalNotification(title, message, isSticky = false) {
+                const toastEl = document.getElementById('globalLiveToast');
+                if (!toastEl) return;
+                const toastMsg = document.getElementById('globalToastMessage');
+                toastMsg.innerHTML = `<i class="bi bi-bell-fill text-warning me-2"></i><span class="text-warning">${title}</span><br><span class="fw-normal" style="font-size: 0.9rem;">${message}</span><br><span class="badge bg-primary mt-2">클릭하여 내역 확인</span>`;
+                
+                if (typeof bootstrap !== 'undefined') {
+                    const toast = new bootstrap.Toast(toastEl, { autohide: !isSticky, delay: 5000 });
+                    toast.show();
+                }
+            }
+            
+			 function startHeaderChatBadgePolling() {
+				    if (!user) return;
+				    if (user.memberType !== '전문가회원' && user.memberType !== 'EXPERT') return;
+				    updateHeaderChatBadge();
+				    setInterval(updateHeaderChatBadge, 5000);
+			}
+			
+			 function updateHeaderChatBadge() {
+				    const badge = document.querySelector('#mypageChatBadge');
+				    if (!badge) return;
+
+				    fetch('/consult/chat/expert/latest-alert')
+				        .then(res => {
+				            if (!res.ok) throw new Error('알림 조회 실패: ' + res.status);
+				            return res.json();
+				        })
+				        .then(data => {
+				            if (data && data.newChat && data.consultId) {
+				                badge.style.display = 'inline-block';
+				                badge.textContent = 'N';
+				            } else {
+				                badge.style.display = 'none';
+				                badge.textContent = '0';
+				            }
+				        })
+				        .catch(err => {
+				            console.error('헤더 채팅 알림 조회 실패', err);
+				            badge.style.display = 'none';
+				        });
+			}
+
+			document.addEventListener('DOMContentLoaded', function () {
+				// 🌟 [추가] 장바구니 개수 최초 로드
+                updateHeaderCartCount();
+
+                if (window.location.pathname.includes('/mypage/main') && sessionStorage.getItem('activeMyPageTab') === 'section-partner-consults') {
+                    setTimeout(() => {
+                        const tabBtn = document.querySelector('.n-link[onclick*="section-partner-consults"]');
+                        if (tabBtn) tabBtn.click();
+                        if (sessionStorage.getItem('scrollToConsultList') === 'true') {
+                            setTimeout(executeScrollToConsultList, 600);
+                        }
+                    }, 100);
+                }
+
+                if (user !== null && user.memberType === '파트너회원' && user.memberId) {
+                    fetch('/api/fitness/partner/consults')
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.success && data.stats) {
+                                const newCnt = data.stats.newConsultCount || 0;
+                                const mypageBtns = document.querySelectorAll('a[href="/mypage/main"]');
+                                if(newCnt > 0) {
+                                    mypageBtns.forEach(btn => {
+                                        if(btn.innerText.includes('마이페이지')) {
+                                            btn.innerHTML += `<span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;"><span class="visually-hidden">New alerts</span></span>`;
+                                            btn.classList.add('position-relative');
+                                        }
+                                    });
+                                }
+
+                                const lastCnt = sessionStorage.getItem('lastConsultCnt_' + user.memberId);
+                                if(newCnt > 0 && lastCnt != newCnt) {
+                                    showGlobalNotification("미확인 상담 알림", `확인하지 않은 상담이 <b>${newCnt}건</b> 있습니다.`, true);
+                                    sessionStorage.setItem('lastConsultCnt_' + user.memberId, newCnt);
+                                } else if (newCnt == 0) {
+                                    sessionStorage.removeItem('lastConsultCnt_' + user.memberId);
+                                }
+                            }
+                        })
+                        .catch(error => console.error('상담 현황 로드 실패:', error));
+
+                    try {
+                        if(!window.globalSocket) {
+                            window.globalSocket = new WebSocket("ws://" + window.location.host + "/ws/notifications");
+                            window.globalSocket.onopen = function() { 
+                                window.globalSocket.send("LOGIN:" + user.memberId); 
+                            };
+                            window.globalSocket.onmessage = function(event) {
+                                var data = JSON.parse(event.data);
+                                if(data.type === "CONSULT") {
+                                    showGlobalNotification(data.centerName, data.message);
+                                    if(typeof window.loadPartnerConsults === 'function' && typeof jQuery !== 'undefined') {
+                                        if($('#section-partner-consults').is(':visible')) {
+                                            window.loadPartnerConsults();
+                                        }
+                                    }
+                                    sessionStorage.removeItem('lastConsultCnt_' + user.memberId);
+                                }
+                            };
+                        }
+                    } catch(e) {
+                        console.error("전역 웹소켓 연결 실패", e);
+                    }
+                }
+				
+				startHeaderChatBadgePolling();
+			});
+			
+		    document.addEventListener('DOMContentLoaded', function() {
+		        const findAccountModalEl = document.getElementById('findAccountModal');
+		        if (findAccountModalEl) {
+		            findAccountModalEl.addEventListener('hidden.bs.modal', function () {
+		                this.querySelectorAll('input').forEach(input => input.value = '');
+		                document.getElementById('idResultArea').style.display = 'none';
+		                document.getElementById('foundId').innerText = '';
+
+		                const firstTabEl = document.querySelector('#findAccountModal .nav-link');
+		                if(firstTabEl && typeof bootstrap !== 'undefined') {
+		                    const tab = new bootstrap.Tab(firstTabEl);
+		                    tab.show();
+		                }
+		            });
+		        }
+		    });
+
+		    function findMyId() {
+		        const name = document.getElementById('findIdName').value;
+		        const email = document.getElementById('findIdEmail').value;
+
+		        if(!name || !email) {
+		            alert("이름과 이메일을 모두 입력해 주세요.");
+		            return;
+		        }
+
+		        const formData = new URLSearchParams();
+		        formData.append('userName', name);
+		        formData.append('email', email);
+
+		        fetch('/auth/find-id', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		            body: formData
+		        })
+		        .then(res => res.text())
+		        .then(res => {
+		            if (res === 'not_found' || res.trim() === '') {
+		                alert("일치하는 회원 정보가 없습니다.");
+		                document.getElementById('idResultArea').style.display = 'none';
+		            } else {
+		                document.getElementById('foundId').innerText = res;
+		                const resultArea = document.getElementById('idResultArea');
+		                resultArea.style.display = 'block';
+		                resultArea.style.animation = 'fadeInDown 0.4s ease-out';
+		            }
+		        })
+		        .catch(err => alert("서버 통신 중 오류가 발생했습니다."));
+		    }
+
+		    function sendResetEmail() {
+		        const emailInput = document.getElementById('resetEmailInput').value;
+		        if(!emailInput) { 
+		            alert("이메일 주소를 입력해 주세요."); 
+		            return; 
+		        }
+		
+		        const btn = document.getElementById('btnSendResetEmail');
+		        const originalContent = btn.innerHTML;
+		        
+		        btn.disabled = true;
+		        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>메일 발송 중...';
+		
+		        const formData = new URLSearchParams();
+		        formData.append('email', emailInput);
+		
+		        fetch('/auth/send-reset-email', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		            body: formData
+		        })
+		        .then(res => res.text())
+		        .then(res => {
+		            btn.disabled = false;
+		            btn.innerHTML = originalContent;
+		            
+		            if (res === 'success') {
+		                alert("비밀번호 재설정 링크가 이메일로 발송되었습니다!\n메일함을 확인해 주세요. (링크는 30분간 유효합니다)");
+		                const myModalEl = document.getElementById('findAccountModal');
+		                if (myModalEl) {
+		                    const modal = bootstrap.Modal.getOrCreateInstance(myModalEl);
+		                    modal.hide();
+		                }
+		            } else if (res === 'not_found') {
+		                alert("가입되지 않은 이메일 주소입니다. 다시 확인해 주세요.");
+		            } else {
+		                alert("메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+		            }
+		        })
+		        .catch(err => {
+		            btn.disabled = false;
+		            btn.innerHTML = originalContent;
+		            alert("서버 통신 중 오류가 발생했습니다.");
+		        });
+		    }
+		    
+		    function sendFullIdEmail() {
+		        const name = document.getElementById('findIdName').value;
+		        const email = document.getElementById('findIdEmail').value;
+		
+		        if(!name || !email) {
+		            alert("이름과 이메일 정보가 없습니다. 다시 조회해 주세요.");
+		            return;
+		        }
+		
+		        if(confirm("가입하신 이메일(" + email + ")로 전체 아이디를 발송하시겠습니까?")) {
+		            
+		            const btn = document.getElementById('btnSendFullId');
+		            const originalContent = btn.innerHTML; 
+		            
+		            btn.disabled = true;
+		            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>메일 발송 중...';
+		
+		            const formData = new URLSearchParams();
+		            formData.append('userName', name);
+		            formData.append('email', email);
+		
+		            fetch('/auth/send-full-id', {
+		                method: 'POST',
+		                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		                body: formData
+		            })
+		            .then(res => res.text())
+		            .then(res => {
+		                btn.disabled = false;
+		                btn.innerHTML = originalContent;
+		
+		                if (res === 'success') {
+		                    alert("이메일로 전체 아이디를 발송했습니다!\n메일함을 확인해 주세요.");
+		                    
+		                    const myModalEl = document.getElementById('findAccountModal');
+		                    if (myModalEl) {
+		                        const modal = bootstrap.Modal.getOrCreateInstance(myModalEl);
+		                        modal.hide();
+		                    }
+		                } else {
+		                    alert("메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+		                }
+		            })
+		            .catch(err => {
+		                btn.disabled = false;
+		                btn.innerHTML = originalContent;
+		                alert("서버 통신 중 오류가 발생했습니다.");
+		            });
+		        }
+		    }
+		</script>
+		
+	</div>
+</body>
+</html>

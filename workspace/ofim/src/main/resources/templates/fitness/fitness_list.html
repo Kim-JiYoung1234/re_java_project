@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>피트니스 센터 찾기</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; }
+    
+    .search-container { background: white; padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); margin-bottom: 30px; border: 1px solid #f1f3f5; }
+    .search-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+    .search-input-box { flex: 1; min-width: 250px; }
+    .search-filter-box { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+    .filter-switch-wrapper { background: #f8f9fa; padding: 10px 15px; border-radius: 12px; border: 1px solid #e9ecef; display: flex; gap: 15px; }
+
+    #mapWrapper { display: none; margin-bottom: 30px; animation: slideDown 0.3s ease-out; }
+    #map { width: 100%; height: 450px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .result-container { background-color: #ffffff; border-radius: 20px; padding: 40px; min-height: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 60px; border: 1px solid #f1f3f5; }
+    .no-result-msg { padding: 100px 0; text-align: center; color: #adb5bd; font-size: 1.25rem; font-weight: 500; }
+    
+    .card { border: none; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: all 0.3s ease; background: white; overflow: hidden; cursor: pointer; border: 1px solid #f8f9fa; }
+    .card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); border-color: #e9ecef; }
+    .card-img-wrapper { position: relative; height: 200px; overflow: hidden; background-color: #eee; }
+    .card-img-top { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .card:hover .card-img-top { transform: scale(1.05); }
+    .status-badge { position: absolute; top: 15px; right: 15px; padding: 6px 14px; border-radius: 12px; font-weight: 600; font-size: 0.75rem; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    
+    .pagination .page-link { border: 1px solid #eee; background-color: #fff; color: #444; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px !important; margin: 0 4px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+    .pagination .page-item.active .page-link { background-color: #111827 !important; color: white !important; border-color: #111827 !important; }
+    
+    .btn-map-toggle { background-color: #111827; color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+    .btn-map-toggle:hover { background-color: #374151; }
+    .btn-map-toggle.active { background-color: #4f46e5; }
+    
+    .footer { background: #343a40; color: white; padding: 30px 0; margin-top: 50px; }
+</style>
+</head>
+<body>
+    <header th:replace="~{header :: header}"></header>
+
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold display-6" style="letter-spacing: -1.5px;">
+                <i class="bi bi-building text-primary me-2"></i>파트너 시설 찾기
+            </h2>
+            <p class="text-muted">내 주변의 완벽한 피트니스 센터를 검색해보세요.</p>
+        </div>
+
+        <div class="search-container">
+            <div class="search-row mb-3">
+                <div class="input-group input-group-lg search-input-box">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" id="addressInput" class="form-control border-start-0 bg-light" placeholder="동, 읍, 면 또는 업체명 입력" onkeydown="if(event.keyCode==13) searchLocation()">
+                </div>
+                
+                <div class="search-filter-box">
+                    <select id="typeSelect" class="form-select form-select-lg w-auto bg-light">
+                        <option value="">전체 업종</option>
+                        <option value="헬스장">헬스장</option>
+                        <option value="필라테스">필라테스</option>
+                        <option value="요가">요가</option>
+                        <option value="크로스핏">크로스핏</option>
+                        <option value="무도학원">무도학원</option>
+                    </select>
+                    <button type="button" onclick="searchLocation()" class="btn btn-primary btn-lg px-4 fw-bold shadow-sm">검색하기</button>
+                </div>
+            </div>
+            
+            <div class="d-flex flex-wrap justify-content-between align-items-center border-top pt-3 gap-3">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="filter-switch-wrapper">
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" id="dayPassCheck" role="switch">
+                            <label class="form-check-label fw-bold text-dark small" for="dayPassCheck">일일권 가능</label>
+                        </div>
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" id="is24hCheck" role="switch">
+                            <label class="form-check-label fw-bold text-dark small" for="is24hCheck">24시 운영</label>
+                        </div>
+                    </div>
+                    <select id="radiusSelect" class="form-select form-select-sm w-auto border-0 text-muted fw-bold" style="background: transparent;">
+                        <option value="1000">반경 1km 검색</option>
+                        <option value="3000" selected>반경 3km 검색</option>
+                        <option value="5000">반경 5km 검색</option>
+                    </select>
+                    <button type="button" onclick="resetSearch()" class="btn btn-sm text-secondary fw-bold border-0 bg-transparent text-decoration-underline">초기화</button>
+                </div>
+                <div>
+                    <button type="button" id="mapToggleButton" onclick="toggleMap()" class="btn-map-toggle">
+                        <i class="bi bi-map-fill"></i> 지도 보기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mapWrapper"><div id="map"></div></div>
+
+        <div class="result-container">
+            <div id="noResultMsg" class="no-result-msg" style="display:none;">
+                <i class="bi bi-exclamation-circle fs-1 d-block mb-3"></i>
+                해당 조건에 맞는 시설이 없습니다.
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="centerList"></div>
+            <nav aria-label="Page navigation" class="mt-5" id="paginationNav">
+                <ul class="pagination justify-content-center" id="paginationList"></ul>
+            </nav>
+        </div>
+    </div>
+
+    <footer th:replace="~{footer :: footer}"></footer>
+    
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=2e8f4bf950438018ae183b2467c7e5f5&libraries=services&autoload=false"></script>
+    
+    <script th:inline="javascript">
+        var map, geocoder, userMarker, circle;
+        var centerMarkers = [], allCenters = [], filteredCenters = []; 
+        var currentPage = 1, itemsPerPage = 6, isMapVisible = false;
+
+        // [추가] 광고 클릭 시 통계 전송 후 이동하는 함수
+        function trackAdClickAndGo(centerNo, isAd) {
+            sessionStorage.setItem('fromDetail', 'true');
+            if(isAd === 1) {
+                fetch('/api/ad/click/' + centerNo, { method: 'POST' })
+                .catch(err => console.log(err))
+                .finally(() => { location.href = '/fitness_detail?id=' + centerNo; });
+            } else {
+                location.href = '/fitness_detail?id=' + centerNo;
+            }
+        }
+
+        function resetSearch() {
+            document.getElementById('addressInput').value = '';
+            document.getElementById('typeSelect').value = '';
+            document.getElementById('dayPassCheck').checked = false;
+            document.getElementById('is24hCheck').checked = false;
+            document.getElementById('radiusSelect').value = '3000';
+            sessionStorage.clear();
+            
+            if (userMarker) userMarker.setMap(null);
+            if (circle) circle.setMap(null);
+            userMarker = null; circle = null;
+            
+            fetch('/api/fitness/data')
+                .then(res => res.json())
+                .then(data => {
+                    allCenters = data; filteredCenters = data.slice();
+                    showMarkersForFiltered(); renderPage(1);
+                    if (map) { map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780)); map.setLevel(7); }
+                });
+        }
+
+        function toggleMap() {
+            const wrapper = document.getElementById('mapWrapper');
+            const btn = document.getElementById('mapToggleButton');
+            isMapVisible = !isMapVisible;
+            if (isMapVisible) {
+                wrapper.style.display = 'block';
+                btn.classList.add('active'); btn.innerHTML = '<i class="bi bi-map"></i> 지도 닫기';
+                setTimeout(() => { if (map) map.relayout(); }, 100);
+            } else {
+                wrapper.style.display = 'none';
+                btn.classList.remove('active'); btn.innerHTML = '<i class="bi bi-map-fill"></i> 지도 보기';
+            }
+        }
+
+        function goToDetail(id) {
+            sessionStorage.setItem('fromDetail', 'true');
+            location.href = '/fitness_detail?id=' + id;
+        }
+
+        kakao.maps.load(function() {
+            var container = document.getElementById('map');
+            map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(37.5665, 126.9780), level: 7 });
+            geocoder = new kakao.maps.services.Geocoder();
+
+            if (!sessionStorage.getItem('fromDetail')) {
+                resetSearch();
+            } else {
+                searchLocation(true);
+                sessionStorage.removeItem('fromDetail');
+            }
+        });
+
+        function showMarkersForFiltered() {
+            centerMarkers.forEach(m => m.setMap(null)); centerMarkers = [];
+            filteredCenters.forEach(center => {
+                if (center.lat && center.lon) {
+                    var marker = new kakao.maps.Marker({ map: map, position: new kakao.maps.LatLng(center.lat, center.lon) });
+                    centerMarkers.push(marker);
+                    kakao.maps.event.addListener(marker, 'click', function() { goToDetail(center.centerNo); });
+                }
+            });
+        }
+
+        function searchLocation(isRestore = false) {
+            let address = document.getElementById('addressInput').value.trim();
+            let url = `/api/fitness/data?location=${encodeURIComponent(address)}`;
+            
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    allCenters = data;
+
+                    let targetPage = 1;
+                    if (isRestore && sessionStorage.getItem('lastPage')) {
+                        targetPage = parseInt(sessionStorage.getItem('lastPage'));
+                    }
+
+                    if (address) {
+                        filteredCenters = allCenters.slice(); 
+                        showMarkersForFiltered(); 
+                        renderPage(targetPage);
+
+                        geocoder.addressSearch(address, function(result, status) {
+                            if (status === kakao.maps.services.Status.OK) {
+                                var userCoords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                                drawUserLocation(userCoords, parseInt(document.getElementById('radiusSelect').value)); 
+                            }
+                        });
+                    } else {
+                        if (userMarker) userMarker.setMap(null); if (circle) circle.setMap(null);
+                        filteredCenters = allCenters.slice();
+                        showMarkersForFiltered(); 
+                        renderPage(targetPage);
+                    }
+                });
+        }
+
+        function drawUserLocation(position, radius) {
+            if (userMarker) userMarker.setMap(null); if (circle) circle.setMap(null);
+            userMarker = new kakao.maps.Marker({ map: map, position: position, image: new kakao.maps.MarkerImage("https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png", new kakao.maps.Size(30, 45)) });
+            circle = new kakao.maps.Circle({ center : position, radius: radius, strokeWeight: 2, strokeColor: '#4f46e5', fillColor: '#4f46e5', fillOpacity: 0.1 });
+            circle.setMap(map); map.setCenter(position);
+        }
+
+        function filterCentersInRadius(centerPosition, radius, targetPage) {
+            filteredCenters = allCenters.filter(center => {
+                if(!center.lat || !center.lon) return true;
+                return getDistance(centerPosition.getLat(), centerPosition.getLng(), center.lat, center.lon) <= radius;
+            });
+            showMarkersForFiltered(); renderPage(targetPage);
+        }
+
+        function renderPage(page) {
+            currentPage = page;
+            sessionStorage.setItem('lastPage', page); 
+            
+            var centerListDiv = document.getElementById('centerList'); centerListDiv.innerHTML = '';
+            
+            if (filteredCenters.length === 0) { 
+                document.getElementById('noResultMsg').style.display = 'block'; 
+                document.getElementById('paginationNav').style.display = 'none'; return; 
+            }
+            document.getElementById('noResultMsg').style.display = 'none'; 
+            document.getElementById('paginationNav').style.display = 'block';
+            
+            var start = (page - 1) * itemsPerPage; var end = Math.min(start + itemsPerPage, filteredCenters.length);
+            var pageItems = filteredCenters.slice(start, end);
+            
+            pageItems.forEach(center => {
+                var priceStr = center.monthCost ? center.monthCost.toLocaleString() + '원/월' : '상담문의';
+                var scoreStr = center.reviewScore ? center.reviewScore.toFixed(1) : '0.0';
+                
+                let adBadge = '';
+                let cardBorder = 'border border-light';
+                let typeBadgeStyle = 'top: 15px; right: 15px;';
+                
+                // [추가] 노출(Impression) 신호를 보내는 코드
+                if (center.isAd === 1) {
+                    adBadge = `<span class="badge bg-warning text-dark position-absolute" style="top: 15px; left: 15px; z-index: 20; padding: 6px 14px; border-radius: 12px; font-weight: 800; box-shadow: 0 4px 10px rgba(255, 193, 7, 0.4);">
+                                <i class="bi bi-megaphone-fill me-1"></i> 스폰서
+                               </span>`;
+                    cardBorder = 'border border-warning border-3 shadow-lg';
+                    
+                    // 화면에 카드를 그리는 즉시 노출 API 호출 (비동기)
+                    fetch('/api/ad/impression/' + center.centerNo, { method: 'POST' })
+                        .catch(err => console.log('노출 에러', err));
+                }
+                
+                // [수정] onclick 이벤트를 기존 goToDetail에서 방금 만든 trackAdClickAndGo로 변경
+                var html = `
+                    <div class="col">
+                        <div class="card h-100 ${cardBorder}" onclick="trackAdClickAndGo(${center.centerNo}, ${center.isAd})" style="position: relative;">
+                            ${adBadge}
+                            <div class="card-img-wrapper">
+                                <span class="badge text-white status-badge ${center.statusColor}" style="${center.isAd === 1 ? typeBadgeStyle : ''}">${center.type}</span>
+                                <img src="${center.imageUrl}" class="card-img-top" alt="센터 이미지">
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted small text-truncate pe-2" style="flex: 1;"><i class="bi bi-geo-alt me-1"></i>${center.facilityAddr}</span>
+                                    <div class="d-flex gap-2 bg-light px-2 py-1 rounded-pill">
+                                        <div class="text-warning small fw-bold"><i class="bi bi-star-fill me-1"></i>${scoreStr}</div>
+                                        <div class="text-primary small fw-bold border-start border-secondary border-opacity-25 ps-2"><i class="bi bi-hand-thumbs-up-fill me-1"></i>${center.recommendCount || 0}</div>
+                                    </div>
+                                </div>
+                                <h5 class="card-title fw-bold text-truncate mb-3 text-dark">${center.centerName}</h5>
+                                <div class="d-flex justify-content-between align-items-end mt-2">
+                                    <span class="text-dark fw-bold fs-5">${priceStr}</span>
+                                    <span class="text-primary fw-bold small">자세히 보기 <i class="bi bi-arrow-right"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                centerListDiv.insertAdjacentHTML('beforeend', html);
+            });
+            renderPaginationButtons();
+        }
+
+        function renderPaginationButtons() {
+            var list = document.getElementById('paginationList'); list.innerHTML = '';
+            var totalPages = Math.ceil(filteredCenters.length / itemsPerPage);
+            if (totalPages <= 1) return;
+            for (var i = 1; i <= totalPages; i++) {
+                (function(idx) {
+                    var li = document.createElement('li'); 
+                    li.className = 'page-item' + (idx === currentPage ? ' active' : '');
+                    li.innerHTML = `<a class="page-link">${idx}</a>`; 
+                    li.onclick = () => renderPage(idx); 
+                    list.appendChild(li);
+                })(i);
+            }
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            var R = 6371000; var dLat = (lat2-lat1) * Math.PI/180; var dLon = (lon2-lon1) * Math.PI/180;
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+    </script>
+</body>
+</html>

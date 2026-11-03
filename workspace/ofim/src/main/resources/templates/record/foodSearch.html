@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>식단 추가하기</title>
+
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link
+	href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+<style>
+body {
+	font-family: 'Noto Sans KR', sans-serif;
+	background-color: #f8f9fa;
+}
+
+.card {
+	border: none;
+	border-radius: 20px;
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+}
+/* 검색 결과 리스트 커스텀 스크롤 */
+.custom-scroll {
+	max-height: 350px;
+	overflow-y: auto;
+	border-radius: 10px;
+}
+
+.list-group-item {
+	border-left: none;
+	border-right: none;
+	transition: background-color 0.2s;
+}
+
+.list-group-item:first-child {
+	border-top: none;
+}
+
+.list-group-item:hover {
+	background-color: #f0fdf4;
+}
+
+/* 모바일에서 입력창 포커스 시 확대 방지 (폰트 크기 16px 이상) */
+@media ( max-width : 768px) {
+	.form-control, .form-select {
+		font-size: 16px !important;
+	}
+}
+
+.footer {
+	background: #343a40;
+	color: white;
+	padding: 30px 0;
+	margin-top: 50px;
+}
+</style>
+</head>
+<body>
+
+	<header th:replace="~{header :: header}"></header>
+
+	<div class="container mt-3 mt-md-5 mb-5">
+		<div class="row justify-content-center">
+			<div class="col-12 col-lg-8">
+				<div class="card p-3 p-md-4">
+					<h4 class="fw-bold text-success mb-4 d-flex align-items-center">
+						<i class="bi bi-plus-circle-fill me-2"></i> 식단 추가하기
+					</h4>
+
+					<div id="searchSection">
+						<div class="input-group mb-3">
+							<input type="text" id="foodKeyword"
+								class="form-control form-control-lg border-success"
+								placeholder="어떤 음식을 드셨나요?">
+							<button class="btn btn-success px-4" onclick="showResults()">검색</button>
+						</div>
+
+
+						<div th:if="${!#lists.isEmpty(foods)}">
+							<div id="resultList"
+								class="list-group mb-3 shadow-sm custom-scroll"
+								style="display: block;">
+								<button type="button"
+									class="list-group-item list-group-item-action py-3"
+									th:each="food : ${foods}" th:if="${food != null}"
+									th:data-id="${food?.foodId}" th:data-name="${food?.foodName}"
+									th:data-unit="${food?.countUnit}" th:data-kcal="${food?.kCal}"
+									th:data-carbs="${food?.carbs}" th:data-sugar="${food?.sugar}"
+									th:data-protein="${food?.protein}" th:data-fat="${food?.fat}"
+									th:data-saturatedfat="${food?.saturatedFat}"
+									th:data-transfat="${food?.transFat}"
+									th:data-sodum="${food?.sodum}"
+									th:data-cholesterol="${food?.cholesterol}"
+									onclick="showFoodInfo(this)">
+									<div class="d-flex justify-content-between align-items-center">
+										<div>
+											<strong class="d-block text-dark" th:text="${food?.foodName}">음식명</strong>
+											<small class="text-muted"
+												th:text="|(${food?.countUnit}당 ${food?.kCal}kcal)|">정보</small>
+										</div>
+										<span class="btn btn-sm btn-outline-success rounded-pill px-3">선택</span>
+									</div>
+								</button>
+							</div>
+						</div>
+
+						<div th:if="${#lists.isEmpty(foods)}" class="text-center py-5">
+							<p class="text-muted">찾으시는 음식 데이터가 없습니다. 😭</p>
+							<button type="button"
+								class="list-group-item list-group-item-action py-3"
+								th:each="food : ${foods}" th:if="${food != null}"
+								th:data-id="${food?.foodId}" th:data-name="${food?.foodName}"
+								th:data-unit="${food?.countUnit}" th:data-kcal="${food?.kCal}"
+								th:data-carbs="${food?.carbs}" th:data-sugar="${food?.sugar}"
+								th:data-protein="${food?.protein}" th:data-fat="${food?.fat}"
+								th:data-saturatedfat="${food?.saturatedFat}"
+								th:data-transfat="${food?.transFat}"
+								th:data-sodum="${food?.sodum}"
+								th:data-cholesterol="${food?.cholesterol}"
+								onclick="showFoodInfo(this)">
+								<div class="d-flex justify-content-between align-items-center">
+									<div>
+										<strong class="d-block text-dark" th:text="${food?.foodName}">음식명</strong>
+										<small class="text-muted"
+											th:text="|(${food?.countUnit}당 ${food?.kCal}kcal)|">정보</small>
+									</div>
+									<span class="btn btn-sm btn-outline-success rounded-pill px-3">선택</span>
+								</div>
+							</button>
+
+						</div>
+
+
+						<div id="recordSection" style="display: none;"
+							class="border-top pt-4">
+
+							<div
+								class="d-flex justify-content-between align-items-start mb-4">
+								<div>
+									<h5 class="fw-bold mb-1">
+										<span id="selectedFoodName" class="text-success">음식명</span>
+									</h5>
+									<p class="text-muted small mb-0">섭취 정보를 입력해주세요.</p>
+								</div>
+								<button class="btn btn-sm btn-light border text-muted"
+									onclick="resetSearch()">
+									<i class="bi bi-arrow-left"></i> 재검색
+								</button>
+							</div>
+
+							<!-- <form action="/food/save" method="post">
+								<input type="hidden" id="selectedFoodId" name="foodId">
+
+								<div class="row g-3">
+									<div class="col-12">
+										<label class="form-label small fw-bold text-secondary">식사
+											구분</label> <select name="mealType" class="form-select form-select-lg">
+											<option value="아침">아침</option>
+											<option value="점심" selected>점심</option>
+											<option value="저녁">저녁</option>
+											<option value="간식">간식</option>
+										</select>
+									</div>
+									<div class="col-7">
+										<label class="form-label small fw-bold text-secondary">섭취량</label>
+										<input type="number" name="quantity"
+											class="form-control form-control-lg" placeholder="숫자 입력">
+									</div>
+									<div class="col-5">
+										<label class="form-label small fw-bold text-secondary">단위</label>
+										<select name="unit" class="form-select form-select-lg">
+											<option value="g">그램(g)</option>
+											<option value="인분">인분</option>
+											<option value="ml">ml</option>
+										</select>
+									</div>
+								</div>
+								<button type="submit"
+									class="btn btn-success w-100 mt-5 py-3 fs-5 fw-bold rounded-3 shadow">
+									기록 완료</button>
+							</form> -->
+						</div>
+					</div>
+
+					<small>* 검색 결과는 공공데이터포털의 식품영양성분 DB를 기반으로 제공됩니다.</small> <small>*
+						DB에 값이 존재하지 않는 항목은 0으로 표시됩니다.</small>
+				</div>
+			</div>
+		</div>
+	</div>
+	<footer th:replace="~{footer :: footer}"></footer>
+
+
+	<!-- 팝업 -->
+	<div class="modal fade" id="foodInfoModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg">
+				<div class="modal-header bg-success text-white">
+					<h5 class="modal-title fw-bold">식단 기록하기</h5>
+					<button type="button" class="btn-close btn-close-white"
+						data-bs-dismiss="modal"></button>
+				</div>
+
+				<div id="modalViewSection">
+					<div class="modal-body p-4">
+						<div class="text-center mb-4">
+							<h3 id="mFoodName" class="fw-bold text-success mb-1">음식 이름</h3>
+							<span id="mCountUnit" class="badge bg-light text-dark border">100g
+								기준</span>
+
+							<p class="mb-2">
+								<strong>칼로리:</strong> <span id="mKCal">0</span>
+							</p>
+							<p class="mb-2">
+								<strong>탄수화물:</strong> <span id="mCarbs"></span>
+
+							</p>
+							<p class="mb-2">
+								<strong>당류:</strong> <span id="mSugar"></span>
+
+							</p>
+							<p class="mb-2">
+								<strong>단백질:</strong> <span id="mProtein"></span>
+
+							</p>
+							<p class="mb-2">
+								<strong>지방:</strong> <span id="mFat">0</span>
+
+							</p>
+							<p class="mb-2">
+								<strong>포화지방:</strong> <span id="mSaturatedFat"></span>
+
+							</p>
+							<p class="mb-2">
+								<strong>나트륨:</strong> <span id="mSodum"></span>
+
+							</p>
+							<p class="mb-2">
+								<strong>콜레스테롤:</strong> <span id="mCholesterol">0</span>
+
+							</p>
+
+							<p class="mb-2">
+								<strong>트랜스지방:</strong> <span id="mTransFat">0</span>
+							</p>
+						</div>
+
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary w-100"
+							data-bs-dismiss="modal">닫기</button>
+						<button type="button" class="btn btn-success w-100"
+							th:if="${session.user != null}" onclick="switchSection('RECORD')">이
+							음식으로 기록하기</button>
+					</div>
+				</div>
+
+				<div id="modalRecordSection" style="display: none;">
+					<form action="/record/foodSearch-data" method="post">
+						<div class="modal-body p-4">
+							<h5 class="fw-bold mb-3">
+								<span id="mSelectedFoodName" class="text-success">음식명</span> 기록
+							</h5>
+							<input type="hidden" id="mSelectedFoodId" name="foodId">
+							<div class="row g-3">
+								<div class="col-12">
+									<label class="form-label small fw-bold">식사 구분</label> <select
+										name="mealTime" class="form-select">
+										<option value="아침">아침</option>
+										<option value="아침간식">아침간식</option>
+										<option value="점심" selected>점심</option>
+										<option value="오후간식">오후간식</option>
+										<option value="저녁">저녁</option>
+										<option value="야식">야식</option>
+									</select>
+								</div>
+								<div class="col-7">
+									<label class="form-label small fw-bold">섭취량</label> <input
+										type="number" name="intake" class="form-control"
+										placeholder="숫자 입력">
+								</div>
+								<div class="col-5">
+									<label class="form-label small fw-bold">단위</label>
+									<p>그램(g)</p>
+								</div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-light border"
+								onclick="switchSection('VIEW')">뒤로가기</button>
+							<button type="submit" class="btn btn-success flex-grow-1">기록
+								완료</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+	<script>
+		// 검색 결과 보여주기
+		// 페이지가 로드되자마자 리스트를 보여주고 싶다면?
+		document.addEventListener('DOMContentLoaded', function() {
+			// 만약 데이터가 있다면(foods가 비어있지 않다면) 리스트를 보여줘!
+			const resultList = document.getElementById('resultList');
+			if (resultList) {
+				resultList.style.display = 'block';
+			}
+		});
+
+		// 결과 페이지 내에서도 다시 검색하고 싶을 때!
+		function showResults() {
+			const keyword = document.getElementById('foodKeyword').value;
+			location.href = "/record/foodSearch?foodKeyword=" + keyword;
+		}
+
+		function selectFood(name, id) {
+			document.getElementById('searchSection').style.display = 'none';
+			document.getElementById('recordSection').style.display = 'block';
+			document.getElementById('selectedFoodName').innerText = name;
+			document.getElementById('selectedFoodId').value = id;
+		}
+
+		function resetSearch() {
+			document.getElementById('searchSection').style.display = 'block';
+			document.getElementById('recordSection').style.display = 'none';
+			document.getElementById('resultList').style.display = 'none';
+			document.getElementById('foodKeyword').value = '';
+		}
+
+		// 팝업
+		// 1. 모달 인스턴스
+		let foodModal;
+
+		// 페이지가 로드된 후 모달 객체를 초기화
+		document.addEventListener('DOMContentLoaded', function() {
+			const modalElement = document.getElementById('foodInfoModal');
+			if (modalElement) {
+				foodModal = new bootstrap.Modal(modalElement);
+			}
+		});
+
+		function showFoodInfo(element) {
+			// 팁: element.dataset을 쓰면 th:data-xxx 에 넣은 값들을 다 가져올 수 있어!
+			const ds = element.dataset;
+
+			console.log("지금 넘어온 데이터들:", ds);
+
+			// 모달의 각 항목에 데이터 꽂아넣기
+			document.getElementById('mFoodName').innerText = ds.name;
+			document.getElementById('mCountUnit').innerText = ds.unit + " 기준";
+			document.getElementById('mKCal').innerText = ds.kcal + " kcal";
+			document.getElementById('mCarbs').innerText = ds.carbs + " g";
+			document.getElementById('mSugar').innerText = ds.sugar + " g";
+			document.getElementById('mProtein').innerText = ds.protein + " g";
+			document.getElementById('mFat').innerText = ds.fat + " g";
+			document.getElementById('mSaturatedFat').innerText = ds.saturatedfat
+					+ " g";
+			document.getElementById('mTransFat').innerText = ds.transfat + " g";
+			document.getElementById('mSodum').innerText = ds.sodum + " mg";
+			document.getElementById('mCholesterol').innerText = ds.cholesterol
+					+ " mg";
+
+			// 기록하기 섹션에 넘길 이름도 미리 세팅!
+			document.getElementById('mSelectedFoodName').innerText = ds.name;
+			document.getElementById('mSelectedFoodId').value = ds.id;
+
+			// 모달 띄우기
+			if (foodModal) {
+				foodModal.show();
+			}
+		}
+
+		function switchSection(mode) {
+			const viewSection = document.getElementById('modalViewSection');
+			const recordSection = document.getElementById('modalRecordSection');
+
+			// 여기서 에러 방지! 섹션이 존재하는지 체크
+			if (!viewSection || !recordSection)
+				return;
+
+			if (mode === 'RECORD') {
+				viewSection.style.display = 'none';
+				recordSection.style.display = 'block';
+				document.getElementById('mSelectedFoodName').innerText = document
+						.getElementById('mFoodName').innerText;
+			} else {
+				viewSection.style.display = 'block';
+				recordSection.style.display = 'none';
+			}
+		}
+
+		// 모달이 닫힐 때 상태 리셋
+		const modalElem = document.getElementById('foodInfoModal');
+		if (modalElem) {
+			modalElem.addEventListener('hidden.bs.modal', function() {
+				switchSection('VIEW');
+			});
+		}
+	</script>
+</body>
+</html>

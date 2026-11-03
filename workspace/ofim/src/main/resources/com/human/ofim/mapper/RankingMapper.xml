@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.RankingMapper">
+
+	<select id="selectTopRankers"
+		resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		nickname AS writerName,
+		activity_point AS activityPoint,
+		member_type AS memberType,
+		member_id AS writerId,
+		profile AS imageName
+		FROM user
+		WHERE activity_point > 0
+		AND member_type != '관리자'
+		ORDER BY activity_point DESC
+		LIMIT 5
+	</select>
+
+	<select id="selectAllRankers"
+		resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		nickname AS writerName,
+		activity_point AS activityPoint,
+		member_type AS memberType,
+		member_id AS writerId,
+		profile AS imageName
+		FROM user
+		WHERE activity_point > 0
+		AND member_type != '관리자'
+		ORDER BY activity_point DESC
+	</select>
+
+</mapper>

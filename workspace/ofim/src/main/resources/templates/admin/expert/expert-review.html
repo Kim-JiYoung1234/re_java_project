@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{admin/layout :: layout(~{::content})}">
+
+<div th:fragment="content">
+
+	<style>
+		.review-page {
+			padding: 6px 4px 30px;
+		}
+
+		.review-page .page-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-end;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-bottom: 24px;
+		}
+
+		.review-page .page-title-wrap h2 {
+			margin: 0;
+			font-size: 1.6rem;
+			font-weight: 800;
+			color: #1e293b;
+		}
+
+		.review-page .page-title-wrap p {
+			margin: 6px 0 0;
+			color: #64748b;
+			font-size: 0.95rem;
+		}
+
+		.summary-grid {
+			display: grid;
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+			gap: 16px;
+			margin-bottom: 24px;
+		}
+
+		.summary-card {
+			background: #fff;
+			border: 1px solid #e2e8f0;
+			border-radius: 18px;
+			padding: 18px 20px;
+			box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+			min-height: 106px;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+
+		.summary-card .label {
+			font-size: 0.9rem;
+			color: #64748b;
+			margin-bottom: 8px;
+			font-weight: 600;
+		}
+
+		.summary-card .value {
+			font-size: 1.9rem;
+			font-weight: 800;
+			color: #0f172a;
+			line-height: 1.1;
+		}
+
+		.summary-card .sub {
+			margin-top: 6px;
+			font-size: 0.82rem;
+			color: #94a3b8;
+		}
+
+		.filter-card,
+		.list-card {
+			background: #fff;
+			border: 1px solid #e2e8f0;
+			border-radius: 22px;
+			box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+		}
+
+		.filter-card {
+			padding: 20px 20px 14px;
+			margin-bottom: 20px;
+		}
+
+		.filter-title {
+			font-size: 1rem;
+			font-weight: 800;
+			color: #1e293b;
+			margin-bottom: 16px;
+		}
+
+		.form-label {
+			font-size: 0.88rem;
+			font-weight: 700;
+			color: #475569;
+			margin-bottom: 8px;
+		}
+
+		.form-control,
+		.form-select {
+			height: 44px;
+			border-radius: 12px;
+			border-color: #dbe2ea;
+			font-size: 0.95rem;
+		}
+
+		.form-control:focus,
+		.form-select:focus {
+			border-color: #3b82f6;
+			box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.12);
+		}
+
+		.filter-btn-wrap {
+			display: flex;
+			gap: 8px;
+			justify-content: flex-end;
+			flex-wrap: wrap;
+		}
+
+		.btn-search,
+		.btn-reset {
+			min-width: 100px;
+			height: 44px;
+			border-radius: 12px;
+			font-weight: 700;
+		}
+
+		.btn-search {
+			background: #2563eb;
+			border-color: #2563eb;
+		}
+
+		.btn-search:hover {
+			background: #1d4ed8;
+			border-color: #1d4ed8;
+		}
+
+		.btn-reset {
+			background: #fff;
+			color: #334155;
+			border: 1px solid #cbd5e1;
+		}
+
+		.btn-reset:hover {
+			background: #f8fafc;
+			color: #0f172a;
+			border-color: #94a3b8;
+		}
+
+		.list-card {
+			padding: 0;
+			overflow: hidden;
+		}
+
+		.list-card-header {
+			padding: 18px 20px;
+			border-bottom: 1px solid #e2e8f0;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+
+		.list-card-header .title {
+			font-size: 1rem;
+			font-weight: 800;
+			color: #1e293b;
+		}
+
+		.list-card-header .count {
+			font-size: 0.9rem;
+			color: #64748b;
+			font-weight: 600;
+		}
+
+		.table-wrap {
+			padding: 6px 16px 16px;
+		}
+
+		.review-table {
+			margin-bottom: 0;
+			vertical-align: middle;
+		}
+
+		.review-table thead th {
+			font-size: 0.86rem;
+			font-weight: 800;
+			color: #475569;
+			border-bottom: 1px solid #e2e8f0;
+			background: #f8fafc;
+			padding: 14px 12px;
+			white-space: nowrap;
+		}
+
+		.review-table tbody td {
+			padding: 14px 12px;
+			font-size: 0.93rem;
+			color: #334155;
+			border-bottom: 1px solid #f1f5f9;
+		}
+
+		.review-table tbody tr:hover {
+			background: #f8fbff;
+		}
+
+		.col-name {
+			font-weight: 700;
+			color: #0f172a;
+		}
+
+		.badge-soft {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding: 6px 12px;
+			border-radius: 999px;
+			font-size: 0.8rem;
+			font-weight: 800;
+			white-space: nowrap;
+		}
+
+		.badge-wait {
+			background: #fff7ed;
+			color: #c2410c;
+		}
+
+		.badge-approved {
+			background: #ecfdf5;
+			color: #047857;
+		}
+
+		.badge-rejected {
+			background: #fef2f2;
+			color: #b91c1c;
+		}
+
+		.badge-online {
+			background: #ecfdf5;
+			color: #047857;
+		}
+
+		.badge-offline {
+			background: #f1f5f9;
+			color: #475569;
+		}
+
+		.badge-member-active {
+			background: #eff6ff;
+			color: #1d4ed8;
+		}
+
+		.badge-member-stop {
+			background: #fff7ed;
+			color: #c2410c;
+		}
+
+		.badge-member-leave {
+			background: #f8fafc;
+			color: #64748b;
+		}
+
+		.btn-detail {
+			height: 36px;
+			padding: 0 14px;
+			border-radius: 10px;
+			font-size: 0.85rem;
+			font-weight: 700;
+		}
+
+		.empty-box {
+			padding: 60px 20px;
+			text-align: center;
+			color: #94a3b8;
+			font-weight: 600;
+		}
+
+		.pagination-wrap {
+			padding: 0 20px 20px;
+			display: flex;
+			justify-content: center;
+		}
+
+		.pagination .page-link {
+			border-radius: 10px !important;
+			margin: 0 3px;
+			border: 1px solid #e2e8f0;
+			color: #334155;
+			min-width: 38px;
+			text-align: center;
+		}
+
+		.pagination .page-item.active .page-link {
+			background: #2563eb;
+			border-color: #2563eb;
+			color: #fff;
+		}
+
+		@media (max-width: 1200px) {
+			.summary-grid {
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+			}
+		}
+
+		@media (max-width: 768px) {
+			.summary-grid {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
+			.filter-btn-wrap {
+				justify-content: stretch;
+			}
+
+			.filter-btn-wrap .btn {
+				flex: 1;
+			}
+		}
+
+		@media (max-width: 576px) {
+			.summary-grid {
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+
+	<div class="review-page">
+
+		<div class="page-header">
+			<div class="page-title-wrap">
+				<h2>전문가 승인관리</h2>
+				<p>전문가회원 신청 내역을 조회하고 승인/반려 검토를 진행합니다.</p>
+			</div>
+		</div>
+
+		<!-- 상단 요약 카드 -->
+		<div class="summary-grid">
+			<div class="summary-card">
+				<div class="label">총 전문가수</div>
+				<div class="value" th:text="${summary != null ? summary.totalCount : 0}">0</div>
+				<div class="sub">전체 전문가회원 기준</div>
+			</div>
+
+			<div class="summary-card">
+				<div class="label">오늘 신청</div>
+				<div class="value" th:text="${summary != null ? summary.todayAppliedCount : 0}">0</div>
+				<div class="sub">금일 신규 신청</div>
+			</div>
+
+			<div class="summary-card">
+				<div class="label">오늘 승인</div>
+				<div class="value" th:text="${summary != null ? summary.todayApprovedCount : 0}">0</div>
+				<div class="sub">금일 최종 승인</div>
+			</div>
+
+			<div class="summary-card">
+				<div class="label">승인대기</div>
+				<div class="value" th:text="${summary != null ? summary.waitingCount : 0}">0</div>
+				<div class="sub">검토 필요</div>
+			</div>
+
+			<div class="summary-card">
+				<div class="label">반려</div>
+				<div class="value" th:text="${summary != null ? summary.rejectedCount : 0}">0</div>
+				<div class="sub">승인 미완료</div>
+			</div>
+		</div>
+
+		<!-- 검색/필터 -->
+		<div class="filter-card">
+			<div class="filter-title">검색 및 필터</div>
+
+			<form th:action="@{/admin/expert/review}" method="get">
+				<div class="row g-3 align-items-end">
+					<div class="col-lg-2 col-md-6">
+						<label class="form-label">승인상태</label>
+						<select name="approveStatus" class="form-select">
+							<option value="">전체</option>
+							<option value="0" th:selected="${approveStatus != null and approveStatus == 0}">승인대기</option>
+							<option value="1" th:selected="${approveStatus != null and approveStatus == 1}">승인</option>
+							<option value="2" th:selected="${approveStatus != null and approveStatus == 2}">반려</option>
+						</select>
+					</div>
+
+					<div class="col-lg-2 col-md-6">
+						<label class="form-label">회원상태</label>
+						<select name="memberStatus" class="form-select">
+							<option value="">전체</option>
+							<option value="가입중" th:selected="${memberStatus == '가입중'}">가입중</option>
+							<option value="징계정지" th:selected="${memberStatus == '징계정지'}">징계정지</option>
+							<option value="사고정지" th:selected="${memberStatus == '사고정지'}">사고정지</option>
+							<option value="징계탈퇴" th:selected="${memberStatus == '징계탈퇴'}">징계탈퇴</option>
+							<option value="사고탈퇴" th:selected="${memberStatus == '사고탈퇴'}">사고탈퇴</option>
+							<option value="자발적탈퇴" th:selected="${memberStatus == '자발적탈퇴'}">자발적탈퇴</option>
+						</select>
+					</div>
+
+					<div class="col-lg-2 col-md-6">
+						<label class="form-label">온라인 여부</label>
+						<select name="onlineYn" class="form-select">
+							<option value="">전체</option>
+							<option value="Y" th:selected="${onlineYn == 'Y'}">온라인</option>
+							<option value="N" th:selected="${onlineYn == 'N'}">오프라인</option>
+						</select>
+					</div>
+
+					<div class="col-lg-2 col-md-6">
+						<label class="form-label">검색조건</label>
+						<select name="searchType" class="form-select">
+							<option value="all" th:selected="${searchType == null or searchType == 'all'}">전체</option>
+							<option value="expertId" th:selected="${searchType == 'expertId'}">전문가ID</option>
+							<option value="loginId" th:selected="${searchType == 'loginId'}">로그인ID</option>
+							<option value="userName" th:selected="${searchType == 'userName'}">이름</option>
+							<option value="specialty" th:selected="${searchType == 'specialty'}">전문분야</option>
+						</select>
+					</div>
+
+					<div class="col-lg-2 col-md-8">
+						<label class="form-label">검색어</label>
+						<input type="text"
+							   name="keyword"
+							   class="form-control"
+							   placeholder="검색어를 입력하세요"
+							   th:value="${keyword}">
+					</div>
+
+					<div class="col-lg-2 col-md-4">
+						<div class="filter-btn-wrap">
+							<button type="submit" class="btn btn-primary btn-search">검색</button>
+							<a th:href="@{/admin/expert/review}" class="btn btn-reset">초기화</a>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+
+		<!-- 목록 -->
+		<div class="list-card">
+			<div class="list-card-header">
+				<div class="title">전문가 신청 목록</div>
+				<div class="count">
+					총 <span th:text="${totalCount != null ? totalCount : 0}">0</span>명
+				</div>
+			</div>
+
+			<div class="table-wrap">
+				<div class="table-responsive">
+					<table class="table review-table">
+						<thead>
+							<tr>
+								<th>전문가ID</th>
+								<th>로그인ID</th>
+								<th>이름</th>
+								<th>전문분야</th>
+								<th>온라인</th>
+								<th>승인상태</th>
+								<th>회원상태</th>
+								<th>신청일</th>
+								<th>상세</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:if="${expertList == null or #lists.isEmpty(expertList)}">
+								<td colspan="9" class="empty-box">조회된 전문가 신청 내역이 없습니다.</td>
+							</tr>
+
+							<tr th:each="expert : ${expertList}">
+								<td th:text="${expert.memberId}">101</td>
+								<td th:text="${expert.loginId}">expert01</td>
+								<td class="col-name" th:text="${expert.userName}">홍길동</td>
+								<td th:text="${expert.specialty != null and expert.specialty != '' ? expert.specialty : '-'}">운동재활</td>
+
+								<td>
+									<span th:if="${expert.isOnline == true or expert.isOnline == 1}"
+										  class="badge-soft badge-online">온라인</span>
+									<span th:unless="${expert.isOnline == true or expert.isOnline == 1}"
+										  class="badge-soft badge-offline">오프라인</span>
+								</td>
+
+								<td>
+									<span th:if="${expert.approveStatus == 0}" class="badge-soft badge-wait">승인대기</span>
+									<span th:if="${expert.approveStatus == 1}" class="badge-soft badge-approved">승인</span>
+									<span th:if="${expert.approveStatus == 2}" class="badge-soft badge-rejected">반려</span>
+								</td>
+
+								<td>
+									<span th:if="${expert.memberStatus == '가입중'}"
+										  class="badge-soft badge-member-active"
+										  th:text="${expert.memberStatus}">가입중</span>
+
+									<span th:if="${expert.memberStatus == '정지'
+											   or expert.memberStatus == '징계정지'
+											   or expert.memberStatus == '사고정지'
+											   or expert.memberStatus == '징계탈퇴'}"
+										  class="badge-soft badge-member-stop"
+										  th:text="${expert.memberStatus}">정지</span>
+
+									<span th:if="${expert.memberStatus == '자발적탈퇴'
+											   or expert.memberStatus == '사고탈퇴'}"
+										  class="badge-soft badge-member-leave"
+										  th:text="${expert.memberStatus}">탈퇴</span>
+
+									<span th:if="${expert.memberStatus != '가입중'
+											   and expert.memberStatus != '정지'
+											   and expert.memberStatus != '징계정지'
+											   and expert.memberStatus != '사고정지'
+											   and expert.memberStatus != '징계탈퇴'
+											   and expert.memberStatus != '자발적탈퇴'
+											   and expert.memberStatus != '사고탈퇴'}"
+										  class="badge-soft badge-member-leave"
+										  th:text="${expert.memberStatus != null ? expert.memberStatus : '-'}">-</span>
+								</td>
+
+								<td th:text="${expert.createdDate != null ? #temporals.format(expert.createdDate, 'yyyy-MM-dd HH:mm') : '-'}">
+									2026-03-25 10:10
+								</td>
+
+								<td>
+									<a class="btn btn-outline-primary btn-detail"
+									   th:href="@{/admin/expert/review/{memberId}(memberId=${expert.memberId})}">
+										상세보기
+									</a>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<!-- 페이지네이션 -->
+			<div class="pagination-wrap" th:if="${totalPages != null and totalPages > 1}">
+				<nav>
+					<ul class="pagination mb-0">
+
+						<li class="page-item" th:classappend="${page <= 1} ? 'disabled'">
+							<a class="page-link"
+							   th:href="@{/admin/expert/review(page=${page - 1}, approveStatus=${approveStatus}, memberStatus=${memberStatus}, onlineYn=${onlineYn}, searchType=${searchType}, keyword=${keyword})}">
+								이전
+							</a>
+						</li>
+
+						<li class="page-item"
+							th:each="p : ${#numbers.sequence(1, totalPages)}"
+							th:classappend="${p == page} ? 'active'">
+							<a class="page-link"
+							   th:text="${p}"
+							   th:href="@{/admin/expert/review(page=${p}, approveStatus=${approveStatus}, memberStatus=${memberStatus}, onlineYn=${onlineYn}, searchType=${searchType}, keyword=${keyword})}">
+								1
+							</a>
+						</li>
+
+						<li class="page-item" th:classappend="${page >= totalPages} ? 'disabled'">
+							<a class="page-link"
+							   th:href="@{/admin/expert/review(page=${page + 1}, approveStatus=${approveStatus}, memberStatus=${memberStatus}, onlineYn=${onlineYn}, searchType=${searchType}, keyword=${keyword})}">
+								다음
+							</a>
+						</li>
+
+					</ul>
+				</nav>
+			</div>
+		</div>
+
+	</div>
+</div>
+</html>

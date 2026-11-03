@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.ExpertUserMapper">
+
+	<insert id="insertExpert" parameterType="ExpertUserDTO">
+		INSERT INTO expert_user
+		(member_id, is_online, approve_status,
+		approved_date, specialty,
+		expert_introduce, profile_image_path)
+		VALUES (#{memberId}, #{isOnline},
+		0, NULL, #{specialty}, #{expertIntroduce},
+		#{profileImagePath})
+	</insert>
+
+	<insert id="insertCertificate" parameterType="CertificateDTO">
+		INSERT INTO
+		certification (certification_id, member_id, cert_name, issuer,
+		cert_no,
+		issued_date,
+		expired_date, cert_file_path, verify_status,
+		verified_date, reject_reason,
+		created_date)
+		VALUES (#{certificationId},
+		#{memberId}, #{certName}, #{issuer}, #{certNo}, #{issuedDate},
+		#{expiredDate}, #{certFilePath}, 0, NULL, NULL, NOW())
+	</insert>
+
+	<insert id="insertExperience" parameterType="ExperienceDTO">
+		INSERT INTO
+		expert_career (expert_id, organization, career_id,
+		career_month,career_year,
+		medical_departments,is_employed)
+		VALUES
+		(#{memberId}, #{organization}, #{careerId},
+		#{careerMonth},
+		#{careerYear},
+		#{medicalDepartments}, #{isEmployed})
+	</insert>
+
+	<insert id="insertEducation" parameterType="EducationDTO">
+		INSERT INTO
+		expert_career2 (expert_id, expert_school, expert_major, career_id,
+		degree_name,
+		graduation_yn)
+		VALUES (#{memberId}, #{expertSchool},
+		#{expertMajor}, #{careerId},
+		#{degreeName},
+		#{graduationYn})
+	</insert>
+
+	<insert id="insertSettlement"
+		parameterType="ExpertSettlementDTO">
+		INSERT INTO expert_settlement (member_id,
+		start_dt, end_dt,
+		cons_cnt, tot_amt, curr_amt, paid_amt, bank_name,
+		acct_no, pay_yn)
+		VALUES (#{memberId}, #{startDt},
+		#{endDt}, #{consCnt},
+		#{totAmt}, #{currAmt}, #{paidAmt}, #{bankName},
+		#{acctNo}, 0)
+	</insert>
+	
+	<select id="selectApproveStatus" resultType="java.lang.Integer">
+        SELECT approve_status FROM expert_user WHERE member_id = #{memberId}
+    </select>
+
+	<select id="selectMemberById"
+		resultType="com.human.ofim.dto.MemberDto">
+		SELECT * FROM user WHERE member_id = #{memberId}
+	</select>
+
+	<select id="selectExpertById"
+		resultType="com.human.ofim.dto.ExpertUserDto">
+		SELECT * FROM expert_user WHERE member_id = #{memberId}
+	</select>
+
+	<select id="selectCertList"
+		resultType="com.human.ofim.dto.CertificateDto">
+		SELECT * FROM certification
+		WHERE member_id = #{memberId}
+		ORDER BY issued_date DESC
+	</select>
+
+	<select id="selectEduList"
+		resultType="com.human.ofim.dto.EducationDto">
+		SELECT * FROM expert_career2 WHERE expert_id = #{memberId}
+	</select>
+
+	<select id="selectExpList"
+		resultType="com.human.ofim.dto.ExperienceDto">
+		SELECT * FROM expert_career
+		WHERE expert_id = #{memberId}
+		ORDER BY career_year DESC, career_month DESC
+	</select>
+	
+	<select id="selectExpertDetail" resultType="com.human.ofim.dto.ExpertUserDto">
+    SELECT
+        m.member_id,
+        m.name,
+        eu.specialty,
+        eu.expert_introduce,
+        eu.is_online AS isOnline
+    FROM member m
+    JOIN expert_user eu ON m.member_id = eu.member_id
+    WHERE m.member_id = #{expertId}
+</select>
+
+	<select id="selectSettlement"
+		resultType="com.human.ofim.dto.ExpertSettlementDto">
+		SELECT * FROM expert_settlement WHERE member_id =
+		#{memberId}
+	</select>
+
+	<update id="updateCert"
+		parameterType="com.human.ofim.dto.CertificateDto">
+		UPDATE certification
+		SET
+		cert_name = #{certName},
+		issuer = #{issuer},
+		issued_date = #{issuedDate},
+		expired_date = #{expiredDate}
+		<if test="certFilePath != null and certFilePath != ''">
+			, cert_file_path = #{certFilePath}
+		</if>
+		WHERE certification_id = #{certificationId}
+	</update>
+
+	<update id="updateExp"
+		parameterType="com.human.ofim.dto.ExperienceDto">
+		UPDATE expert_career SET organization = #{organization},
+		career_year = #{careerYear},
+		career_month = #{careerMonth}
+		WHERE
+		career_id = #{careerId}
+	</update>
+
+	<update id="updateEdu"
+		parameterType="com.human.ofim.dto.EducationDto">
+		UPDATE expert_career2 SET expert_school =
+		#{expertSchool},
+		expert_major = #{expertMajor},
+		degree_name =
+		#{degreeName},
+		graduation_yn = #{graduationYn}
+		WHERE career_id =
+		#{careerId}
+	</update>
+
+	<update id="updateExpertProfile">
+		UPDATE expert_user
+		SET specialty = #{specialty}, expert_introduce =
+		#{expertIntroduce}
+		<if test="profileImagePath != null">
+			, profile_image_path = #{profileImagePath}
+		</if>
+		WHERE member_id = #{memberId}
+	</update>
+
+	<update id="updateSettlement"
+		parameterType="com.human.ofim.dto.ExpertSettlementDto">
+		UPDATE expert_settlement SET
+		bank_name = #{bankName},
+		acct_no = #{acctNo}
+		WHERE member_id = #{memberId}
+	</update>
+
+	<delete id="deleteExp" parameterType="long">
+		DELETE FROM expert_career
+		WHERE career_id = #{careerId}
+	</delete>
+
+	<delete id="deleteEdu" parameterType="long">
+		DELETE FROM expert_career2
+		WHERE career_id = #{careerId}
+	</delete>
+
+	<delete id="deleteCertificate">
+		DELETE FROM certification WHERE certification_id =
+		#{certificationId} AND member_id =
+		#{memberId}
+	</delete>
+	
+	<update id="updateOnlineStatus">
+    UPDATE expert_user
+    SET is_online = #{isOnline}
+    WHERE member_id = #{memberId}
+</update>
+
+</mapper>

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::content})}">
+
+<div th:fragment="content">
+
+    <div class="container-fluid py-4">
+
+        <div th:if="${successMessage != null}" class="alert alert-success shadow-sm" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage != null}" class="alert alert-danger shadow-sm" th:text="${errorMessage}"></div>
+
+        <!-- 전문가 기본 정보 -->
+        <div class="card card-soft mb-3">
+            <div class="card-body d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+                <div class="d-flex gap-3 align-items-center">
+                    <img
+                        th:src="${expert.profileImagePath != null and !#strings.isEmpty(expert.profileImagePath)} ?
+                                @{${expert.profileImagePath}} : @{/images/default.png}"
+                        src="/images/default.png"
+                        style="width: 72px; height: 72px; border-radius: 18px; object-fit: cover;">
+
+                    <div>
+                        <button type="button"
+                                class="btn btn-link p-0 fw-bold fs-5 text-decoration-none text-dark"
+                                data-bs-toggle="modal"
+                                data-bs-target="#joinInfoModal"
+                                th:text="${expert.userName}">
+                            전문가명
+                        </button>
+
+                        <div class="text-muted small">
+                            <span th:text="${expert.loginId}">login</span>
+                            <span class="mx-2">·</span>
+                            <span th:text="${expert.email}">email</span>
+                        </div>
+
+                        <div class="mt-1">
+                            <span class="badge text-bg-secondary" th:text="${expert.specialty}">전문분야</span>
+
+                            <span class="badge ms-2"
+                                  th:classappend="${expert.approveStatus == 1} ? ' text-bg-success' :
+                                                  (${expert.approveStatus == 2} ? ' text-bg-danger' : ' text-bg-warning')"
+                                  th:text="${expert.approveStatus == 1 ? '승인' : (expert.approveStatus == 2 ? '반려' : '대기')}">
+                                상태
+                            </span>
+
+                            <span class="badge ms-2"
+                                  th:classappend="${expert.isOnline != null and expert.isOnline} ? ' text-bg-primary' : ' text-bg-light text-dark'"
+                                  th:text="${expert.isOnline != null and expert.isOnline ? 'ONLINE' : 'OFFLINE'}">
+                                ONLINE
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 상단 버튼 -->
+                <div class="d-flex gap-2">
+                    <button type="button"
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#memberStatusModal">
+                        수정
+                    </button>
+
+                    <a class="btn btn-outline-secondary"
+                       th:href="@{/admin/expert/list}">
+                        목록
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body pt-0">
+                <div class="text-muted small mb-1">소개</div>
+                <div th:text="${expert.expertIntroduce != null and !#strings.isEmpty(expert.expertIntroduce) ? expert.expertIntroduce : '-'}">-</div>
+            </div>
+        </div>
+
+        <!-- 상담 통계 -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="card card-soft p-3 h-100">
+                    <div class="text-secondary small">총 상담 수</div>
+                    <div class="fs-4 fw-bold" th:text="${consultStats.totalConsultCount}">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-soft p-3 h-100">
+                    <div class="text-secondary small">상담 고객 수</div>
+                    <div class="fs-4 fw-bold" th:text="${consultStats.totalClientCount}">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-soft p-3 h-100">
+                    <div class="text-secondary small">총 상담 시간(분)</div>
+                    <div class="fs-4 fw-bold"><span th:text="${consultStats.totalMinutes}">0</span> 분</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 상담 회원 리스트 -->
+        <div class="card card-soft mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="fw-semibold">상담 회원 리스트</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small"
+                              th:text="${clientList != null ? #lists.size(clientList) : 0} + '명'">0명</span>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#clientListModal"
+                                th:if="${clientList != null and !#lists.isEmpty(clientList)}">
+                            상세보기
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 90px;">회원ID</th>
+                            <th style="width: 140px;">로그인ID</th>
+                            <th style="width: 140px;">이름</th>
+                            <th>이메일</th>
+                            <th style="width: 120px;">상담횟수</th>
+                            <th style="width: 140px;">총 상담시간(분)</th>
+                            <th style="width: 180px;">최근상담</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="c : ${clientPreviewList}">
+                            <td th:text="${c.memberId}">0</td>
+                            <td th:text="${c.clientLoginId}">-</td>
+                            <td th:text="${c.clientName}">-</td>
+                            <td th:text="${c.clientEmail}">-</td>
+                            <td th:text="${c.consultCount}">0</td>
+                            <td th:text="${c.totalMinutes}">0</td>
+                            <td th:text="${c.lastConsultAt != null ? #temporals.format(c.lastConsultAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                        </tr>
+                        <tr th:if="${clientPreviewList == null or #lists.isEmpty(clientPreviewList)}">
+                            <td colspan="7" class="text-center text-muted py-4">상담 회원이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 전문가 상담 목록 -->
+        <div class="card card-soft mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="fw-semibold">전문가 상담 목록</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small"
+                              th:text="${consultList != null ? #lists.size(consultList) : 0} + '건'">0건</span>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#consultListModal"
+                                th:if="${consultList != null and !#lists.isEmpty(consultList)}">
+                            상세보기
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 90px;">상담ID</th>
+                            <th style="width: 160px;">시작</th>
+                            <th style="width: 160px;">종료</th>
+                            <th style="width: 90px;">분</th>
+                            <th style="width: 100px;">유형</th>
+                            <th style="width: 110px;">상태</th>
+                            <th style="width: 120px;">회원명</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="r : ${consultPreviewList}">
+                            <td th:text="${r.consultId}">0</td>
+                            <td th:text="${r.consultStartDate != null ? #temporals.format(r.consultStartDate, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                            <td th:text="${r.consultEndDate != null ? #temporals.format(r.consultEndDate, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                            <td th:text="${r.minutes} + '분'">0분</td>
+                            <td th:text="${r.consultType}">채팅</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${r.status == 1} ? ' text-bg-warning' :
+                                                      (${r.status == 2} ? ' text-bg-primary' :
+                                                      (${r.status == 3} ? ' text-bg-success' : ' text-bg-secondary'))"
+                                      th:text="${r.status == 1 ? '예약신청' : (r.status == 2 ? '예약확정' : (r.status == 3 ? '상담완료' : '취소'))}">
+                                    상태
+                                </span>
+                            </td>
+                            <td th:text="${r.clientName}">-</td>
+                        </tr>
+
+                        <tr th:if="${consultPreviewList == null or #lists.isEmpty(consultPreviewList)}">
+                            <td colspan="7" class="text-center text-muted py-4">상담 기록이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 자격증 / 서류 -->
+        <div class="card card-soft mb-3" id="certs">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="fw-semibold">자격증 / 서류</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small"
+                              th:text="${certList != null ? #lists.size(certList) : 0} + '건'">0건</span>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#certListModal"
+                                th:if="${certList != null and !#lists.isEmpty(certList)}">
+                            상세보기
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>자격증명</th>
+                            <th style="width: 140px;">발급처</th>
+                            <th style="width: 120px;">상태</th>
+                            <th style="width: 120px;">등록일</th>
+                            <th style="width: 260px;" class="text-end">작업</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="c : ${certPreviewList}">
+                            <td th:text="${c.certificationId}">1</td>
+                            <td th:text="${c.certName}">자격증</td>
+                            <td th:text="${c.issuer}">발급처</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${c.verifyStatus == 1} ? ' text-bg-success' :
+                                                      (${c.verifyStatus == 2} ? ' text-bg-danger' : ' text-bg-warning')"
+                                      th:text="${c.verifyStatus == 1 ? '승인' : (c.verifyStatus == 2 ? '반려' : '대기')}">
+                                    상태
+                                </span>
+                            </td>
+                            <td th:text="${c.createdDate != null ? #temporals.format(c.createdDate, 'yyyy-MM-dd') : '-'}">-</td>
+                            <td class="text-end">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        th:attr="data-preview-url=@{/admin/expert/cert/preview(certId=${c.certificationId})},
+                                                 data-file-path=${c.certFilePath}">
+                                    미리보기
+                                </button>
+
+                                <a class="btn btn-sm btn-outline-secondary ms-1"
+                                   th:href="@{/admin/expert/cert/download(certId=${c.certificationId})}">
+                                    다운로드
+                                </a>
+
+                                <form th:action="@{/admin/expert/cert/approve}" method="post" class="d-inline">
+                                    <input type="hidden" name="certId" th:value="${c.certificationId}">
+                                    <input type="hidden" name="memberId" th:value="${expert.memberId}">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-success ms-1"
+                                            th:disabled="${c.verifyStatus == 1}">
+                                        승인
+                                    </button>
+                                </form>
+
+                                <form th:action="@{/admin/expert/cert/reject}" method="post" class="d-inline">
+                                    <input type="hidden" name="certId" th:value="${c.certificationId}">
+                                    <input type="hidden" name="memberId" th:value="${expert.memberId}">
+                                    <input type="hidden" name="reason" value="관리자 반려">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-danger ms-1"
+                                            th:disabled="${c.verifyStatus == 2}">
+                                        반려
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${certPreviewList == null or #lists.isEmpty(certPreviewList)}">
+                            <td colspan="6" class="text-center text-muted py-4">등록된 서류가 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 전문가 상태 변경 모달 -->
+    <div class="modal fade" id="memberStatusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">전문가 상태 변경</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form th:action="@{/admin/expert/member-status}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="memberId" th:value="${expert.memberId}">
+
+                        <div class="mb-3">
+                            <label class="form-label">처리 유형</label>
+                            <select name="actionType" class="form-select" required>
+                                <option value="">선택하세요</option>
+                                <option value="discipline_stop">징계정지</option>
+                                <option value="accident_stop">사고정지</option>
+                                <option value="discipline_withdraw">징계탈퇴</option>
+                                <option value="accident_withdraw">사고탈퇴</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="form-label">사유</label>
+                            <textarea name="reason"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="처리 사유를 입력하세요."
+                                      required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">취소</button>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상담 회원 전체 모달 -->
+    <div class="modal fade" id="clientListModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">상담 회원 전체 리스트</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle sortable-table" id="clientTable">
+                            <thead>
+                            <tr>
+                                <th class="sortable" data-type="number">회원ID</th>
+                                <th class="sortable" data-type="string">로그인ID</th>
+                                <th class="sortable" data-type="string">이름</th>
+                                <th class="sortable" data-type="string">이메일</th>
+                                <th class="sortable" data-type="number">상담횟수</th>
+                                <th class="sortable" data-type="number">총 상담시간</th>
+                                <th class="sortable" data-type="datetime">최근 상담일</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${clientList == null or #lists.isEmpty(clientList)}">
+                                <td colspan="7" class="text-center text-muted py-4">데이터가 없습니다.</td>
+                            </tr>
+                            <tr th:each="c : ${clientList}">
+                                <td th:attr="data-value=${c.memberId}" th:text="${c.memberId}">1</td>
+                                <td th:attr="data-value=${c.clientLoginId}" th:text="${c.clientLoginId}">login</td>
+                                <td th:attr="data-value=${c.clientName}" th:text="${c.clientName}">이름</td>
+                                <td th:attr="data-value=${c.clientEmail}" th:text="${c.clientEmail}">email</td>
+                                <td th:attr="data-value=${c.consultCount}" th:text="${c.consultCount}">0</td>
+                                <td th:attr="data-value=${c.totalMinutes}" th:text="${c.totalMinutes} + '분'">0분</td>
+                                <td th:attr="data-value=${c.lastConsultAt != null ? #temporals.format(c.lastConsultAt, 'yyyyMMddHHmmss') : ''}"
+                                    th:text="${c.lastConsultAt != null ? #temporals.format(c.lastConsultAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="small text-muted mt-2">컬럼명을 클릭하면 오름차순 → 내림차순 → 정렬초기화 됩니다.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상담 전체 목록 모달 -->
+    <div class="modal fade" id="consultListModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">상담 전체 목록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle sortable-table" id="consultTable">
+                            <thead>
+                            <tr>
+                                <th class="sortable" data-type="number">상담ID</th>
+                                <th class="sortable" data-type="datetime">시작일시</th>
+                                <th class="sortable" data-type="datetime">종료일시</th>
+                                <th class="sortable" data-type="number">상담시간</th>
+                                <th class="sortable" data-type="string">상담유형</th>
+                                <th class="sortable" data-type="string">상태</th>
+                                <th class="sortable" data-type="string">회원명</th>
+                                <th class="sortable" data-type="string">로그인ID</th>
+                                <th class="sortable" data-type="string">이메일</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${consultList == null or #lists.isEmpty(consultList)}">
+                                <td colspan="9" class="text-center text-muted py-4">데이터가 없습니다.</td>
+                            </tr>
+                            <tr th:each="r : ${consultList}">
+                                <td th:attr="data-value=${r.consultId}" th:text="${r.consultId}">0</td>
+                                <td th:attr="data-value=${r.consultStartDate != null ? #temporals.format(r.consultStartDate, 'yyyyMMddHHmmss') : ''}"
+                                    th:text="${r.consultStartDate != null ? #temporals.format(r.consultStartDate, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                                <td th:attr="data-value=${r.consultEndDate != null ? #temporals.format(r.consultEndDate, 'yyyyMMddHHmmss') : ''}"
+                                    th:text="${r.consultEndDate != null ? #temporals.format(r.consultEndDate, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                                <td th:attr="data-value=${r.minutes}" th:text="${r.minutes} + '분'">0분</td>
+                                <td th:attr="data-value=${r.consultType}" th:text="${r.consultType}">채팅</td>
+                                <td th:attr="data-value=${r.status == 1 ? '예약신청' : (r.status == 2 ? '예약확정' : (r.status == 3 ? '상담완료' : '취소'))}"
+                                    th:text="${r.status == 1 ? '예약신청' : (r.status == 2 ? '예약확정' : (r.status == 3 ? '상담완료' : '취소'))}">상태</td>
+                                <td th:attr="data-value=${r.clientName}" th:text="${r.clientName}">-</td>
+                                <td th:attr="data-value=${r.clientLoginId}" th:text="${r.clientLoginId}">-</td>
+                                <td th:attr="data-value=${r.clientEmail}" th:text="${r.clientEmail}">-</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="small text-muted mt-2">컬럼명을 클릭하면 오름차순 → 내림차순 → 정렬초기화 됩니다.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자격증/서류 전체 모달 -->
+    <div class="modal fade" id="certListModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">자격증 / 서류 전체 목록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle sortable-table" id="certTable">
+                            <thead>
+                            <tr>
+                                <th class="sortable" data-type="number">ID</th>
+                                <th class="sortable" data-type="string">자격증명</th>
+                                <th class="sortable" data-type="string">발급처</th>
+                                <th class="sortable" data-type="string">상태</th>
+                                <th class="sortable" data-type="datetime">등록일</th>
+                                <th>작업</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${certList == null or #lists.isEmpty(certList)}">
+                                <td colspan="6" class="text-center text-muted py-4">등록된 서류가 없습니다.</td>
+                            </tr>
+                            <tr th:each="c : ${certList}">
+                                <td th:attr="data-value=${c.certificationId}" th:text="${c.certificationId}">1</td>
+                                <td th:attr="data-value=${c.certName}" th:text="${c.certName}">자격증명</td>
+                                <td th:attr="data-value=${c.issuer}" th:text="${c.issuer}">발급처</td>
+                                <td th:attr="data-value=${c.verifyStatus == 1 ? '승인' : (c.verifyStatus == 2 ? '반려' : '대기')}">
+                                    <span class="badge"
+                                          th:classappend="${c.verifyStatus == 1} ? ' text-bg-success' :
+                                                          (${c.verifyStatus == 2} ? ' text-bg-danger' : ' text-bg-warning')"
+                                          th:text="${c.verifyStatus == 1 ? '승인' : (c.verifyStatus == 2 ? '반려' : '대기')}">
+                                        상태
+                                    </span>
+                                </td>
+                                <td th:attr="data-value=${c.createdDate != null ? #temporals.format(c.createdDate, 'yyyyMMddHHmmss') : ''}"
+                                    th:text="${c.createdDate != null ? #temporals.format(c.createdDate, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                                <td>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary"
+                                            th:attr="data-preview-url=@{/admin/expert/cert/preview(certId=${c.certificationId})},
+                                                     data-file-path=${c.certFilePath}">
+                                        미리보기
+                                    </button>
+
+                                    <a class="btn btn-sm btn-outline-secondary ms-1"
+                                       th:href="@{/admin/expert/cert/download(certId=${c.certificationId})}">
+                                        다운로드
+                                    </a>
+
+                                    <form th:action="@{/admin/expert/cert/approve}" method="post" class="d-inline">
+                                        <input type="hidden" name="certId" th:value="${c.certificationId}">
+                                        <input type="hidden" name="memberId" th:value="${expert.memberId}">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-success ms-1"
+                                                th:disabled="${c.verifyStatus == 1}">
+                                            승인
+                                        </button>
+                                    </form>
+
+                                    <form th:action="@{/admin/expert/cert/reject}" method="post" class="d-inline">
+                                        <input type="hidden" name="certId" th:value="${c.certificationId}">
+                                        <input type="hidden" name="memberId" th:value="${expert.memberId}">
+                                        <input type="hidden" name="reason" value="관리자 반려">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger ms-1"
+                                                th:disabled="${c.verifyStatus == 2}">
+                                            반려
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="small text-muted mt-2">컬럼명을 클릭하면 오름차순 → 내림차순 → 정렬초기화 됩니다.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 가입 정보 보기 모달 -->
+    <div class="modal fade" id="joinInfoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">가입정보</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">회원번호</label>
+                            <div class="fw-semibold" th:text="${joinInfo.memberId}">0</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">로그인ID</label>
+                            <div class="fw-semibold" th:text="${joinInfo.loginId}">id</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">이름</label>
+                            <div class="fw-semibold" th:text="${joinInfo.userName}">이름</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">닉네임</label>
+                            <div class="fw-semibold" th:text="${joinInfo.nickname}">닉네임</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">생년월일</label>
+                            <div th:text="${joinInfo.birthDate != null ? #temporals.format(joinInfo.birthDate, 'yyyy-MM-dd') : '-'}">-</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">성별</label>
+                            <div th:text="${joinInfo.gender != null ? joinInfo.gender : '-'}">-</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">연락처</label>
+                            <div th:text="${joinInfo.phone != null ? joinInfo.phone : '-'}">-</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">이메일</label>
+                            <div th:text="${joinInfo.email != null ? joinInfo.email : '-'}">-</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small">우편번호</label>
+                            <div th:text="${joinInfo.zipcode != null ? joinInfo.zipcode : '-'}">-</div>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label text-muted small">주소</label>
+                            <div th:text="${joinInfo.address != null ? joinInfo.address : '-'}">-</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-muted small">상세주소</label>
+                            <div th:text="${joinInfo.address2 != null and !#strings.isEmpty(joinInfo.address2) ? joinInfo.address2 : '-'}">-</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small">회원상태</label>
+                            <div th:text="${joinInfo.memberStatus}">가입중</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small">회원유형</label>
+                            <div th:text="${joinInfo.memberType}">전문가회원</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small">가입일</label>
+                            <div th:text="${joinInfo.createdDate != null ? #temporals.format(joinInfo.createdDate, 'yyyy-MM-dd HH:mm') : '-'}">-</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-muted small">상태사유</label>
+                            <div th:text="${joinInfo.statusReason != null and !#strings.isEmpty(joinInfo.statusReason) ? joinInfo.statusReason : '-'}">-</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-muted small">최근 로그인</label>
+                            <div th:text="${joinInfo.lastLoginDate != null ? #temporals.format(joinInfo.lastLoginDate, 'yyyy-MM-dd HH:mm') : '-'}">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자격증 미리보기 모달 -->
+    <div class="modal fade" id="certPreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">자격증 미리보기</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <img id="certPreviewImg" src="" alt="preview"
+                             style="max-width: 100%; height: auto; border-radius: 12px;">
+                    </div>
+                    <div class="small text-muted mt-2">
+                        PDF인 경우 브라우저에서 직접 열립니다. (이미지 파일은 모달로 표시)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .sortable::after {
+            content: ' ↕';
+            font-size: 0.8em;
+            color: #94a3b8;
+        }
+        .sortable.sort-asc::after {
+            content: ' ↑';
+            color: #2563eb;
+        }
+        .sortable.sort-desc::after {
+            content: ' ↓';
+            color: #2563eb;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('button[data-preview-url]');
+            if (!btn) return;
+
+            const url = btn.getAttribute('data-preview-url');
+            const filePath = (btn.getAttribute('data-file-path') || '').toLowerCase();
+
+            if (filePath.endsWith('.pdf')) {
+                window.open(url, '_blank');
+                return;
+            }
+
+            const img = document.getElementById('certPreviewImg');
+            img.src = url;
+
+            const modalEl = document.getElementById('certPreviewModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        });
+
+        function initSortableTable(tableId) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            const tbody = table.querySelector('tbody');
+            const headers = table.querySelectorAll('thead th.sortable');
+            if (!tbody || !headers.length) return;
+
+            const originalRows = Array.from(tbody.querySelectorAll('tr'))
+                .filter(row => !row.querySelector('td[colspan]'));
+
+            headers.forEach((header, colIndex) => {
+                header.dataset.state = 'none';
+
+                header.addEventListener('click', function() {
+                    const currentState = header.dataset.state;
+                    const nextState = currentState === 'none' ? 'asc' : (currentState === 'asc' ? 'desc' : 'none');
+                    const type = header.dataset.type || 'string';
+
+                    headers.forEach(h => {
+                        if (h !== header) {
+                            h.dataset.state = 'none';
+                            h.classList.remove('sort-asc', 'sort-desc');
+                        }
+                    });
+
+                    header.dataset.state = nextState;
+                    header.classList.remove('sort-asc', 'sort-desc');
+                    if (nextState === 'asc') header.classList.add('sort-asc');
+                    if (nextState === 'desc') header.classList.add('sort-desc');
+
+                    if (nextState === 'none') {
+                        originalRows.forEach(row => tbody.appendChild(row));
+                        return;
+                    }
+
+                    const rows = Array.from(originalRows);
+
+                    rows.sort((a, b) => {
+                        const aCell = a.children[colIndex];
+                        const bCell = b.children[colIndex];
+
+                        const aValue = (aCell?.dataset.value ?? aCell?.innerText ?? '').trim();
+                        const bValue = (bCell?.dataset.value ?? bCell?.innerText ?? '').trim();
+
+                        let compare = 0;
+
+                        if (type === 'number') {
+                            compare = (parseFloat(aValue) || 0) - (parseFloat(bValue) || 0);
+                        } else if (type === 'datetime') {
+                            compare = aValue.localeCompare(bValue);
+                        } else {
+                            compare = aValue.localeCompare(bValue, 'ko', { numeric: true, sensitivity: 'base' });
+                        }
+
+                        return nextState === 'asc' ? compare : -compare;
+                    });
+
+                    rows.forEach(row => tbody.appendChild(row));
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initSortableTable('clientTable');
+            initSortableTable('consultTable');
+            initSortableTable('certTable');
+        });
+    </script>
+
+</div>
+</html>

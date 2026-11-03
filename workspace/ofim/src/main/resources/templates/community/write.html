@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title th:text="${board?.postId == null or board?.postId == 0 ? '새 글 작성' : '글 수정'}">글쓰기</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<style>
+.form-label {
+	font-weight: bold;
+}
+/* 이미지 미리보기 스타일 */
+#imagePreviewArea img {
+	max-width: 200px;
+	border-radius: 8px;
+	margin-top: 10px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+/* 유튜브 입력창 강조 스타일 */
+.video-url-box {
+	background-color: #f8f9fa;
+	border: 1px dashed #ced4da;
+	border-radius: 10px;
+	padding: 15px;
+}
+/* 챌린지 종료일 영역 강조 */
+.end-date-box {
+	background-color: #eef7ff;
+	border: 1px solid #cfe2ff;
+	border-radius: 10px;
+	padding: 15px;
+}
+</style>
+</head>
+<body>
+	<main class="container my-5">
+		<h3 th:text="${board?.postId == null or board?.postId == 0 ? '새 글 작성' : '글 수정'}">새 글 작성</h3>
+
+		<form th:action="${board?.postId == null or board?.postId == 0 ? '/community/write' : '/community/update'}"
+			method="post" enctype="multipart/form-data">
+
+			<input type="hidden" name="postId" th:value="${board?.postId ?: 0}"> <input type="hidden" name="writerId"
+				th:value="${board?.writerId ?: session.user.memberId}">
+
+			<div class="mb-3">
+				<label class="form-label">카테고리</label> <select name="categoryId" id="mainCategory" class="form-select" required>
+					<option value="1" th:if="${session.user.memberType == '관리자'}" th:selected="${board?.categoryId == 1}">공지사항</option>
+					<option value="2" th:selected="${board?.categoryId == 2}">자유게시판</option>
+					<option value="3" th:selected="${board?.categoryId == 3}">건강 Q&A</option>
+					<option value="4" th:if="${session.user.memberType == '관리자'}" th:selected="${board?.categoryId == 4}">카드뉴스</option>
+					<option value="5" th:selected="${board?.categoryId == 5}">관리자에게</option>
+					<option value="6" th:selected="${board?.categoryId == 6}">🔥 챌린지</option>
+				</select>
+			</div>
+
+			<div class="mb-3" id="subCategoryArea" style="display: none;">
+				<label class="form-label">게시판 분류</label> <select name="subCategory" id="subCategory" class="form-select"></select>
+			</div>
+
+			<div class="mb-3 end-date-box" id="endDateArea" style="display: none;">
+				<label for="endDate" class="form-label text-primary"> <i class="bi bi-calendar-check"></i> 챌린지 종료일 설정
+				</label> <input type="date" name="endDate" id="endDate" class="form-control" th:value="${board?.endDate}">
+				<div class="form-text mt-2">
+					챌린지가 자동으로 <strong>'종료'</strong> 상태로 표시될 날짜를 선택해주세요.
+				</div>
+			</div>
+
+			<div class="mb-3 video-url-box" id="videoUrlGroup" style="display: none;">
+				<label for="videoUrl" class="form-label text-danger"> <i class="bi bi-youtube"></i> 유튜브 영상 링크
+				</label> <input type="text" name="videoUrl" id="videoUrl" class="form-control" th:value="${board?.videoUrl}"
+					placeholder="https://www.youtube.com/watch?v=... 형태의 주소를 입력하세요">
+				<div class="form-text mt-2">
+					카드뉴스의 <strong>'주요영상'</strong> 게시글인 경우에만 영상을 가져옵니다.
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">제목</label> <input type="text" name="title" id="titleInput" class="form-control" required
+					th:value="${board?.title}" placeholder="제목을 입력하세요">
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">이미지 첨부</label> <input type="file" name="uploadFile" class="form-control" id="uploadFile"
+					accept="image/*">
+
+				<div th:if="${board?.imageName != null}" class="mt-2 small text-muted">
+					현재 파일: <span th:text="${board.imageName}">파일명.jpg</span>
+				</div>
+
+				<div id="imagePreviewArea"></div>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">내용</label>
+				<textarea id="contentArea" name="content" class="form-control" rows="10" required th:text="${board?.content}"
+					placeholder="내용을 입력하세요"></textarea>
+			</div>
+
+			<div class="d-flex gap-2">
+				<button type="submit" class="btn btn-primary"
+					th:text="${board?.postId == null or board?.postId == 0 ? '등록' : '수정완료'}">등록</button>
+				<a th:href="@{/community/main}" class="btn btn-secondary">취소</a>
+			</div>
+		</form>
+	</main>
+
+	<script th:inline="javascript">
+        // 세션 유저의 타입을 자바스크립트 변수로 할당
+        const userMemberType = [[${session.user.memberType}]];
+
+        // --- 이미지 미리보기 기능 ---
+        document.getElementById('uploadFile').addEventListener('change', function(e) {
+            const previewArea = document.getElementById('imagePreviewArea');
+            previewArea.innerHTML = ''; 
+            
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = document.createElement('img');
+                    img.setAttribute('src', event.target.result);
+                    previewArea.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+	
+        const titleInput = document.getElementById('titleInput'); 
+        const mainCategory = document.getElementById('mainCategory');
+        const subCategoryArea = document.getElementById('subCategoryArea');
+        const subCategorySelect = document.getElementById('subCategory');
+        const videoUrlGroup = document.getElementById('videoUrlGroup'); 
+        const contentTextArea = document.getElementById('contentArea'); 
+        const endDateArea = document.getElementById('endDateArea'); // 챌린지 날짜 영역
+
+        // --- 서브 카테고리 옵션 데이터 ---
+        const subOptions = {
+            '2': [
+                { value: '일상/잡담', text: '일상/잡담' },
+                { value: '오운완/오식완', text: '오운완/오식완 인증' },
+                { value: '정보나눔', text: '정보나눔' }
+            ],
+            '3': [
+                { value: '일상생활', text: '일상생활' },
+                { value: '운동', text: '운동' },
+                { value: '식단', text: '식단' },
+                { value: '건강', text: '건강' }
+            ],
+            '4': [
+                { value: '건강백과', text: '건강백과' },
+                { value: '주요영상', text: '주요영상' }
+            ],
+            '6': [
+                { value: '공식 챌린지', text: '🏆 공식 챌린지', adminOnly: true },
+                { value: '자율 챌린지', text: '🤝 자율 챌린지' }
+            ]
+        };
+
+        function checkVideoVisibility() {
+            const mainVal = mainCategory.value;
+            const subVal = subCategorySelect.value;
+            
+            if (mainVal === '4' && subVal === '주요영상') {
+                videoUrlGroup.style.display = 'block';
+            } else {
+                videoUrlGroup.style.display = 'none';
+            }
+        }
+
+        function updatePlaceholder(mainVal) {
+            if (mainVal === '6') { 
+                titleInput.placeholder = "예: [인증] 매일 만보 걷기 1일차 도전! 함께 하실 분? 💪";
+                contentTextArea.placeholder = "[챌린지 작성 팁]\n1. 목표: 매일 만보 걷기 (건강한 습관 만들기!)\n2. 참여방법: 오늘 걸음수가 표시된 앱 화면을 캡처해서 댓글로 인증해주세요!\n3. 응원 한마디: 우리 모두 끝까지 완주해봐요! 🔥";
+                endDateArea.style.display = 'block'; // 🔥 챌린지일 때 날짜 선택 표시
+            } else {
+                titleInput.placeholder = "제목을 입력하세요";
+                endDateArea.style.display = 'none'; // 챌린지가 아니면 숨김
+                
+                if (mainVal === '3') {
+                    contentTextArea.placeholder = "궁금하신 건강 정보를 질문해주세요. 전문가와 유저들이 답변해드립니다!";
+                } else if (mainVal === '5') {
+                    contentTextArea.placeholder = "문의하실 내용을 상세히 적어주시면 빠른 답변 도와드리겠습니다.";
+                } else {
+                    contentTextArea.placeholder = "내용을 입력하세요.";
+                }
+            }
+        }
+
+        function renderSubCategories(mainVal, selectedSub) {
+            let options = subOptions[mainVal];
+            
+            updatePlaceholder(mainVal);
+
+            if (options) {
+                if (userMemberType !== '관리자') {
+                    options = options.filter(opt => !opt.adminOnly);
+                }
+
+                subCategoryArea.style.display = 'block';
+                subCategorySelect.innerHTML = '';
+                options.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt.value;
+                    el.text = opt.text;
+                    if (opt.value === selectedSub) el.selected = true;
+                    subCategorySelect.appendChild(el);
+                });
+            } else {
+                subCategoryArea.style.display = 'none';
+                subCategorySelect.innerHTML = '';
+            }
+            checkVideoVisibility();
+        }
+
+        mainCategory.addEventListener('change', function() {
+            renderSubCategories(this.value, '');
+        });
+
+        subCategorySelect.addEventListener('change', checkVideoVisibility);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const initialMain = mainCategory.value;
+            const initialSub = /*[[${board?.subCategory}]]*/ '';
+            renderSubCategories(initialMain, initialSub);
+        });
+    </script>
+</body>
+</html>

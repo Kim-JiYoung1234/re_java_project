@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.AdminUserMapper">
+
+    <!-- 공통 JOIN -->
+    <sql id="userJoinSql">
+        FROM user u
+        LEFT JOIN member m
+            ON u.member_id = m.member_id
+        LEFT JOIN user_grade ug
+            ON m.grade_id = ug.grade_id
+    </sql>
+
+    <!-- 공통 WHERE -->
+    <sql id="userWhereSql">
+        <where>
+            <if test="type != null and type != ''">
+                AND u.member_type = #{type}
+            </if>
+
+            <if test="status != null and status != ''">
+                AND u.member_status = #{status}
+            </if>
+
+            <if test="grade != null and grade != ''">
+                AND ug.grade_name = #{grade}
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    u.login_id LIKE CONCAT('%', #{keyword}, '%')
+                    OR u.user_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u.email LIKE CONCAT('%', #{keyword}, '%')
+                    OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+    </sql>
+
+    <!-- 회원 목록 -->
+    <select id="selectUserList" resultType="com.human.ofim.dto.MemberDto">
+        SELECT
+            u.member_id AS memberId,
+            u.login_id AS loginId,
+            u.user_name AS userName,
+            u.nickname AS nickname,
+            u.email AS email,
+            u.phone AS phone,
+            u.birth_date AS birthDate,
+            u.gender AS gender,
+            u.zipcode AS zipcode,
+            u.address AS address,
+            u.address2 AS address2,
+            u.created_date AS createdDate,
+            u.updated_date AS updatedDate,
+            u.last_login_date AS lastLoginDate,
+            u.member_status AS memberStatus,
+            u.member_type AS memberType,
+            COALESCE(ug.grade_name, '-') AS gradeName
+        <include refid="userJoinSql"/>
+        <include refid="userWhereSql"/>
+        ORDER BY u.member_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 회원 수 -->
+    <select id="countUsers" resultType="int">
+        SELECT COUNT(*)
+        <include refid="userJoinSql"/>
+        <include refid="userWhereSql"/>
+    </select>
+
+    <!-- 회원 상세 -->
+    <select id="selectUserDetail" resultType="com.human.ofim.dto.MemberDto">
+        SELECT
+            u.member_id AS memberId,
+            u.login_id AS loginId,
+            u.user_name AS userName,
+            u.nickname AS nickname,
+            u.email AS email,
+            u.phone AS phone,
+            u.birth_date AS birthDate,
+            u.gender AS gender,
+            u.zipcode AS zipcode,
+            u.address AS address,
+            u.address2 AS address2,
+            u.created_date AS createdDate,
+            u.updated_date AS updatedDate,
+            u.last_login_date AS lastLoginDate,
+            u.member_status AS memberStatus,
+            u.member_type AS memberType,
+            COALESCE(ug.grade_name, '-') AS gradeName
+        <include refid="userJoinSql"/>
+        WHERE u.member_id = #{memberId}
+    </select>
+
+    <!-- 회원 상태 변경 -->
+    <update id="updateMemberStatus">
+    UPDATE user
+    SET member_status = #{memberStatus},
+        status_reason = #{reason},
+        updated_date = NOW()
+    WHERE member_id = #{memberId}
+</update>
+
+</mapper>

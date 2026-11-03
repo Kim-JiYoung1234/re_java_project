@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>운동 추가하기</title>
+
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link
+	href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+<style>
+body {
+	font-family: 'Noto Sans KR', sans-serif;
+	background-color: #f8f9fa;
+}
+
+.card {
+	border: none;
+	border-radius: 20px;
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+.custom-scroll {
+	max-height: 350px;
+	overflow-y: auto;
+	border-radius: 10px;
+}
+
+.list-group-item {
+	border-left: none;
+	border-right: none;
+	transition: background-color 0.2s;
+}
+
+.list-group-item:first-child {
+	border-top: none;
+}
+
+.list-group-item:hover {
+	background-color: #f0f7ff; /* 파란색 계열 호버 */
+}
+
+@media ( max-width : 768px) {
+	.form-control, .form-select {
+		font-size: 16px !important;
+	}
+}
+
+.footer {
+	background: #343a40;
+	color: white;
+	padding: 30px 0;
+	margin-top: 50px;
+}
+</style>
+</head>
+<body>
+
+	<header th:replace="~{header :: header}"></header>
+
+	<div class="container mt-3 mt-md-5 mb-5">
+		<div class="row justify-content-center">
+			<div class="col-12 col-lg-8">
+				<div class="card p-3 p-md-4">
+					<h4 class="fw-bold text-primary mb-4 d-flex align-items-center">
+						<i class="bi bi-person-walking me-2"></i> 운동 추가하기
+					</h4>
+
+					<div id="searchSection">
+						<div class="input-group mb-3">
+							<input type="text" id="exerciseKeyword"
+								class="form-control form-control-lg border-primary"
+								placeholder="어떤 운동을 하셨나요?">
+							<button class="btn btn-primary px-4" onclick="showResults()">검색</button>
+						</div>
+
+						<div th:if="${!#lists.isEmpty(exercises)}">
+							<div id="resultList"
+								class="list-group mb-3 shadow-sm custom-scroll"
+								style="display: block;">
+								<button type="button"
+									class="list-group-item list-group-item-action py-3"
+									th:each="ex : ${exercises}" th:if="${ex != null}"
+									th:data-id="${ex.exerciseId}" th:data-name="${ex.exerciseName}"
+									th:data-intensity="${ex.intensity}"
+									th:data-unit="${ex.exerciseUnit}" th:data-kcal="${ex.calories}"
+									onclick="showExerciseInfo(this)">
+									<div class="d-flex justify-content-between align-items-center">
+										<div>
+											<strong class="d-block text-dark"
+												th:text="${ex.exerciseName}">운동명</strong> <small
+												class="text-muted"
+												th:text="|1${ex.exerciseUnit == 'MIN' ? '시간' : '회'}당 ${ex.calories}kcal|">정보</small>
+										</div>
+										<span class="btn btn-sm btn-outline-primary rounded-pill px-3">선택</span>
+									</div>
+								</button>
+							</div>
+						</div>
+
+						<div th:if="${#lists.isEmpty(exercises)}" class="text-center py-5">
+							<p class="text-muted">찾으시는 운동 데이터가 없습니다. 😭</p>
+
+							<button type="button"
+									class="list-group-item list-group-item-action py-3"
+									th:each="ex : ${exercises}" th:if="${ex != null}"
+									th:data-id="${ex.exerciseId}" th:data-name="${ex.exerciseName}"
+									th:data-intensity="${ex.intensity}"
+									th:data-unit="${ex.exerciseUnit}" th:data-kcal="${ex.calories}"
+									onclick="showExerciseInfo(this)">
+									<div class="d-flex justify-content-between align-items-center">
+										<div>
+											<strong class="d-block text-dark"
+												th:text="${ex.exerciseName}">운동명</strong> <small
+												class="text-muted"
+												th:text="|1${ex.exerciseUnit == 'MIN' ? '시간' : '회'}당 ${ex.calories}kcal|">정보</small>
+										</div>
+										<span class="btn btn-sm btn-outline-primary rounded-pill px-3">선택</span>
+									</div>
+								</button>
+						</div>
+
+					</div>
+					
+					<small>* 검색 결과는 한국건강증진개발원의 보건소 모바일 헬스케어 운동 DB를 기반으로 제공됩니다. </small>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer th:replace="~{footer :: footer}"></footer>
+
+	<div class="modal fade" id="exerciseInfoModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg">
+				<div class="modal-header bg-primary text-white">
+					<h5 class="modal-title fw-bold">운동 기록하기</h5>
+					<button type="button" class="btn-close btn-close-white"
+						data-bs-dismiss="modal"></button>
+				</div>
+
+				<div id="modalViewSection">
+					<div class="modal-body p-4 text-center">
+						<div class="mb-4">
+							<i class="bi bi-fire text-danger fs-1"></i>
+							<h3 id="mExerciseName" class="fw-bold text-primary mt-2">운동명</h3>
+						</div>
+						<div
+							class="row g-0 border-top border-bottom py-3 justify-content-center">
+							<div class="col-4 border-end">
+								<small class="text-muted d-block">단위당 소모</small> <strong
+									class="fs-5 text-dark"><span id="mKcal">0</span></strong> <small>kcal</small>
+							</div>
+							<div class="col-4 border-end">
+								<small class="text-muted d-block">기준 단위</small> <strong
+									class="fs-5 text-dark" id="mUnit">단위</strong>
+							</div>
+							<div class="col-4">
+								<small class="text-muted d-block">강도</small> <strong
+									class="fs-5 text-dark" id="mIntensity">중</strong>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary w-100"
+							data-bs-dismiss="modal">닫기</button>
+						<button type="button" class="btn btn-primary w-100"
+						th:if="${session.user != null}"
+							onclick="switchSection('RECORD')">이 운동으로 기록하기</button>
+					</div>
+				</div>
+
+				<div id="modalRecordSection" style="display: none;">
+					<form action="/record/exerciseSearch-data" method="post">
+						<div class="modal-body p-4">
+							<h5 class="fw-bold mb-3">
+								<span id="mSelectedExerciseName" class="text-primary">운동명</span>
+								기록
+							</h5>
+							<input type="hidden" id="mSelectedExerciseId" name="exerciseId">
+							<div class="row g-3">
+								<div class="col-12">
+    <label class="form-label small fw-bold text-secondary">운동량 입력</label>
+    <div class="input-group input-group-lg">
+        <input type="number" name="volume" class="form-control" placeholder="숫자만 입력하세요" required> 
+        
+        <span class="input-group-text" id="mInputUnitBadge">단위</span>
+    </div>
+    
+    <input type="hidden" id="mExerciseUnit" name="exerciseUnit">
+    
+    <small class="text-muted mt-1" id="mUnitGuide">
+        ※ 해당 운동은 <span id="mUnitText">단위</span> 기준으로 기록됩니다.
+    </small>
+</div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-light border"
+								onclick="switchSection('VIEW')">뒤로가기</button>
+							<button type="submit" class="btn btn-primary flex-grow-1">기록
+								완료</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+	<script>
+		// 페이지 로딩 시 리스트 노출 처리 (식단 코드와 동일)
+		document.addEventListener('DOMContentLoaded', function() {
+			const resultList = document.getElementById('resultList');
+			if (resultList) {
+				resultList.style.display = 'block';
+			}
+		});
+
+		// 검색 버튼 클릭 시 (Controller의 매핑 주소에 맞춰 수정해줘!)
+		function showResults() {
+			const keyword = document.getElementById('exerciseKeyword').value;
+			// 팁: 컨트롤러 경로가 /record/exerciseSearch 라면 아래처럼!
+			location.href = "/record/exerciseSearch?exerciseKeyword=" + keyword;
+		}
+
+		// 모달 인스턴스 초기화
+		let exerciseModal;
+		document.addEventListener('DOMContentLoaded', function() {
+			const modalElement = document.getElementById('exerciseInfoModal');
+			if (modalElement) {
+				exerciseModal = new bootstrap.Modal(modalElement);
+			}
+		});
+
+		// DB 리스트 클릭 시 모달에 데이터 뿌려주는 핵심 로직!
+		// DB 리스트 클릭 시 모달에 데이터 뿌려주는 핵심 로직!
+function showExerciseInfo(element) {
+    const ds = element.dataset;
+    console.log("선택된 운동 데이터:", ds);
+
+    try {
+        // 1. DTO 데이터를 모달 View 화면에 세팅
+        document.getElementById('mExerciseName').innerText = ds.name;
+        document.getElementById('mKcal').innerText = ds.kcal;
+        document.getElementById('mIntensity').innerText = ds.intensity;
+
+        // 단위 예쁘게 바꾸기 (DB의 MIN/REP -> 사용자용 분/회)
+        // 지영아, 아까 DB 데이터에 따라 'MIN' 또는 'rep' 등 조건문을 맞춰줘!
+        const displayUnit = (ds.unit === 'MIN' || ds.unit === 'min') ? '분' : '회';
+        document.getElementById('mUnit').innerText = displayUnit;
+
+        // 2. 기록하기(Record) 화면으로 넘어갈 때 쓸 데이터 미리 세팅
+        document.getElementById('mSelectedExerciseId').value = ds.id;
+        document.getElementById('mSelectedExerciseName').innerText = ds.name;
+        
+        // [범인 검거!] mInputGuideText가 HTML에 없어서 에러가 났던 거야. 
+        // 대신 존재하는 ID인 mUnitText와 mInputUnitBadge를 사용하자!
+        document.getElementById('mInputUnitBadge').innerText = displayUnit;
+        document.getElementById('mUnitText').innerText = displayUnit;
+
+        // 3. 서버로 보낼 hidden 값 세팅
+        document.getElementById('mExerciseUnit').value = ds.unit;
+
+        // 모든 세팅이 끝난 후 모달 띄우기!
+        if (exerciseModal) {
+            exerciseModal.show();
+        }
+    } catch (e) {
+        console.error("모달 데이터 세팅 중 에러 발생:", e);
+        // 에러가 나도 일단 모달을 띄우고 싶다면 여기에 넣어줘
+        exerciseModal.show();
+    }
+}
+
+		// 모달 안에서 VIEW <-> RECORD 화면 전환
+		function switchSection(mode) {
+			const viewSection = document.getElementById('modalViewSection');
+			const recordSection = document.getElementById('modalRecordSection');
+
+			if (!viewSection || !recordSection)
+				return;
+
+			if (mode === 'RECORD') {
+				viewSection.style.display = 'none';
+				recordSection.style.display = 'block';
+			} else {
+				viewSection.style.display = 'block';
+				recordSection.style.display = 'none';
+			}
+		}
+
+		// 모달이 닫힐 때 뷰 화면으로 리셋 (식단 코드와 동일)
+		const modalElem = document.getElementById('exerciseInfoModal');
+		if (modalElem) {
+			modalElem.addEventListener('hidden.bs.modal', function() {
+				switchSection('VIEW');
+			});
+		}
+		
+		// 운동 선택 시 호출되는 함수 (지영이의 기존 코드에 맞춰서 수정해 봐!)
+		function setExerciseModal(exerciseName, exerciseId, unit) {
+		    // 1. 운동 이름과 ID 세팅
+		    document.getElementById('mSelectedExerciseName').innerText = exerciseName;
+		    document.getElementById('mSelectedExerciseId').value = exerciseId;
+		    
+		    // 2. 단위 텍스트 변경 (rep -> 회, min -> 분)
+		    let displayUnit = (unit === 'rep') ? '회' : '분';
+		    
+		    // 3. UI 업데이트
+		    document.getElementById('mUnitText').innerText = displayUnit;
+		    
+		    // 4. 서버로 보낼 hidden 값에 저장 (DB에 들어갈 값)
+		    document.getElementById('mExerciseUnit').value = unit; 
+		}
+	</script>
+</body>
+</html>

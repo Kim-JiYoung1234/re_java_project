@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="content">
+
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="fw-bold mb-2">시설 승인 미리보기</h3>
+            <p class="text-secondary">고객 화면(App/Web)에 표시될 센터 상세 정보 페이지의 실제 레이아웃입니다.</p>
+        </div>
+        <a th:href="@{/admin/fitness/list}" class="btn btn-dark fw-bold"><i class="bi bi-arrow-left me-2"></i>목록으로 돌아가기</a>
+    </div>
+
+    <!-- 미리보기 테두리 (모바일 앱 느낌의 틀) -->
+    <div style="background: white; border: 3px solid #111827; border-radius: 20px; overflow: hidden; position: relative; max-width: 900px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        <!-- 상단 라벨 -->
+        <div style="background: #111827; color: white; padding: 10px 20px; font-weight: bold; display: flex; justify-content: space-between;">
+            <span><i class="bi bi-phone"></i> 고객 화면 미리보기 (User View)</span>
+            <span class="badge bg-warning text-dark">승인 대기중</span>
+        </div>
+
+        <!-- 유저용 뷰 이식 영역 시작 -->
+        <div style="padding: 0; background-color: #f8f9fa;">
+            <th:block th:if="${center != null}">
+                <div style="background-color: white; padding: 30px 20px; border-bottom: 1px solid #dee2e6;">
+                    <span class="badge mb-2 fs-6 px-3 py-2 rounded-pill bg-dark" th:text="${center.type}">업종</span>
+                    <h2 class="fw-bold" th:text="${center.centerName}">업체명</h2>
+                    <p class="text-muted mb-0" th:text="${center.facilityAddr} + ' ' + ${center.facilityAddrDetail != null ? center.facilityAddrDetail : ''}">상세 주소</p>
+                    
+                    <div style="margin-top: 15px; padding: 10px 15px; border-radius: 12px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;"
+                         th:classappend="${center.dayPassYn ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}">
+                        <i th:class="${center.dayPassYn ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'}"></i>
+                        <span th:text="${center.dayPassYn ? '일일권 이용 가능 센터' : '일일권 이용 불가 (회원전용)'}"></span>
+                    </div>
+                </div>
+
+                <div style="padding: 20px;">
+                    <div style="width: 100%; height: 300px; overflow: hidden; border-radius: 15px; margin-bottom: 30px;">
+                        <img th:src="${center.imageUrl}" alt="시설 이미지" style="width: 100%; height: 100%; object-fit: cover; background: #eee;">
+                    </div>
+                    
+                    <h5 class="fw-bold mb-3">센터 소개</h5>
+                    <div class="mb-4 p-4 bg-white border rounded-3" style="white-space: pre-wrap;" th:text="${center.description != null and center.description != '' ? center.description : '사장님이 아직 상세 소개를 등록하지 않았습니다.'}"></div>
+                    
+                    <h5 class="fw-bold mb-3">운영 시간</h5>
+                    <div class="mb-4 p-4 bg-white border rounded-3">
+                        <th:block th:if="${center.is24h != null and center.is24h}">
+                            <div class="text-danger fw-bold"><i class="bi bi-check-circle-fill me-2"></i>24시간 연중무휴</div>
+                        </th:block>
+                        <th:block th:unless="${center.is24h != null and center.is24h}">
+                            <div class="d-flex justify-content-between border-bottom py-2" th:if="${center.weekdayOpen != null and center.weekdayOpen != ''}">
+                                <strong>평일</strong> <span th:text="${#strings.substring(center.weekdayOpen, 0, 5) + ' ~ ' + #strings.substring(center.weekdayClose, 0, 5)}"></span>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom py-2 text-primary" th:if="${center.satOpen != null and center.satOpen != ''}">
+                                <strong>토요일</strong> <span th:text="${#strings.substring(center.satOpen, 0, 5) + ' ~ ' + #strings.substring(center.satClose, 0, 5)}"></span>
+                            </div>
+                            <div class="d-flex justify-content-between py-2 text-danger" th:if="${center.sunOpen != null and center.sunOpen != ''}">
+                                <strong>일/공휴일</strong> <span th:text="${#strings.substring(center.sunOpen, 0, 5) + ' ~ ' + #strings.substring(center.sunClose, 0, 5)}"></span>
+                            </div>
+                        </th:block>
+                    </div>
+
+                    <h5 class="fw-bold mb-3">회원권 및 요금</h5>
+                    <div class="mb-4 p-4 bg-white border rounded-3">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                            <span class="fw-bold">정규 월 회비</span>
+                            <span class="text-primary fw-bold" th:text="${center.monthCost != null ? #numbers.formatInteger(center.monthCost, 0, 'COMMA') + '원' : '상담문의'}"></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center" th:if="${center.dayPassYn}">
+                            <span class="fw-bold">일일권 요금</span>
+                            <span class="fw-bold" th:text="${center.dayCost != null ? #numbers.formatInteger(center.dayCost, 0, 'COMMA') + '원' : '센터 문의'}"></span>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold mb-3">지도 / 위치 정보</h5>
+                    <div class="mb-4 p-4 bg-white border rounded-3">
+                        <div id="map" style="width: 100%; height: 200px; border-radius: 8px; background: #e9ecef; margin-bottom: 15px;"></div>
+                        <div><i class="bi bi-geo-alt-fill text-primary me-2"></i> <span th:text="${center.facilityAddr}">주소</span></div>
+                        <div class="mt-2"><i class="bi bi-telephone-fill text-secondary me-2"></i> <span th:text="${center.centerPhone != null ? center.centerPhone : '문의 요망'}"></span></div>
+                    </div>
+                </div>
+            </th:block>
+            <div th:unless="${center != null}" class="p-5 text-center text-muted">
+                <i class="bi bi-exclamation-triangle fs-1"></i><br>데이터를 불러올 수 없습니다.
+            </div>
+        </div>
+        <!-- 유저용 뷰 이식 영역 끝 -->
+    </div>
+
+    <!-- 카카오 맵 API (미리보기 지도용) -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=2e8f4bf950438018ae183b2467c7e5f5&libraries=services&autoload=false"></script>
+    <script th:if="${center != null}" th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            kakao.maps.load(function() {
+                var lat = /*[[${center.lat}]]*/ 37.5665;
+                var lon = /*[[${center.lon}]]*/ 126.9780;
+                var position = new kakao.maps.LatLng(lat, lon);
+                
+                var map = new kakao.maps.Map(document.getElementById('map'), { center: position, level: 3 });
+                var marker = new kakao.maps.Marker({ 
+                    position: position, 
+                    image: new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', new kakao.maps.Size(24, 35)) 
+                });
+                marker.setMap(map);
+            });
+        });
+    </script>
+</div>
+</html>

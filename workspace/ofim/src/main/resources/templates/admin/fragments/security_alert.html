@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="footer">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        #security-toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .security-toast { background-color: #ff4444; color: white; padding: 15px 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-weight: bold; animation: slideIn 0.5s ease-out forwards; display: flex; align-items: center; gap: 10px; min-width: 300px; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+
+    <div id="security-toast-container"></div>
+
+    <script>
+        var stompClient = null;
+        function connectSecurityAlerts() {
+            var socket = new SockJS('/ws-chat'); 
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null; 
+            stompClient.connect({}, function (frame) {
+                console.log('보안 관제 웹소켓 연결 완료');
+                stompClient.subscribe('/topic/admin/alerts', function (message) {
+                    showSecurityToast(message.body);
+                });
+            });
+        }
+        function showSecurityToast(message) {
+            var container = document.getElementById('security-toast-container');
+            var toast = document.createElement('div');
+            toast.className = 'security-toast';
+            toast.innerHTML = '<span>🚨</span> <span>' + message + '</span>';
+            container.appendChild(toast);
+            setTimeout(function() { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 5000);
+        }
+        document.addEventListener("DOMContentLoaded", function() { connectSecurityAlerts(); });
+    </script>
+</div>
+</html>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.human.ofim.mapper.MemberMapper">
+
+	<insert id="insertUser" parameterType="com.human.ofim.dto.MemberDto" useGeneratedKeys="true" keyProperty="memberId">
+		INSERT INTO user (login_id, user_name, password, email, birth_date, nickname, address, address2, phone, gender, member_type, created_date, updated_date, profile, member_status, zipcode, activity_point)
+		VALUES (#{loginId}, #{userName}, #{password}, #{email}, #{birthDate}, #{nickname}, #{address}, #{address2}, #{phone}, #{gender}, #{memberType}, NOW(), NOW(), #{profile}, '가입중', #{zipcode}, 0)
+	</insert>
+
+	<insert id="insertMember" parameterType="long">
+		INSERT INTO member (member_id) VALUES (#{memberId})
+	</insert>
+
+	<update id="updateLastLoginDate">
+		UPDATE user SET last_login_date = NOW() WHERE login_id = #{loginId}
+	</update>
+
+	<update id="updateProfileImage">
+		UPDATE user SET profile = #{profile}, updated_date = NOW() WHERE login_id = #{loginId}
+	</update>
+
+	<update id="updateMemberField">
+		UPDATE user SET ${fieldName} = #{fieldValue}, updated_date = NOW() WHERE member_id = #{memberId}
+	</update>
+
+	<update id="updateMemberAddress">
+		UPDATE user SET zipcode = #{zipcode}, address = #{address}, address2 = #{address2}, updated_date = NOW() WHERE member_id = #{memberId}
+	</update>
+
+	<update id="updatePassword">
+		UPDATE user SET password = #{encodedNewPassword} WHERE login_id = #{loginId}
+	</update>
+	
+	<update id="updatePasswordByEmail">
+		UPDATE user SET password = #{encodedNewPassword}
+		WHERE email = #{email}
+	</update>
+
+	<update id="updateActivityPoint">
+		UPDATE user SET activity_point = activity_point + #{points}, updated_date = NOW() WHERE member_id = #{memberId}
+	</update>
+
+	<select id="countByLoginId" resultType="int">
+		SELECT COUNT(*) FROM user WHERE login_id = #{loginId}
+	</select>
+	
+	<select id="getPasswordById" resultType="string">
+	    SELECT password 
+	    FROM user 
+	    WHERE login_id = #{loginId}
+	</select>
+
+	<select id="countByNickname" resultType="int">
+		SELECT COUNT(*) FROM user WHERE nickname = #{nickname}
+	</select>
+
+	<select id="findByLoginId" resultType="com.human.ofim.dto.MemberDto">
+		SELECT member_id AS memberId, user_name AS userName, nickname, login_id AS loginId, email, password, zipcode, address, address2, phone, gender, birth_date AS birthDate, member_type AS memberType, grade_id AS gradeId, created_date AS createdDate, updated_date AS updatedDate, last_login_date AS lastLoginDate, profile, activity_point AS activityPoint, member_status AS memberStatus
+		FROM user WHERE login_id = #{loginId}
+	</select>
+	
+	<select id="findIdByNameAndEmail" resultType="string">
+	    SELECT login_id FROM user 
+	    WHERE user_name = #{userName} AND email = #{email}
+	</select>
+
+	<select id="selectMemberById" resultType="com.human.ofim.dto.MemberDto">
+		SELECT member_id AS memberId, user_name AS userName, nickname, login_id AS loginId, email, password, zipcode, address, address2, phone, gender, birth_date AS birthDate, member_type AS memberType, grade_id AS gradeId, created_date AS createdDate, updated_date AS updatedDate, last_login_date AS lastLoginDate, profile, activity_point AS activityPoint, member_status AS memberStatus
+		FROM user WHERE member_id = #{memberId}
+	</select>
+
+	<select id="countByEmail" resultType="int">
+		SELECT COUNT(*) FROM user WHERE email = #{email}
+	</select>
+
+	<select id="selectTopRankers" resultType="com.human.ofim.dto.MemberDto">
+		SELECT nickname, profile, activity_point AS activityPoint FROM user ORDER BY activity_point DESC LIMIT 5
+	</select>
+
+	<update id="updateMemberStatusWithdraw">
+		UPDATE user SET member_status = '자발적탈퇴', login_id = CONCAT(login_id, '_WD_', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), password = '', user_name = '(알 수 없음)', nickname = CONCAT('탈퇴회원', member_id), email = CONCAT('del_', member_id, '@withdraw.com'), phone = CONCAT('del_', member_id), updated_date = NOW() WHERE member_id = #{memberId}
+	</update>
+
+	<update id="updateMemberStatusDiscipline">
+		UPDATE user SET member_status = '징계탈퇴', login_id = CONCAT(login_id, '_DIS_', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), password = '', user_name = '(알 수 없음)', nickname = CONCAT('탈퇴회원', member_id), email = CONCAT('del_', member_id, '@withdraw.com'), phone = CONCAT('del_', member_id), updated_date = NOW() WHERE member_id = #{memberId}
+	</update>
+
+	<update id="updateMemberStatusAccident">
+		UPDATE user SET member_status = '사고탈퇴', login_id = CONCAT(login_id, '_ACC_', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), password = '', user_name = '(알 수 없음)', nickname = CONCAT('탈퇴회원', member_id), email = CONCAT('del_', member_id, '@withdraw.com'), phone = CONCAT('del_', member_id), updated_date = NOW() WHERE member_id = #{memberId}
+	</update>
+
+	<select id="getTodayEarnedPoints" resultType="int">
+		SELECT IFNULL(SUM(point_amount), 0) FROM point_log WHERE member_id = #{memberId} AND point_amount > 0 AND DATE(created_at) = CURDATE()
+	</select>
+
+	<insert id="insertPointLog">
+		INSERT INTO point_log (member_id, point_amount, reason, created_at) VALUES (#{memberId}, #{points}, #{reason}, NOW())
+	</insert>
+
+	<select id="selectReplyWriterId" resultType="java.lang.Integer">
+		SELECT writer_id FROM board_reply WHERE reply_id = #{replyId}
+	</select>
+
+	<select id="findByMemberId" resultType="com.human.ofim.dto.MemberDto">
+		SELECT * FROM user WHERE member_id = #{memberId}
+	</select>
+
+	<insert id="insertLoginAudit">
+		INSERT INTO login_audit_log (login_id, ip_address, user_agent, status, fail_reason, attempt_at)
+		VALUES (#{loginId}, #{ipAddress}, #{userAgent}, #{status}, #{failReason}, NOW())
+	</insert>
+
+	<select id="countRecentFailedLogins" resultType="int">
+		SELECT COUNT(*) FROM login_audit_log
+		WHERE ip_address = #{ipAddress} AND login_id = #{loginId} AND status = 'FAIL' AND attempt_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+	</select>
+
+	<select id="selectRecentLoginAudit" resultType="map">
+		SELECT audit_no as auditNo, login_id as loginId, ip_address as ipAddress, user_agent as userAgent, status, fail_reason as failReason, DATE_FORMAT(attempt_at, '%Y-%m-%d %H:%i:%s') as attemptAt
+		FROM login_audit_log ORDER BY audit_no DESC LIMIT 20
+	</select>
+
+	<select id="selectTodayLoginStats" resultType="map">
+		SELECT 
+			COUNT(CASE WHEN status = 'SUCCESS' THEN 1 END) as successCnt,
+			COUNT(CASE WHEN status = 'FAIL' THEN 1 END) as failCnt,
+			COUNT(CASE WHEN status = 'BLOCKED' THEN 1 END) as blockCnt
+		FROM login_audit_log WHERE DATE(attempt_at) = CURDATE()
+	</select>
+
+</mapper>

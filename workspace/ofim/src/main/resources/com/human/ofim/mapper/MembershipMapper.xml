@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.MembershipMapper">
+
+    <select id="selectMembershipStatus" resultType="com.human.ofim.dto.MembershipStatusDto">
+        SELECT
+            m.member_id AS memberId,
+            ug.grade_id AS gradeId,
+            ug.grade_name AS gradeName,
+            ug.monthly_price AS monthlyPrice,
+            ug.monthly_chat_limit AS monthlyChatLimit,
+            ug.monthly_phone_limit AS monthlyPhoneLimit,
+            ug.monthly_chat_phone_limit AS monthlyChatPhoneLimit,
+            ug.monthly_inquiry_limit AS monthlyInquiryLimit,
+            ug.diet_review_yn AS dietReviewYn,
+            ug.diary_report_yn AS diaryReportYn,
+            ug.premium_content_yn AS premiumContentYn,
+            ug.full_video_yn AS fullVideoYn,
+            ug.carryover_yn AS carryoverYn,
+            ug.weekly_report_yn AS weeklyReportYn,
+            ms.subscription_status AS subscriptionStatus,
+            ms.start_date AS startDate,
+            ms.end_date AS endDate,
+            ms.next_billing_date AS nextBillingDate,
+            ms.auto_renew_yn AS autoRenewYn
+        FROM member m
+        JOIN user_grade ug
+          ON ug.grade_id = m.grade_id
+        LEFT JOIN membership_subscription ms
+          ON ms.member_id = m.member_id
+         AND ms.subscription_status = 'ACTIVE'
+        WHERE m.member_id = #{memberId}
+    </select>
+
+    <select id="selectMembershipUsage" resultType="com.human.ofim.dto.MembershipUsageDto">
+        SELECT
+            mu.member_id AS memberId,
+            mu.usage_month AS usageMonth,
+            mu.grade_id AS gradeId,
+            mu.chat_used_count AS chatUsedCount,
+            mu.phone_used_count AS phoneUsedCount,
+            mu.chat_phone_used_count AS chatPhoneUsedCount,
+            mu.inquiry_used_count AS inquiryUsedCount,
+            mu.carryover_chat_phone_count AS carryoverChatPhoneCount,
+
+            GREATEST(ug.monthly_chat_limit - mu.chat_used_count, 0) AS remainChatCount,
+            GREATEST(ug.monthly_phone_limit - mu.phone_used_count, 0) AS remainPhoneCount,
+            GREATEST((ug.monthly_chat_phone_limit + mu.carryover_chat_phone_count) - mu.chat_phone_used_count, 0) AS remainChatPhoneCount,
+            GREATEST(ug.monthly_inquiry_limit - mu.inquiry_used_count, 0) AS remainInquiryCount
+        FROM membership_usage_monthly mu
+        JOIN user_grade ug
+          ON ug.grade_id = mu.grade_id
+        WHERE mu.member_id = #{memberId}
+          AND mu.usage_month = #{usageMonth}
+    </select>
+
+    <insert id="insertMonthlyUsageRow">
+        INSERT INTO membership_usage_monthly (
+            member_id,
+            usage_month,
+            grade_id,
+            chat_used_count,
+            phone_used_count,
+            chat_phone_used_count,
+            inquiry_used_count,
+            carryover_chat_phone_count
+        ) VALUES (
+            #{memberId},
+            #{usageMonth},
+            #{gradeId},
+            0,
+            0,
+            0,
+            0,
+            0
+        )
+    </insert>
+    
+    <update id="increaseChatUsedCount">
+    UPDATE membership_usage_monthly
+    SET
+        chat_used_count = chat_used_count + 1,
+        updated_date = NOW()
+    WHERE member_id = #{memberId}
+      AND usage_month = #{usageMonth}
+</update>
+
+<update id="increaseChatPhoneUsedCount">
+    UPDATE membership_usage_monthly
+    SET
+        chat_phone_used_count = chat_phone_used_count + 1,
+        updated_date = NOW()
+    WHERE member_id = #{memberId}
+      AND usage_month = #{usageMonth}
+</update>
+
+<update id="increaseInquiryUsedCount">
+    UPDATE membership_usage_monthly
+    SET
+        inquiry_used_count = inquiry_used_count + 1,
+        updated_date = NOW()
+    WHERE member_id = #{memberId}
+      AND usage_month = #{usageMonth}
+</update>
+
+</mapper>

@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.ConsultChatMapper">
+
+    <!-- =========================
+         ResultMap
+    ========================== -->
+    <resultMap id="chatMessageMap" type="com.human.ofim.dto.ConsultChatMessageDto">
+        <id property="chatId" column="chat_id"/>
+        <result property="consultId" column="consult_id"/>
+        <result property="senderId" column="sender_id"/>
+        <result property="senderNickname" column="sender_nickname"/>
+        <result property="senderName" column="sender_name"/>
+        <result property="messageType" column="message_type"/>
+        <result property="messageContent" column="message_content"/>
+        <result property="createdDate" column="created_date"/>
+        <result property="isRead" column="is_read"/>
+    </resultMap>
+
+    <resultMap id="chatRoomMap" type="com.human.ofim.dto.ConsultChatRoomDto">
+        <id property="consultId" column="consult_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="expertId" column="expert_id"/>
+        <result property="memberNickname" column="member_nickname"/>
+        <result property="expertName" column="expert_name"/>
+        <result property="status" column="status"/>
+        <result property="lastMessage" column="last_message"/>
+        <result property="lastMessageTime" column="last_message_time"/>
+        <result property="unreadCount" column="unread_count"/>
+    </resultMap>
+
+    <resultMap id="chatAlertMap" type="com.human.ofim.dto.ConsultChatAlertDto">
+        <result property="consultId" column="consult_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="memberNickname" column="member_nickname"/>
+        <result property="expertId" column="expert_id"/>
+        <result property="expertName" column="expert_name"/>
+        <result property="lastMessage" column="last_message"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <resultMap id="consultDetailMap" type="com.human.ofim.dto.ConsultChatDto">
+        <id property="consultId" column="consult_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="expertId" column="expert_id"/>
+        <result property="consultType" column="consult_type"/>
+        <result property="status" column="status"/>
+        <result property="consultStartDate" column="consult_start_date"/>
+        <result property="consultEndDate" column="consult_end_date"/>
+        <result property="createdDate" column="created_date"/>
+    </resultMap>
+
+    <resultMap id="pendingConsultMap" type="com.human.ofim.dto.ConsultPendingDto">
+        <id property="consultId" column="consult_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="consultType" column="consult_type"/>
+        <result property="consultContent" column="consult_content"/>
+    </resultMap>
+
+
+    <!-- =========================
+         기존 즉시상담 / 채팅방 관련
+    ========================== -->
+
+    <!-- 채팅 즉시상담용 기존 방 조회 -->
+    <select id="selectActiveChatConsult" resultType="int">
+        SELECT consult_id
+        FROM consultation
+        WHERE member_id = #{memberId}
+          AND expert_id = #{expertId}
+          AND consult_type = '채팅'
+          AND status IN (1,2)
+        ORDER BY consult_id DESC
+        LIMIT 1
+    </select>
+
+    <!-- 채팅 상담방 생성 -->
+    <insert id="insertConsult"
+            parameterType="com.human.ofim.dto.ConsultDto"
+            useGeneratedKeys="true"
+            keyProperty="consultId">
+        INSERT INTO consultation
+        (
+            consult_type,
+            expert_id,
+            member_id,
+            status,
+            created_date
+        )
+        VALUES
+        (
+            #{consultType},
+            #{expertId},
+            #{memberId},
+            #{status},
+            NOW()
+        )
+    </insert>
+
+    <!-- 전문가용 최근 대기/진행 채팅 알림 -->
+    <select id="selectLatestPendingChatForExpert" resultMap="chatAlertMap">
+        SELECT
+            c.consult_id,
+            c.member_id,
+            u.nickname AS member_nickname,
+            c.expert_id,
+            exp.user_name AS expert_name,
+            (
+                SELECT m.message_content
+                FROM consult_chat_message m
+                WHERE m.consult_id = c.consult_id
+                ORDER BY m.created_date DESC, m.chat_id DESC
+                LIMIT 1
+            ) AS last_message,
+            DATE_FORMAT(c.created_date, '%Y-%m-%d %H:%i:%s') AS created_time
+        FROM consultation c
+        JOIN user u
+          ON c.member_id = u.member_id
+        JOIN user exp
+          ON c.expert_id = exp.member_id
+        WHERE c.expert_id = #{expertId}
+          AND c.consult_type = '채팅'
+          AND c.status = 1
+        ORDER BY c.created_date DESC, c.consult_id DESC
+        LIMIT 1
+    </select>
+
+
+    <!-- =========================
+         권한 / 상태 / 상세 조회
+    ========================== -->
+
+    <!-- 기존 countConsultParticipant 유지 -->
+    <select id="countConsultParticipant" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation
+        WHERE consult_id = #{consultId}
+          AND (member_id = #{memberId} OR expert_id = #{memberId})
+    </select>
+
+    <!-- 새 서비스용 countParticipant -->
+    <select id="countParticipant" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation
+        WHERE consult_id = #{consultId}
+          AND (member_id = #{memberId} OR expert_id = #{memberId})
+    </select>
+
+    <select id="selectConsultStatus" resultType="int">
+        SELECT status
+        FROM consultation
+        WHERE consult_id = #{consultId}
+    </select>
+
+    <select id="selectConsultDetail" resultMap="consultDetailMap">
+        SELECT
+            c.consult_id,
+            c.member_id,
+            c.expert_id,
+            c.consult_type,
+            c.status,
+            c.consult_start_date,
+            c.consult_end_date,
+            c.created_date
+        FROM consultation c
+        WHERE c.consult_id = #{consultId}
+    </select>
+
+
+    <!-- =========================
+         메시지
+    ========================== -->
+
+    <insert id="insertMessage"
+            parameterType="com.human.ofim.dto.ConsultChatMessageDto"
+            useGeneratedKeys="true"
+            keyProperty="chatId">
+        INSERT INTO consult_chat_message
+        (
+            consult_id,
+            sender_id,
+            message_type,
+            message_content,
+            created_date,
+            is_read
+        )
+        VALUES
+        (
+            #{consultId},
+            #{senderId},
+            #{messageType},
+            #{messageContent},
+            NOW(),
+            0
+        )
+    </insert>
+
+    <select id="selectMessagesByConsultId" resultMap="chatMessageMap">
+        SELECT
+            m.chat_id,
+            m.consult_id,
+            m.sender_id,
+            u.nickname AS sender_nickname,
+            u.user_name AS sender_name,
+            m.message_type,
+            m.message_content,
+            m.created_date,
+            m.is_read
+        FROM consult_chat_message m
+        JOIN user u
+          ON m.sender_id = u.member_id
+        WHERE m.consult_id = #{consultId}
+        ORDER BY m.created_date ASC, m.chat_id ASC
+    </select>
+
+    <!-- 새 서비스에서 getMessages()용으로 같이 사용 가능 -->
+    <select id="selectMessages" resultMap="chatMessageMap">
+        SELECT
+            m.chat_id,
+            m.consult_id,
+            m.sender_id,
+            u.nickname AS sender_nickname,
+            u.user_name AS sender_name,
+            m.message_type,
+            m.message_content,
+            m.created_date,
+            m.is_read
+        FROM consult_chat_message m
+        JOIN user u
+          ON m.sender_id = u.member_id
+        WHERE m.consult_id = #{consultId}
+        ORDER BY m.created_date ASC, m.chat_id ASC
+    </select>
+
+    <update id="updateReadByConsultId">
+        UPDATE consult_chat_message
+        SET is_read = 1
+        WHERE consult_id = #{consultId}
+          AND sender_id != #{readerId}
+          AND is_read = 0
+    </update>
+
+    <select id="countUnreadByConsultId" resultType="int">
+        SELECT COUNT(*)
+        FROM consult_chat_message
+        WHERE consult_id = #{consultId}
+          AND sender_id != #{memberId}
+          AND is_read = 0
+    </select>
+
+
+    <!-- =========================
+         채팅방 요약
+    ========================== -->
+
+    <select id="selectChatRoomSummary" resultMap="chatRoomMap">
+        SELECT
+            c.consult_id,
+            c.member_id,
+            c.expert_id,
+            u.nickname AS member_nickname,
+            exp.user_name AS expert_name,
+            c.status,
+            (
+                SELECT m.message_content
+                FROM consult_chat_message m
+                WHERE m.consult_id = c.consult_id
+                ORDER BY m.created_date DESC, m.chat_id DESC
+                LIMIT 1
+            ) AS last_message,
+            (
+                SELECT m.created_date
+                FROM consult_chat_message m
+                WHERE m.consult_id = c.consult_id
+                ORDER BY m.created_date DESC, m.chat_id DESC
+                LIMIT 1
+            ) AS last_message_time,
+            (
+                SELECT COUNT(*)
+                FROM consult_chat_message m
+                WHERE m.consult_id = c.consult_id
+                  AND m.sender_id != #{memberId}
+                  AND m.is_read = 0
+            ) AS unread_count
+        FROM consultation c
+        JOIN user u
+          ON c.member_id = u.member_id
+        JOIN user exp
+          ON c.expert_id = exp.member_id
+        WHERE c.consult_id = #{consultId}
+    </select>
+
+
+    <!-- =========================
+         상태 변경
+    ========================== -->
+
+    <update id="updateStatus">
+        UPDATE consultation
+        SET status = #{status}
+        WHERE consult_id = #{consultId}
+    </update>
+
+
+    <!-- =========================
+         expert_info polling용
+    ========================== -->
+
+ <select id="selectPendingConsult" resultMap="pendingConsultMap">
+    SELECT
+        c.consult_id,
+        u.user_name,
+        c.consult_type,
+        COALESCE(
+            (
+                SELECT m.message_content
+                FROM consult_chat_message m
+                WHERE m.consult_id = c.consult_id
+                  AND m.message_type = 'TALK'
+                ORDER BY m.created_date ASC, m.chat_id ASC
+                LIMIT 1
+            ),
+            '요청 내용 없음'
+        ) AS consult_content
+    FROM consultation c
+    JOIN user u
+      ON c.member_id = u.member_id
+    WHERE c.expert_id = #{expertId}
+      AND c.consult_type = '채팅'
+      AND c.status = 1
+    ORDER BY c.created_date DESC, c.consult_id DESC
+    LIMIT 1
+</select>
+</mapper>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.MemberTypeMapper">
+
+	<select id="selectMemberTypeById" parameterType="long"
+		resultType="com.human.ofim.dto.MemberDto"> 
+		SELECT member_id AS memberId, member_type AS
+		memberType FROM user WHERE member_id = #{memberId}
+	</select>
+	
+</mapper>

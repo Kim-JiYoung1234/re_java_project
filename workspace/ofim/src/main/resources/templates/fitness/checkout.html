@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안전 결제 | OUT FAT IN MUSCLE</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; }
+    .checkout-card { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: white; }
+    .pg-btn { border: 2px solid #e9ecef; border-radius: 12px; transition: 0.2s; cursor: pointer; background: white; padding: 15px; }
+    .pg-btn:hover, .pg-btn.active { border-color: #0d6efd; background-color: #f8f9fa; }
+</style>
+</head>
+<body>
+    <!-- 공통 헤더 (장바구니 아이콘 포함) -->
+    <header th:replace="~{header :: header}"></header>
+
+    <div class="container my-5" style="max-width: 800px;">
+        <div class="d-flex align-items-center mb-4">
+            <a href="javascript:history.back()" class="text-dark me-3 fs-4"><i class="bi bi-arrow-left"></i></a>
+            <h3 class="fw-bold mb-0">주문 / 결제</h3>
+        </div>
+
+        <div class="row g-4">
+            <!-- 1. 주문 상품 확인 -->
+            <div class="col-12">
+                <div class="checkout-card p-4">
+                    <h5 class="fw-bold mb-4"><i class="bi bi-cart-check-fill text-primary me-2"></i>주문 상품 정보</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li th:each="item : ${cartItems}" class="d-flex justify-content-between align-items-center border-bottom py-3">
+                            <div>
+                                <!-- 세션에 저장된 시설명(centerName)과 티켓명 출력 -->
+                                <span class="badge bg-light text-secondary border mb-1" th:text="${item.centerName != null ? item.centerName : '피트니스 센터'}">피트니스 센터 이름</span>
+                                <h6 class="fw-bold text-dark mb-0" th:text="${item.ticketName}">티켓 이름</h6>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-muted small mb-1" th:text="${item.qty} + '개'">수량</div>
+                                <h6 class="fw-bold text-dark mb-0" th:text="${#numbers.formatInteger(item.price * item.qty, 0, 'COMMA')} + '원'">금액</h6>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 2. 결제 수단 선택 -->
+            <div class="col-12">
+                <div class="checkout-card p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-credit-card-2-front-fill text-primary me-2"></i>결제 수단</h5>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="pg-btn text-center active" onclick="selectPg(this)">
+                                <i class="bi bi-credit-card fs-2 text-primary d-block mb-2"></i>
+                                <span class="fw-bold">신용/체크카드</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="pg-btn text-center" onclick="selectPg(this)">
+                                <i class="bi bi-phone fs-2 text-success d-block mb-2"></i>
+                                <span class="fw-bold">카카오페이 / 토스</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 최종 결제 정보 -->
+            <div class="col-12">
+                <div class="checkout-card p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-dark fw-bold fs-5">최종 결제 금액</span>
+                        <span class="text-danger fw-bold fs-2" th:text="${#numbers.formatInteger(totalPrice, 0, 'COMMA')} + '원'">0원</span>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary w-100 py-3 fw-bold fs-5 rounded-3 shadow" onclick="processPayment()">
+                        결제하기
+                    </button>
+                    <p class="text-center text-muted small mt-3 mb-0"><i class="bi bi-shield-lock-fill text-success"></i> 안전 결제가 적용되어 있습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 공통 푸터 -->
+    <footer th:replace="~{footer :: footer}"></footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script th:inline="javascript">
+        // 결제 수단 UI 선택 효과
+        function selectPg(element) {
+            document.querySelectorAll('.pg-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // 🌟 [DB 미사용 시뮬레이션] 결제 진행 로직
+        function processPayment() {
+            // 타임리프에서 넘겨준 총 결제 금액 가져오기
+            const totalPrice = /*[[${totalPrice}]]*/ 0;
+
+            // 확인창 띄우기
+            if(!confirm("총 " + totalPrice.toLocaleString() + "원을 결제하시겠습니까?")) return;
+
+            // 확인 누르면 서버의 장바구니 세션을 초기화(비우기) 하는 API 호출
+            $.post('/api/cart/clear', function(res) {
+                if(res.success) {
+                    // 헤더의 장바구니 숫자도 0으로 갱신
+                    if(typeof updateHeaderCartCount === 'function') {
+                        updateHeaderCartCount();
+                    }
+                    
+                    // 성공 알림 후 피트니스 리스트 화면으로 이동
+                    alert("🎉 결제가 완료되었습니다!\n이용권 정보는 등록하신 연락처로 발송됩니다.");
+                    location.href = "/fitness_list";
+                } else {
+                    alert("결제 처리 중 오류가 발생했습니다.");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

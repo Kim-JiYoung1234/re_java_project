@@ -1,0 +1,2096 @@
+<div th:fragment="expertContent">
+
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+	<style>
+/* --- 전문가 페이지 공통 레이아웃 --- */
+.n-expert-container {
+	max-width: 1100px;
+	margin: 0 auto;
+	width: 100%;
+	animation: fadeIn 0.3s ease-in-out;
+}
+
+.expert-tab-content {
+	display: none;
+	width: 100%;
+}
+
+.expert-tab-content.active {
+	display: block;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.n-card {
+	background: #ffffff;
+	border-radius: 24px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+	border: 1px solid #f1f5f9;
+	overflow: hidden;
+	margin-bottom: 30px;
+}
+
+.n-card-header {
+	padding: 25px 40px;
+	border-bottom: 1px solid #f1f5f9;
+	font-weight: 800;
+	font-size: 1.2rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background-color: #ffffff;
+}
+
+.n-btn {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	color: #475569;
+	border-radius: 12px;
+	padding: 8px 18px;
+	font-size: 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.n-btn:hover {
+	background: #f8fafc;
+	border-color: #cbd5e1;
+	color: #212529;
+}
+
+.n-btn-add {
+	background: #0fb8ad;
+	color: #ffffff;
+	border: none;
+}
+
+.n-btn-add:hover {
+	background: #0ca197 !important;
+	color: #ffffff !important;
+}
+
+.n-empty-state {
+	text-align: center;
+	padding: 70px 20px;
+	background-color: #f8fafc;
+	border-radius: 20px;
+	border: 2px dashed #e2e8f0;
+	margin: 30px;
+	transition: all 0.3s ease;
+}
+
+.n-empty-state:hover {
+	background-color: #f1f5f9;
+	border-color: #cbd5e1;
+}
+
+.n-empty-icon {
+	font-size: 4rem;
+	color: #cbd5e1;
+	margin-bottom: 20px;
+	display: block;
+}
+
+.n-empty-text {
+	font-size: 1.2rem;
+	color: #334155;
+	font-weight: 800;
+	margin-bottom: 10px;
+}
+
+.n-empty-sub {
+	font-size: 0.95rem;
+	color: #94a3b8;
+	margin-bottom: 25px;
+}
+
+.n-grid-container {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: 25px;
+	padding: 30px;
+	background-color: #fafbfc;
+}
+
+.n-grid-card {
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 20px;
+	padding: 30px 25px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+	position: relative;
+	transition: transform 0.2s, box-shadow 0.2s;
+	display: flex;
+	flex-direction: column;
+}
+
+.n-grid-card:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 15px 30px rgba(0, 0, 0, 0.06);
+	border-color: #cbd5e1;
+}
+
+.n-grid-actions {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	display: flex;
+	gap: 5px;
+}
+
+.n-grid-actions .action-btn {
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	border: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #f1f5f9;
+	color: #64748b;
+	font-size: 0.85rem;
+	transition: 0.2s;
+}
+
+.n-grid-actions .action-btn:hover {
+	background: #e2e8f0;
+	color: #0f172a;
+}
+
+.n-grid-actions .action-btn.delete:hover {
+	background: #fee2e2;
+	color: #ef4444;
+}
+
+.bank-card {
+	background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+	color: white;
+	border-radius: 20px;
+	padding: 40px;
+	margin: 30px;
+	box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+/* 즉시상담 뱃지 */
+.instant-badge-wrap {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.instant-chat-badge {
+	display: none;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 7px;
+	border-radius: 999px;
+	background: #ef4444;
+	color: #fff;
+	font-size: 0.75rem;
+	font-weight: 700;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+	box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+}
+
+.instant-chat-badge.show {
+	display: inline-flex;
+}
+
+.instant-chat-dot {
+	display: none;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #ef4444;
+	box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+}
+
+.instant-chat-dot.show {
+	display: inline-block;
+}
+
+/* 🌟 Flatpickr 달력 커스텀 */
+.flatpickr-calendar {
+	display: none;
+}
+
+.flatpickr-calendar.open {
+	display: block;
+	z-index: 9999 !important;
+}
+
+.flatpickr-calendar .flatpickr-current-month {
+	display: flex !important;
+	flex-direction: row-reverse !important;
+	align-items: center;
+	justify-content: center;
+}
+
+.flatpickr-calendar .numInputWrapper {
+	width: 85px !important;
+	margin-right: 15px;
+}
+
+.flatpickr-calendar .numInput.cur-year {
+	font-weight: 800 !important;
+	font-size: 1.2em !important;
+	padding: 0 !important;
+}
+
+.flatpickr-calendar .flatpickr-monthDropdown-months {
+	font-weight: 800 !important;
+	font-size: 1.1em !important;
+}
+</style>
+
+	<div class="n-expert-container">
+
+		<div id="section-expert" class="expert-tab-content active">
+			<div class="card border-0 shadow-lg overflow-hidden"
+				style="border-radius: 30px; background: #fff;">
+				<div
+					style="height: 120px; background: linear-gradient(135deg, #0fb8ad 0%, #1fc8db 100%);"></div>
+				<div class="card-body p-4 p-md-5" style="margin-top: -60px;">
+					<div
+						class="text-center text-md-start d-md-flex align-items-end gap-4 mb-4">
+						<div class="position-relative d-inline-block">
+							<img
+								th:src="${expert?.profileImagePath != null ? expert.profileImagePath : '/images/default-profile.png'}"
+								alt="Profile"
+								style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; border: 8px solid #fff; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);">
+							<span th:if="${expert?.isOnline}"
+								class="position-absolute border border-4 border-white rounded-circle bg-success"
+								style="width: 25px; height: 25px; bottom: 15px; right: 15px;"
+								title="현재 접속 중"></span>
+						</div>
+						<div class="mt-3 mt-md-0 flex-grow-1">
+							<div
+								class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 mb-2">
+								<h1 class="fw-bold mb-0 text-dark" style="font-size: 2.2rem;"
+									th:text="${user?.userName}">전문가 이름</h1>
+								<span class="badge px-3 py-2 shadow-sm"
+									style="background: #e6f6f5; color: #0fb8ad; border-radius: 10px; font-size: 1rem; border: 1px solid #0fb8ad;"
+									th:text="${expert?.specialty ?: '전문 분야 미등록'}">분야 미설정</span>
+							</div>
+							<p
+								class="text-muted mb-0 d-flex align-items-center justify-content-center justify-content-md-start">
+								<i class="bi bi-patch-check-fill text-primary me-2"></i> 인증된 전문가
+								포트폴리오
+							</p>
+						</div>
+						<div class="mt-4 mt-md-0">
+							<button
+								class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm"
+								data-bs-toggle="modal" data-bs-target="#profileModal">
+								<i class="fas fa-pen-nib me-2"></i>프로필 편집
+							</button>
+						</div>
+					</div>
+					<hr class="my-5 opacity-25">
+					<div
+						class="introduction-box position-relative p-4 p-md-5 rounded-4"
+						style="background-color: #f8fafc; border: 1px dashed #cbd5e1;">
+						<i
+							class="fas fa-quote-left text-primary opacity-25 position-absolute"
+							style="font-size: 3rem; top: 20px; left: 20px;"></i>
+						<div class="position-relative">
+							<h5 class="fw-bold text-dark mb-3"
+								style="letter-spacing: -0.5px;">나의 전문 서비스 소개</h5>
+							<p class="fs-5 lh-base mb-0 text-secondary fw-medium"
+								th:text="${expert?.expertIntroduce ?: '아직 등록된 소개글이 없습니다. 당신의 가치를 전달할 수 있는 멋진 한 줄을 작성해보세요!'}">소개글
+								내용</p>
+						</div>
+					</div>
+					<div class="row g-4 mt-4">
+						<div class="col-6 col-md-3">
+							<div class="p-3 text-center border-end">
+								<div class="small text-muted mb-1">총 상담</div>
+								<div class="h4 fw-bold mb-0"
+									th:text="${expert?.totalConsultCount ?: 0} + '회'">0회</div>
+							</div>
+						</div>
+						<div class="col-6 col-md-3">
+							<div class="p-3 text-center">
+								<div class="small text-muted mb-1">상담 만족도</div>
+								<div class="h4 fw-bold mb-0 text-warning">4.9 / 5.0</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="section-cert" class="expert-tab-content">
+			<div class="n-card">
+				<div class="n-card-header" style="border-left: 8px solid #f59f00;">
+					자격증 관리
+					<button th:unless="${#lists.isEmpty(certList)}"
+						class="n-btn n-btn-add" data-bs-toggle="modal"
+						data-bs-target="#certModal">
+						<i class="fas fa-plus me-2"></i>자격증 추가
+					</button>
+				</div>
+				<div class="n-card-body p-0">
+					<div class="n-empty-state" th:if="${#lists.isEmpty(certList)}">
+						<i class="fas fa-award n-empty-icon" style="color: #fde68a;"></i>
+						<div class="n-empty-text">등록된 자격증이 없습니다.</div>
+						<div class="n-empty-sub">전문성을 증명할 수 있는 자격증을 등록하고 고객의 신뢰도를
+							높여보세요!</div>
+						<button class="n-btn n-btn-add px-4 py-2 fs-6 rounded-pill"
+							data-bs-toggle="modal" data-bs-target="#certModal">
+							<i class="fas fa-plus me-2"></i>첫 자격증 추가하기
+						</button>
+					</div>
+					<div class="n-grid-container"
+						th:unless="${#lists.isEmpty(certList)}">
+						<div class="n-grid-card" th:each="cert : ${certList}">
+							<div class="n-grid-actions">
+								<button class="action-btn" data-bs-toggle="modal"
+									data-bs-target="#editCertModal"
+									th:data-id="${cert.certificationId}"
+									th:data-name="${cert.certName}" th:data-certno="${cert.certNo}"
+									th:data-issuer="${cert.issuer}"
+									th:data-issued="${cert.issuedDate}"
+									th:data-expired="${cert.expiredDate}">
+									<i class="fas fa-pen"></i>
+								</button>
+								<form th:action="@{/expert/delete-cert}" method="post"
+									onsubmit="return confirm('정말 삭제하시겠습니까?');" class="m-0">
+									<input type="hidden" name="certificationId"
+										th:value="${cert.certificationId}" />
+									<button type="submit" class="action-btn delete">
+										<i class="fas fa-trash"></i>
+									</button>
+								</form>
+							</div>
+							<i class="fas fa-certificate text-warning mb-3"
+								style="font-size: 2.2rem;"></i>
+							<h5 class="fw-bold text-dark mb-1" th:text="${cert.certName}">자격증명</h5>
+							<div class="text-secondary small fw-bold mb-4"
+								th:text="'No. ' + ${cert.certNo}">1234-5678</div>
+							<div class="mt-auto pt-3 border-top d-flex flex-column gap-2">
+								<div class="d-flex align-items-center text-muted small">
+									<i class="fas fa-building w-20px text-center me-2"></i> <span
+										th:text="${cert.issuer}">발급기관</span>
+								</div>
+								<div class="d-flex align-items-center text-muted small">
+									<i class="far fa-calendar-check w-20px text-center me-2"></i> <span
+										th:text="${cert.issuedDate} + ' 발급'">발급일</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="section-edu" class="expert-tab-content">
+			<div class="n-card">
+				<div class="n-card-header" style="border-left: 8px solid #3b82f6;">
+					학력 정보
+					<button th:unless="${#lists.isEmpty(eduList)}"
+						class="n-btn n-btn-add" data-bs-toggle="modal"
+						data-bs-target="#eduModal">
+						<i class="fas fa-plus me-2"></i>학력 추가
+					</button>
+				</div>
+				<div class="n-card-body p-0">
+					<div class="n-empty-state" th:if="${#lists.isEmpty(eduList)}">
+						<i class="fas fa-user-graduate n-empty-icon"
+							style="color: #bfdbfe;"></i>
+						<div class="n-empty-text">등록된 학력 정보가 없습니다.</div>
+						<div class="n-empty-sub">최종 학력이나 전공 정보를 등록하여 프로필을 더욱 풍성하게
+							만들어보세요.</div>
+						<button class="n-btn n-btn-add px-4 py-2 fs-6 rounded-pill"
+							style="background-color: #3b82f6;" data-bs-toggle="modal"
+							data-bs-target="#eduModal">
+							<i class="fas fa-plus me-2"></i>학력 정보 추가하기
+						</button>
+					</div>
+					<div class="n-grid-container"
+						th:unless="${#lists.isEmpty(eduList)}">
+						<div class="n-grid-card" th:each="edu : ${eduList}">
+							<div class="n-grid-actions">
+								<button class="action-btn" data-bs-toggle="modal"
+									data-bs-target="#editEduModal" th:data-id="${edu.careerId}"
+									th:data-school="${edu.expertSchool}"
+									th:data-major="${edu.expertMajor}"
+									th:data-degreename="${edu.degreeName}"
+									th:data-grad="${edu.graduationYn}">
+									<i class="fas fa-pen"></i>
+								</button>
+								<form th:action="@{/expert/delete-edu}" method="post"
+									class="m-0">
+									<input type="hidden" name="careerId" th:value="${edu.careerId}" />
+									<button type="submit" class="action-btn delete">
+										<i class="fas fa-trash"></i>
+									</button>
+								</form>
+							</div>
+							<i class="fas fa-school text-primary mb-3"
+								style="font-size: 2.2rem;"></i>
+							<h5 class="fw-bold text-dark mb-1" th:text="${edu.expertSchool}">학교명</h5>
+							<div class="text-secondary small fw-bold mb-4"
+								th:text="${edu.expertMajor}">전공</div>
+							<div class="mt-auto pt-3 border-top d-flex flex-column gap-2">
+								<div class="d-flex align-items-center text-muted small">
+									<i class="fas fa-graduation-cap w-20px text-center me-2"></i> <span
+										th:text="${edu.degreeName} + ' 과정'">학위</span>
+								</div>
+								<div class="d-flex align-items-center text-muted small">
+									<i class="fas fa-check-circle w-20px text-center me-2"></i> <span
+										th:text="${edu.graduationYn}">졸업여부</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="section-exp" class="expert-tab-content">
+			<div class="n-card">
+				<div class="n-card-header" style="border-left: 8px solid #64748b;">
+					경력 정보
+					<button th:unless="${#lists.isEmpty(expList)}"
+						class="n-btn n-btn-add" data-bs-toggle="modal"
+						data-bs-target="#expModal">
+						<i class="fas fa-plus me-2"></i>경력 추가
+					</button>
+				</div>
+				<div class="n-card-body p-0">
+					<div class="n-empty-state" th:if="${#lists.isEmpty(expList)}">
+						<i class="fas fa-briefcase n-empty-icon" style="color: #cbd5e1;"></i>
+						<div class="n-empty-text">등록된 경력 정보가 없습니다.</div>
+						<div class="n-empty-sub">과거 근무했던 센터나 기관의 경력을 추가하여 경험을 증명하세요.</div>
+						<button class="n-btn n-btn-add px-4 py-2 fs-6 rounded-pill"
+							style="background-color: #64748b;" data-bs-toggle="modal"
+							data-bs-target="#expModal">
+							<i class="fas fa-plus me-2"></i>첫 경력 추가하기
+						</button>
+					</div>
+					<div class="n-grid-container"
+						th:unless="${#lists.isEmpty(expList)}">
+						<div class="n-grid-card" th:each="exp : ${expList}">
+							<div class="n-grid-actions">
+								<button class="action-btn" data-bs-toggle="modal"
+									data-bs-target="#editExpModal" th:data-id="${exp.careerId}"
+									th:data-org="${exp.organization}"
+									th:data-year="${exp.careerYear}"
+									th:data-month="${exp.careerMonth}">
+									<i class="fas fa-pen"></i>
+								</button>
+								<form th:action="@{/expert/delete-exp}" method="post"
+									class="m-0">
+									<input type="hidden" name="careerId" th:value="${exp.careerId}" />
+									<button type="submit" class="action-btn delete">
+										<i class="fas fa-trash"></i>
+									</button>
+								</form>
+							</div>
+							<div class="d-flex align-items-center mb-3">
+								<div
+									class="bg-secondary bg-opacity-10 p-3 rounded-circle text-secondary me-3">
+									<i class="fas fa-building fs-3"></i>
+								</div>
+								<h5 class="fw-bold text-dark mb-0" th:text="${exp.organization}">기관명</h5>
+							</div>
+							<div class="mt-auto pt-3 border-top">
+								<div
+									class="d-inline-flex align-items-center bg-light rounded-pill px-3 py-2 text-dark fw-bold">
+									<i class="fas fa-history text-secondary me-2"></i> <span
+										th:text="${(exp.careerYear ?: 0) + '년 ' + (exp.careerMonth ?: 0) + '개월'}">경력
+										기간</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="section-bank" class="expert-tab-content">
+			<div class="n-card">
+				<div class="n-card-header" style="border-left: 8px solid #10b981;">정산
+					계좌 관리</div>
+				<div class="n-card-body p-0 pb-4">
+					<div class="n-empty-state mx-4 mt-4"
+						th:if="${settlement?.bankName == null or settlement?.bankName == ''}">
+						<i class="fas fa-piggy-bank n-empty-icon" style="color: #a7f3d0;"></i>
+						<div class="n-empty-text">수익금을 정산받을 계좌가 없습니다.</div>
+						<div class="n-empty-sub">안전하고 빠른 정산을 위해 본인 명의의 계좌를 등록해 주세요.</div>
+						<button class="n-btn n-btn-add px-4 py-2 fs-6 rounded-pill"
+							style="background-color: #10b981;" data-bs-toggle="modal"
+							data-bs-target="#settlementModal">
+							<i class="fas fa-plus me-2"></i>계좌 등록하기
+						</button>
+					</div>
+					<div class="bank-card"
+						th:unless="${settlement?.bankName == null or settlement?.bankName == ''}">
+						<div>
+							<div class="text-white-50 fw-bold mb-1 letter-spacing-1">SETTLEMENT
+								ACCOUNT</div>
+							<h3 class="fw-bold mb-4" th:text="${settlement.bankName}">은행명</h3>
+							<div class="fs-4 fw-bold font-monospace tracking-widest"
+								th:text="${settlement.acctNo}">0000-00-000000</div>
+						</div>
+						<div
+							class="text-end d-flex flex-column justify-content-between h-100">
+							<i class="fas fa-piggy-bank opacity-50 mb-4"
+								style="font-size: 4rem;"></i>
+							<button
+								class="btn btn-light text-success fw-bold rounded-pill px-4"
+								data-bs-toggle="modal" data-bs-target="#settlementModal">변경하기</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="section-consult-list" class="expert-tab-content">
+			<div class="n-card border-0 shadow-sm rounded-4">
+				<div class="n-card-header bg-white rounded-top-4"
+					style="border-left: 8px solid #6366f1;">
+					<div class="instant-badge-wrap">
+						<h5 class="mb-0 fw-bold">상담 신청 내역</h5>
+						<span id="instantChatBadge" class="instant-chat-badge">N</span>
+						<span id="instantChatDot" class="instant-chat-dot"></span>
+					</div>
+				</div>
+				<div class="n-card-body p-4 bg-light bg-opacity-50">
+					<th:block
+						th:with="chatList=${consultList != null ? consultList.?[category != null and (category.contains('화상') or category.contains('채팅'))] : null}, phoneList=${consultList != null ? consultList.?[category != null and category.contains('전화')] : null}">
+						<ul class="nav nav-pills mb-4 border-bottom pb-4"
+							id="consultMainTab" role="tablist">
+							<li class="nav-item me-2" role="presentation"><button
+									class="nav-link px-4 fw-bold rounded-pill shadow-sm active"
+									data-bs-toggle="pill" data-bs-target="#tab-phone" type="button"
+									role="tab">📞 전화 상담</button></li>
+							<li class="nav-item me-2" role="presentation"><button
+									class="nav-link px-4 fw-bold rounded-pill shadow-sm"
+									data-bs-toggle="pill" data-bs-target="#tab-chat" type="button"
+									role="tab">💬 채팅 상담</button></li>
+						</ul>
+						<div class="tab-content" id="consultMainTabContent">
+							<div class="tab-pane fade" id="tab-chat" role="tabpanel">
+								<ul class="nav nav-pills mb-4" id="chatStatusTab"
+									th:unless="${#lists.isEmpty(chatList)}">
+									<li class="nav-item me-2"><a
+										class="nav-link active rounded-pill px-4 fw-bold shadow-sm"
+										href="javascript:void(0)" onclick="filterConsult('all', this)">전체</a></li>
+									<li class="nav-item me-2"><a
+										class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+										href="javascript:void(0)" onclick="filterConsult('1', this)">예약신청</a></li>
+									<li class="nav-item me-2"><a
+										class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+										href="javascript:void(0)" onclick="filterConsult('2', this)">예약확정</a></li>
+									<li class="nav-item me-2"><a
+										class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+										href="javascript:void(0)" onclick="filterConsult('3', this)">상담완료</a></li>
+									<li class="nav-item"><a
+										class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+										href="javascript:void(0)" onclick="filterConsult('4', this)">취소</a></li>
+								</ul>
+								<div
+									class="n-empty-state m-0 text-center py-5 bg-white rounded-4 border border-light shadow-sm"
+									th:if="${#lists.isEmpty(chatList)}">
+									<i class="fas fa-video n-empty-icon mb-3"
+										style="color: #c7d2fe; font-size: 3.5rem;"></i>
+									<h5 class="n-empty-text fw-bold text-dark">접수된 채팅/화상 상담이
+										없습니다.</h5>
+								</div>
+								<div class="row g-4" id="chatCardContainer"
+									th:unless="${#lists.isEmpty(chatList)}">
+									<div class="col-12 col-xl-6 consult-card-item"
+										th:each="item : ${chatList}"
+										th:data-consult-status="${item.status}">
+										<div
+											class="bg-white rounded-4 p-4 hover-card-ui shadow-sm border border-light h-100 d-flex flex-column"
+											style="cursor: pointer;" data-bs-toggle="modal"
+											data-bs-target="#consultDetailModal"
+											th:data-id="${item.consult_id}"
+											th:data-date="${#temporals.format(item.consult_start_date, 'yyyy.MM.dd HH:mm')}"
+											th:data-type="${item.category}"
+											th:data-content="${item['consultContent']}"
+											th:data-status="${item.status}"
+											th:data-has-message="${item.hasChatMessage}">
+											<div
+												class="d-flex justify-content-between align-items-center mb-3">
+												<span class="badge px-3 py-2 rounded-pill shadow-sm"
+													th:classappend="${item.status == 1 ? 'bg-warning text-dark' : (item.status == 2 ? 'bg-primary text-white' : (item.status == 3 ? 'bg-success text-white' : 'bg-danger text-white'))}"><i
+													class="fas"
+													th:classappend="${item.status == 1 ? 'fa-paper-plane' : (item.status == 2 ? 'fa-calendar-check' : (item.status == 3 ? 'fa-check-circle' : 'fa-times-circle'))} + ' me-1'"></i><span
+													th:text="${item.status == 1 ? '예약신청' : (item.status == 2 ? '예약확정' : (item.status == 3 ? '상담완료' : '취소'))}">상태</span></span>
+												<h5 class="fw-bold text-dark mb-0"
+													th:text="${item.userName} + ' 님'">고객명 님</h5>
+											</div>
+											<div
+												class="d-flex justify-content-between align-items-center mb-3">
+												<span class="badge px-2 py-1 fs-6 rounded-2 border"
+													th:classappend="${item.category == '전화' or item.category == '전화상담' ? 'bg-info bg-opacity-10 text-info border-info-subtle' : (item.category == '화상' or item.category == '화상상담' ? 'bg-primary bg-opacity-10 text-primary border-primary-subtle' : 'bg-success bg-opacity-10 text-success border-success-subtle')}"><i
+													class="fas"
+													th:classappend="${item.category == '전화' or item.category == '전화상담' ? 'fa-phone-alt' : (item.category == '화상' or item.category == '화상상담' ? 'fa-video' : 'fa-user-check')} + ' me-1'"></i><span
+													th:text="${item.category}">상담방식</span></span> <small
+													class="text-secondary fw-semibold text-end"><i
+													class="far fa-calendar-alt me-1 text-primary opacity-75"></i>
+													<span
+													th:text="${#temporals.format(item.consult_start_date, 'yyyy.MM.dd HH:mm')}">날짜</span></small>
+											</div>
+											<div
+												class="bg-light bg-opacity-50 p-3 rounded-3 mb-4 mt-2 border border-light">
+												<p class="text-secondary small mb-0"
+													style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;"
+													th:text="${item['consultContent']}">내용</p>
+											</div>
+											<div class="mt-auto text-end border-top pt-3 border-light">
+												<span class="text-primary small fw-bold">상세 정보 및 상태
+													변경 <i class="fas fa-chevron-right ms-1"></i>
+												</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="tab-pane fade show active" id="tab-phone"
+								role="tabpanel">
+								<ul class="nav nav-pills mb-4" id="phoneStatusTab"
+									th:unless="${#lists.isEmpty(phoneList)}">
+									<li class="nav-item me-2"><a
+										class="nav-link active rounded-pill px-4 fw-bold shadow-sm"
+										href="javascript:void(0)" onclick="filterConsult('all', this)">전체</a></li>
+									<li class="nav-item me-2"><a
+										class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+										href="javascript:void(0)" onclick="filterConsult('1', this)">예약신청</a></li>
+									<li class="nav-item me-2"><a
+										class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+										href="javascript:void(0)" onclick="filterConsult('2', this)">예약확정</a></li>
+									<li class="nav-item me-2"><a
+										class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+										href="javascript:void(0)" onclick="filterConsult('3', this)">상담완료</a></li>
+									<li class="nav-item"><a
+										class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+										href="javascript:void(0)" onclick="filterConsult('4', this)">취소</a></li>
+								</ul>
+								<div
+									class="n-empty-state m-0 text-center py-5 bg-white rounded-4 border border-light shadow-sm"
+									th:if="${#lists.isEmpty(phoneList)}">
+									<i class="fas fa-phone-alt n-empty-icon mb-3"
+										style="color: #c7d2fe; font-size: 3.5rem;"></i>
+									<h5 class="n-empty-text fw-bold text-dark">접수된 전화 상담이
+										없습니다.</h5>
+								</div>
+								<div class="row g-4" id="phoneCardContainer"
+									th:unless="${#lists.isEmpty(phoneList)}">
+									<div class="col-12 col-xl-6 consult-card-item"
+										th:each="item : ${phoneList}"
+										th:data-consult-status="${item.status}">
+										<div
+											class="bg-white rounded-4 p-4 hover-card-ui shadow-sm border border-light h-100 d-flex flex-column"
+											style="cursor: pointer;" data-bs-toggle="modal"
+											data-bs-target="#consultDetailModal"
+											th:data-id="${item.consult_id}"
+											th:data-date="${#temporals.format(item.consult_start_date, 'yyyy.MM.dd HH:mm')}"
+											th:data-type="${item.category}"
+											th:data-content="${item['consultContent']}"
+											th:data-status="${item.status}">
+											<div
+												class="d-flex justify-content-between align-items-center mb-3">
+												<span class="badge px-3 py-2 rounded-pill shadow-sm"
+													th:classappend="${item.status == 1 ? 'bg-warning text-dark' : (item.status == 2 ? 'bg-primary text-white' : (item.status == 3 ? 'bg-success text-white' : 'bg-danger text-white'))}"><i
+													class="fas"
+													th:classappend="${item.status == 1 ? 'fa-paper-plane' : (item.status == 2 ? 'fa-calendar-check' : (item.status == 3 ? 'fa-check-circle' : 'fa-times-circle'))} + ' me-1'"></i><span
+													th:text="${item.status == 1 ? '예약신청' : (item.status == 2 ? '예약확정' : (item.status == 3 ? '상담완료' : '취소'))}">상태</span></span>
+												<h5 class="fw-bold text-dark mb-0"
+													th:text="${item.userName} + ' 님'">고객명 님</h5>
+											</div>
+											<div
+												class="d-flex justify-content-between align-items-center mb-3">
+												<span
+													class="badge px-2 py-1 fs-6 rounded-2 border bg-info bg-opacity-10 text-info border-info-subtle"><i
+													class="fas fa-phone-alt me-1"></i> <span
+													th:text="${item.category}">전화상담</span></span> <small
+													class="text-secondary fw-semibold text-end"><i
+													class="far fa-calendar-alt me-1 text-primary opacity-75"></i>
+													<span
+													th:text="${#temporals.format(item.consult_start_date, 'yyyy.MM.dd HH:mm')}">날짜</span></small>
+											</div>
+											<div
+												class="bg-light bg-opacity-50 p-3 rounded-3 mb-4 mt-2 border border-light">
+												<p class="text-secondary small mb-0"
+													style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;"
+													th:text="${item['consultContent']}">내용</p>
+											</div>
+											<div class="mt-auto text-end border-top pt-3 border-light">
+												<span class="text-primary small fw-bold">상세 정보 및 상태
+													변경 <i class="fas fa-chevron-right ms-1"></i>
+												</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</th:block>
+				</div>
+			</div>
+		</div>
+
+		<div id="section-inquiry" class="expert-tab-content">
+			<div class="n-card border-0 shadow-sm rounded-4">
+				<div class="n-card-header bg-white rounded-top-4"
+					style="border-left: 8px solid #38bdf8;">
+					<h5 class="mb-0 fw-bold">1:1 문의 내역</h5>
+				</div>
+				<div class="n-card-body p-4 bg-light bg-opacity-50">
+					<th:block
+						th:with="inquiryList=${consultList != null ? consultList.?[category != null and (category.contains('문의') or category.contains('1:1'))] : null}">
+						<ul class="nav nav-pills mb-4"
+							th:unless="${#lists.isEmpty(inquiryList)}">
+							<li class="nav-item me-2"><a
+								class="nav-link active rounded-pill px-4 fw-bold shadow-sm"
+								href="javascript:void(0)" onclick="filterConsult('all', this)">전체</a></li>
+							<li class="nav-item me-2"><a
+								class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+								href="javascript:void(0)" onclick="filterConsult('1', this)">답변
+									대기</a></li>
+							<li class="nav-item"><a
+								class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+								href="javascript:void(0)" onclick="filterConsult('3', this)">답변
+									완료</a></li>
+						</ul>
+						<div
+							class="n-empty-state m-0 text-center py-5 bg-white rounded-4 border border-light shadow-sm"
+							th:if="${#lists.isEmpty(inquiryList)}">
+							<i class="fas fa-pen-nib n-empty-icon mb-3"
+								style="color: #c7d2fe; font-size: 3.5rem;"></i>
+							<h5 class="n-empty-text fw-bold text-dark">접수된 1:1 문의가 없습니다.</h5>
+						</div>
+						<div class="row g-4" th:unless="${#lists.isEmpty(inquiryList)}">
+							<th:block th:each="item : ${inquiryList}">
+								<div class="col-12 col-xl-6 consult-card-item"
+									th:data-consult-status="${item.status}">
+									<div
+										class="bg-white rounded-4 p-4 hover-card-ui shadow-sm border border-light h-100 d-flex flex-column"
+										style="cursor: pointer;" data-bs-toggle="modal"
+										th:data-bs-target="'#inquiryModal-' + ${item.consult_id}">
+										<div
+											class="d-flex justify-content-between align-items-center mb-3">
+											<span class="badge px-3 py-2 rounded-pill shadow-sm"
+												th:classappend="${item.status == 1 ? 'bg-warning text-dark' : 'bg-success text-white'}"><i
+												class="fas"
+												th:classappend="${item.status == 1 ? 'fa-paper-plane' : 'fa-check-circle'} + ' me-1'"></i><span
+												th:text="${item.status == 1 ? '답변 대기' : '답변 완료'}">상태</span></span>
+											<h5 class="fw-bold text-dark mb-0"
+												th:text="${item.userName} + ' 님'">고객명</h5>
+										</div>
+										<div
+											class="bg-light bg-opacity-50 p-3 rounded-3 mb-2 mt-2 border border-light flex-grow-1">
+											<p class="text-secondary small mb-0"
+												style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;"
+												th:text="${item['consultContent']}">문의 내용</p>
+										</div>
+										<div class="mt-auto text-end border-top pt-3 border-light">
+											<span class="text-primary small fw-bold">상세 내용 및 답변하기<i
+												class="fas fa-chevron-right ms-1"></i></span>
+										</div>
+									</div>
+								</div>
+
+								<div class="modal fade"
+									th:id="'inquiryModal-' + ${item.consult_id}" tabindex="-1"
+									aria-hidden="true">
+									<div
+										class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+										<div class="modal-content rounded-4 border-0 shadow">
+											<div
+												class="modal-header bg-light border-bottom-0 pb-3 pt-4 px-4">
+												<div>
+													<h5 class="modal-title fw-bold text-dark mb-1">📝 1:1
+														문의 상세</h5>
+												</div>
+												<button type="button" class="btn-close"
+													data-bs-dismiss="modal"></button>
+											</div>
+											<div class="modal-body p-4 bg-light bg-opacity-50">
+												<div class="d-flex flex-column gap-3">
+													<th:block th:each="inq : ${item.inquiryList}">
+														<div th:if="${inq.commentType == '질문'}"
+															class="bg-white p-3 rounded-4 border shadow-sm me-4">
+															<label class="fw-bold text-secondary mb-1 small"><i
+																class="fas fa-question-circle me-1"></i>회원 질문</label>
+															<p class="text-dark small mb-1"
+																style="white-space: pre-wrap;" th:text="${inq.content}"></p>
+														</div>
+														<div
+															th:if="${inq.commentType == '전문가답변' or inq.commentType == '관리자답변'}"
+															class="bg-primary bg-opacity-10 p-3 rounded-4 ms-4 shadow-sm">
+															<label class="fw-bold text-primary mb-1 small"><i
+																class="fas fa-user-md me-1"></i>전문가 답변</label>
+															<p class="text-dark small mb-1"
+																style="white-space: pre-wrap;" th:text="${inq.content}"></p>
+														</div>
+													</th:block>
+												</div>
+											</div>
+											<div class="modal-footer border-top-0 bg-white p-4"
+												th:if="${item.status == 1}">
+												<div class="w-100">
+													<textarea th:id="'inquiry-answer-' + ${item.consult_id}"
+														class="form-control border-light mb-3 shadow-sm bg-light"
+														rows="4" placeholder="답변을 작성해주세요..."></textarea>
+													<div class="text-end">
+														<button type="button"
+															class="btn btn-secondary px-4 rounded-pill fw-bold me-2"
+															data-bs-dismiss="modal">닫기</button>
+														<button type="button"
+															class="btn btn-primary px-4 rounded-pill fw-bold shadow-sm"
+															th:onclick="|submitInquiryAnswer(${item.consult_id})|">답변
+															등록</button>
+													</div>
+												</div>
+											</div>
+											<div class="modal-footer border-top-0 bg-white p-3"
+												th:unless="${item.status == 1}">
+												<button type="button"
+													class="btn btn-secondary px-4 rounded-pill fw-bold"
+													data-bs-dismiss="modal">닫기</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							</th:block>
+						</div>
+					</th:block>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<div class="modal fade" id="profileModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/expert/edit-profile}" method="post"
+					enctype="multipart/form-data">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">프로필 수정</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<label
+								class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+								class="fas fa-camera me-1"></i> 프로필 이미지</label> <input type="file"
+								name="profileImageFile"
+								class="form-control border-0 shadow-sm rounded-3 bg-white mb-4"
+								accept="image/*"> <label
+								class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+								class="fas fa-star me-1"></i> 전문 분야</label> <select name="specialty"
+								class="form-select form-select-lg border-0 shadow-sm rounded-3 fw-medium text-dark px-3 mb-4 cursor-pointer"
+								required>
+								<option value="" disabled
+									th:selected="${expert?.specialty == null or expert?.specialty == ''}">전문
+									분야를 선택해주세요</option>
+								<option
+									th:each="spec : ${ {'영양상담', '운동상담', '여성건강', '남성건강', '탈모상담', '일반건강상담'} }"
+									th:value="${spec}" th:text="${spec}"
+									th:selected="${expert?.specialty == spec}"></option>
+							</select> <label
+								class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+								class="fas fa-comment-dots me-1"></i> 한 줄 소개</label>
+							<textarea name="expertIntroduce"
+								class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark p-3"
+								rows="3" th:text="${expert?.expertIntroduce}"
+								placeholder="당신의 가치를 전달할 수 있는 멋진 한 줄을 작성해보세요!"></textarea>
+						</div>
+					</div>
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소하기</button>
+						<button type="submit"
+							class="btn btn-info text-white px-5 py-2 fw-bold rounded-pill shadow-sm">저장하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="certModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/expert/add-cert}" method="post"
+					enctype="multipart/form-data">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">자격증 추가</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<div class="row">
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+										class="fas fa-award me-1"></i> 자격증명</label> <input type="text"
+										name="certName"
+										class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+										required>
+								</div>
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+										class="fas fa-hashtag me-1"></i> 자격증 번호</label> <input type="text"
+										name="certNo"
+										class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+										placeholder="예: 1234-5678" required>
+								</div>
+							</div>
+							<div class="mb-4">
+								<label
+									class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+									class="fas fa-building me-1"></i> 발급기관</label> <input type="text"
+									name="issuer"
+									class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+									required>
+							</div>
+							<div class="row">
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+										class="far fa-calendar-check me-1"></i> 발급일</label>
+									<div class="input-group shadow-sm rounded-3">
+										<span class="input-group-text bg-white border-0 text-primary"><i
+											class="far fa-calendar-alt"></i></span> <input type="text"
+											name="issuedDate"
+											class="form-control border-0 fw-medium text-dark px-2 flatpickr-past bg-white cursor-pointer"
+											required readonly placeholder="날짜 선택">
+									</div>
+								</div>
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+										class="far fa-calendar-times me-1"></i> 만료일</label>
+									<div class="input-group shadow-sm rounded-3">
+										<span class="input-group-text bg-white border-0 text-primary"><i
+											class="far fa-calendar-alt"></i></span> <input type="text"
+											name="expiredDate" id="addExpiredDate"
+											class="form-control border-0 fw-medium text-dark px-2 flatpickr-future bg-white cursor-pointer"
+											readonly placeholder="날짜 선택">
+									</div>
+									<div class="form-check mt-2 ms-1">
+										<input class="form-check-input no-expire-check"
+											type="checkbox" id="addNoExpire" data-target="addExpiredDate">
+										<label
+											class="form-check-label fw-bold text-secondary small cursor-pointer"
+											for="addNoExpire">만료일 없음 (체크 시 비활성화)</label>
+									</div>
+								</div>
+							</div>
+							<div class="mb-0 mt-2">
+								<label
+									class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+									class="fas fa-file-upload me-1"></i> 증빙파일 업로드</label> <input
+									type="file" name="certFile"
+									class="form-control border-0 shadow-sm rounded-3 bg-white"
+									required>
+							</div>
+						</div>
+					</div>
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소하기</button>
+						<button type="submit"
+							class="btn btn-info text-white px-5 py-2 fw-bold rounded-pill shadow-sm">추가하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="editCertModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/expert/edit-cert}" method="post"
+					enctype="multipart/form-data">
+					<input type="hidden" name="certificationId" id="e_certId">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">자격증 수정</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<div class="row">
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase">자격증명</label>
+									<input type="text" name="certName" id="e_certName"
+										class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+										required>
+								</div>
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase">자격증
+										번호</label> <input type="text" name="certNo" id="e_certNo"
+										class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+										required>
+								</div>
+							</div>
+							<div class="mb-4">
+								<label
+									class="form-label fw-bold mb-2 text-primary small text-uppercase">발급기관</label>
+								<input type="text" name="issuer" id="e_issuer"
+									class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+									required>
+							</div>
+							<div class="row">
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase">발급일</label>
+									<div class="input-group shadow-sm rounded-3">
+										<span class="input-group-text bg-white border-0 text-primary"><i
+											class="far fa-calendar-alt"></i></span> <input type="text"
+											name="issuedDate" id="e_issuedDate"
+											class="form-control border-0 fw-medium text-dark px-2 flatpickr-past bg-white cursor-pointer"
+											required readonly>
+									</div>
+								</div>
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase">만료일</label>
+									<div class="input-group shadow-sm rounded-3">
+										<span class="input-group-text bg-white border-0 text-primary"><i
+											class="far fa-calendar-alt"></i></span> <input type="text"
+											name="expiredDate" id="e_expiredDate"
+											class="form-control border-0 fw-medium text-dark px-2 flatpickr-future bg-white cursor-pointer"
+											readonly>
+									</div>
+									<div class="form-check mt-2 ms-1">
+										<input class="form-check-input no-expire-check"
+											type="checkbox" id="editNoExpire" data-target="e_expiredDate">
+										<label
+											class="form-check-label fw-bold text-secondary small cursor-pointer"
+											for="editNoExpire">만료일 없음 (체크 시 비활성화)</label>
+									</div>
+								</div>
+							</div>
+							<div class="mb-0 mt-2">
+								<label
+									class="form-label fw-bold mb-2 text-primary small text-uppercase">증빙파일
+									다시 업로드 (선택)</label> <input type="file" name="certFile"
+									class="form-control border-0 shadow-sm rounded-3 bg-white mb-2">
+								<small class="text-secondary fw-bold"><i
+									class="fas fa-info-circle me-1"></i>파일을 새로 올리지 않으면 기존 파일이
+									유지됩니다.</small>
+							</div>
+						</div>
+					</div>
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소</button>
+						<button type="submit"
+							class="btn btn-info text-white px-5 py-2 fw-bold rounded-pill shadow-sm">수정하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="eduModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/expert/add-edu}" method="post">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">학력 추가</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<div class="row">
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+										class="fas fa-school me-1"></i> 학교명</label> <input type="text"
+										name="expertSchool"
+										class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+										required>
+								</div>
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+										class="fas fa-book me-1"></i> 전공</label> <input type="text"
+										name="expertMajor"
+										class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+										required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6 mb-3 mb-md-0">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+										class="fas fa-graduation-cap me-1"></i> 학위명</label> <select
+										name="degreeName"
+										class="form-select border-0 shadow-sm rounded-3 fw-medium text-dark px-3 cursor-pointer"
+										required>
+										<option value="" disabled selected>선택하세요</option>
+										<option value="학사">학사</option>
+										<option value="석사">석사</option>
+										<option value="박사">박사</option>
+									</select>
+								</div>
+								<div class="col-md-6">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+										class="fas fa-user-graduate me-1"></i> 졸업 여부</label> <select
+										name="graduationYn"
+										class="form-select border-0 shadow-sm rounded-3 fw-medium text-dark px-3 cursor-pointer">
+										<option value="졸업">졸업</option>
+										<option value="재학">재학중</option>
+									</select>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소</button>
+						<button type="submit"
+							class="btn btn-primary text-white px-5 py-2 fw-bold rounded-pill shadow-sm">추가하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="editEduModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/expert/edit-edu}" method="post">
+					<input type="hidden" name="careerId" id="e_eduId">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">학력 수정</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<div class="row">
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase">학교명</label>
+									<input type="text" name="expertSchool" id="e_expertSchool"
+										class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+										required>
+								</div>
+								<div class="col-md-6 mb-4">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase">전공</label>
+									<input type="text" name="expertMajor" id="e_expertMajor"
+										class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+										required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6 mb-3 mb-md-0">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase">학위명</label>
+									<select name="degreeName" id="e_degreeName"
+										class="form-select border-0 shadow-sm rounded-3 fw-medium text-dark px-3 cursor-pointer"
+										required>
+										<option value="" disabled selected>선택하세요</option>
+										<option value="학사">학사</option>
+										<option value="석사">석사</option>
+										<option value="박사">박사</option>
+									</select>
+								</div>
+								<div class="col-md-6">
+									<label
+										class="form-label fw-bold mb-2 text-primary small text-uppercase">졸업
+										여부</label> <select name="graduationYn" id="e_graduationYn"
+										class="form-select border-0 shadow-sm rounded-3 fw-medium text-dark px-3 cursor-pointer">
+										<option value="졸업">졸업</option>
+										<option value="재학">재학중</option>
+									</select>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소</button>
+						<button type="submit"
+							class="btn btn-primary text-white px-5 py-2 fw-bold rounded-pill shadow-sm">수정하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="expModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/expert/add-exp}" method="post">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">경력 추가</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<label
+								class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+								class="fas fa-building me-1"></i> 근무지명</label> <input type="text"
+								name="organization"
+								class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3 mb-4"
+								placeholder="회사/센터명" required> <label
+								class="form-label fw-bold mb-2 text-primary small text-uppercase"><i
+								class="fas fa-history me-1"></i> 경력 기간</label>
+							<div class="row g-2">
+								<div class="col-6">
+									<div class="input-group shadow-sm rounded-3">
+										<input type="number" name="careerYear"
+											class="form-control border-0 fw-medium bg-white"
+											placeholder="0" min="0"> <span
+											class="input-group-text border-0 bg-white fw-bold text-muted">년</span>
+									</div>
+								</div>
+								<div class="col-6">
+									<div class="input-group shadow-sm rounded-3">
+										<input type="number" name="careerMonth"
+											class="form-control border-0 fw-medium bg-white"
+											placeholder="0" min="0" max="11"> <span
+											class="input-group-text border-0 bg-white fw-bold text-muted">개월</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소</button>
+						<button type="submit"
+							class="btn btn-secondary text-white px-5 py-2 fw-bold rounded-pill shadow-sm">경력
+							추가</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="editExpModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/expert/edit-exp}" method="post">
+					<input type="hidden" name="careerId" id="e_expId">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">경력 수정</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<label
+								class="form-label fw-bold mb-2 text-primary small text-uppercase">근무지명</label>
+							<input type="text" name="organization" id="e_org"
+								class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3 mb-4"
+								required> <label
+								class="form-label fw-bold mb-2 text-primary small text-uppercase">경력
+								기간</label>
+							<div class="row g-2">
+								<div class="col-6">
+									<div class="input-group shadow-sm rounded-3">
+										<input type="number" name="careerYear" id="e_year"
+											class="form-control border-0 fw-medium bg-white"
+											placeholder="0" min="0"> <span
+											class="input-group-text border-0 bg-white fw-bold text-muted">년</span>
+									</div>
+								</div>
+								<div class="col-6">
+									<div class="input-group shadow-sm rounded-3">
+										<input type="number" name="careerMonth" id="e_month"
+											class="form-control border-0 fw-medium bg-white"
+											placeholder="0" min="0" max="11"> <span
+											class="input-group-text border-0 bg-white fw-bold text-muted">개월</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소</button>
+						<button type="submit"
+							class="btn btn-secondary text-white px-5 py-2 fw-bold rounded-pill shadow-sm">수정하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="settlementModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/expert/edit-settlement}" method="post">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">정산 계좌 관리</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<label
+								class="form-label fw-bold mb-2 text-success small text-uppercase"><i
+								class="fas fa-university me-1"></i> 은행명</label> <select name="bankName"
+								class="form-select border-0 shadow-sm rounded-3 fw-medium text-dark px-3 mb-4 cursor-pointer"
+								required>
+								<option value="" disabled
+									th:selected="${settlement?.bankName == null or settlement?.bankName == ''}">은행을
+									선택해주세요</option>
+								<option
+									th:each="bank : ${ {'KB국민은행','NH농협은행','신한은행','우리은행','하나은행','카카오뱅크','토스뱅크','케이뱅크','IBK기업은행','KDB산업은행','SC제일은행','Sh수협은행','BNK경남은행','BNK부산은행','DGB대구은행(iM뱅크)','광주은행','전북은행','제주은행','우체국','새마을금고','신협','저축은행','산림조합','미래에셋증권','삼성증권','한국투자증권','NH투자증권','키움증권','KB증권','신한투자증권','대신증권','유안타증권','한화투자증권'} }"
+									th:value="${bank}" th:text="${bank}"
+									th:selected="${settlement?.bankName == bank}"></option>
+							</select> <label
+								class="form-label fw-bold mb-2 text-success small text-uppercase"><i
+								class="fas fa-money-check-alt me-1"></i> 계좌번호</label> <input type="text"
+								name="acctNo"
+								class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+								th:value="${settlement?.acctNo}" placeholder="계좌번호 (- 제외)"
+								required>
+						</div>
+					</div>
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소</button>
+						<button type="submit"
+							class="btn btn-success px-5 py-2 fw-bold rounded-pill shadow-sm">저장하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="consultDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            <div class="modal-header bg-light border-0 rounded-top-4">
+                <h5 class="modal-title fw-bold text-dark">상담 상세 정보</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <input type="hidden" id="modalConsultId">
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">
+                        <i class="far fa-calendar-check me-1"></i> 상담 예약 일시
+                    </label>
+                    <div class="fs-5 fw-bold text-dark" id="modalConsultDate">2026.03.15 14:00</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">
+                        <i class="fas fa-headset me-1"></i> 상담 방식
+                    </label>
+                    <div class="fs-5 fw-bold text-primary" id="modalConsultType">전화</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-secondary small fw-bold">
+                        <i class="far fa-comment-dots me-1"></i> 상담 요청 내용
+                    </label>
+                    <div class="p-3 bg-light rounded-3 text-dark border border-light"
+                         id="modalConsultContent"
+                         style="min-height: 80px; font-size: 0.95rem;">
+                        내용이 없습니다.
+                    </div>
+                </div>
+
+                <hr class="border-light">
+
+                <div class="mb-2">
+                    <label class="form-label text-secondary small fw-bold">
+                        <i class="fas fa-tasks me-1"></i> 진행 상태 관리
+                    </label>
+
+                    <select class="form-select form-select-lg fs-6 fw-bold border-dark"
+                            id="modalConsultStatus">
+                        <option value="1">승인 대기중</option>
+                        <option value="2">예약 확정 (진행 예정)</option>
+                        <option value="3">상담 완료</option>
+                        <option value="4">상담 취소 (거절)</option>
+                    </select>
+
+                    <div class="mt-3 d-none" id="rejectReasonWrap">
+                        <label class="form-label text-secondary small fw-bold">거절 사유</label>
+                        <textarea class="form-control" id="modalRejectReason" rows="3"
+                                  placeholder="거절 사유를 입력해주세요."></textarea>
+                    </div>
+                </div>
+
+                <div id="callNoteSection" class="d-none mt-4">
+                    <hr class="border-light">
+
+                    <label class="form-label fw-bold text-secondary small">
+                        <i class="fas fa-file-alt me-1"></i> 전화 상담 기록
+                    </label>
+
+                    <textarea id="callNoteContent" class="form-control mb-3" rows="5"
+                              placeholder="통화 요약, 상담 내용, 안내사항 등을 입력하세요"></textarea>
+
+                    <label class="form-label fw-bold text-secondary small">
+                        <i class="fas fa-paperclip me-1"></i> 첨부파일 (선택)
+                    </label>
+
+                    <input type="file" id="callNoteFile" class="form-control" accept=".m4a,.mp3,.wav,.aac,.jpg,.jpeg,.png,.pdf">
+
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-outline-primary" onclick="saveCallNote()">
+                            전화상담 기록 저장
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button type="button" class="btn btn-light fw-bold px-4"
+                        data-bs-dismiss="modal">닫기</button>
+
+                <a id="consultActionBtn" href="#" class="btn btn-success fw-bold px-4 d-none">
+                    채팅방 입장
+                </a>
+
+                <button type="button" class="btn btn-primary fw-bold px-4"
+                        onclick="updateConsultStatus()">상태 저장하기</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+	<!-- 즉시 상담 요청 모달 -->
+	<div class="modal fade" id="expertChatDecisionModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg rounded-4">
+				<div class="modal-header bg-light border-0">
+					<h5 class="modal-title fw-bold">즉시 상담 요청</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body p-4">
+					<input type="hidden" id="instantConsultId">
+					<p class="mb-2 text-secondary small fw-bold">새로운 즉시 상담 요청이 도착했습니다.</p>
+					<div class="p-3 bg-light rounded-3 border">
+						<div class="mb-2">
+							<span class="text-secondary small fw-bold">회원명</span>
+							<div class="fw-bold" id="instantConsultUserName">-</div>
+						</div>
+						<div class="mb-2">
+							<span class="text-secondary small fw-bold">상담 방식</span>
+							<div class="fw-bold text-primary" id="instantConsultType">-</div>
+						</div>
+						<div>
+							<span class="text-secondary small fw-bold">요청 내용</span>
+							<div id="instantConsultContent">-</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer border-0">
+					<button type="button" class="btn btn-outline-secondary fw-bold"
+						data-bs-dismiss="modal">닫기</button>
+					<button type="button" class="btn btn-danger fw-bold"
+						onclick="openRejectReasonModal()">거절</button>
+					<button type="button" class="btn btn-primary fw-bold"
+						onclick="acceptInstantChat()">수락</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 즉시 상담 거절 사유 모달 -->
+	<div class="modal fade" id="expertRejectReasonModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg rounded-4">
+				<div class="modal-header bg-light border-0">
+					<h5 class="modal-title fw-bold">거절 사유 입력</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body p-4">
+					<label for="instantRejectReason"
+						class="form-label small fw-bold text-secondary">거절 사유</label>
+					<textarea id="instantRejectReason" class="form-control" rows="4"
+						placeholder="거절 사유를 입력해주세요."></textarea>
+				</div>
+				<div class="modal-footer border-0">
+					<button type="button" class="btn btn-light fw-bold"
+						data-bs-dismiss="modal">취소</button>
+					<button type="button" class="btn btn-danger fw-bold"
+						onclick="rejectInstantChat()">거절 완료</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+	<script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
+
+	<script>
+    let expertChatDecisionModalInstance = null;
+    let expertRejectReasonModalInstance = null;
+    let instantPollingStarted = false;
+    let lastInstantConsultId = null;
+
+    function updateInstantBadge(show) {
+        const badge = document.getElementById('instantChatBadge');
+        const dot = document.getElementById('instantChatDot');
+
+        if (badge) {
+            badge.classList.toggle('show', show);
+        }
+        if (dot) {
+            dot.classList.toggle('show', show);
+        }
+    }
+
+    function filterConsult(status, btn) {
+        const links = btn.closest('.nav-pills').querySelectorAll('.nav-link');
+        links.forEach(link => {
+            link.classList.remove('active');
+            link.classList.add('bg-white', 'text-secondary');
+        });
+
+        btn.classList.add('active');
+        btn.classList.remove('bg-white', 'text-secondary');
+
+        const container = btn.closest('.expert-tab-content') || btn.closest('.tab-pane');
+        const items = container.querySelectorAll('.consult-card-item');
+
+        items.forEach(item => {
+            const itemStatus = item.getAttribute('data-consult-status');
+            if (status === 'all' || itemStatus === status) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    function submitInquiryAnswer(consultId) {
+        const answerTextArea = document.getElementById('inquiry-answer-' + consultId);
+        const answerContent = answerTextArea.value.trim();
+
+        if (!answerContent) {
+            alert('답변 내용을 입력해주세요!');
+            answerTextArea.focus();
+            return;
+        }
+
+        if (!confirm('답변을 등록하시겠습니까? (등록 후 수정 불가)')) return;
+
+        $.ajax({
+            url: '/expert/inquiry/answer',
+            type: 'POST',
+            data: {
+                consult_id: consultId,
+                answer: answerContent
+            },
+            success: function(response) {
+                if (response === 'success') {
+                    alert('답변이 성공적으로 등록되었습니다.');
+                    location.reload();
+                } else {
+                    alert('답변 등록에 실패했습니다.');
+                }
+            },
+            error: function() {
+                alert('서버 통신 실패!');
+            }
+        });
+    }
+
+    function toggleRejectReasonByStatus(statusValue) {
+        const rejectWrap = document.getElementById('rejectReasonWrap');
+        const rejectReason = document.getElementById('modalRejectReason');
+
+        if (!rejectWrap || !rejectReason) return;
+
+        if (String(statusValue) === '4') {
+            rejectWrap.classList.remove('d-none');
+        } else {
+            rejectWrap.classList.add('d-none');
+            rejectReason.value = '';
+        }
+    }
+
+    function updateConsultStatus() {
+        const consultId = document.getElementById('modalConsultId').value;
+        const newStatus = document.getElementById('modalConsultStatus').value;
+        const statusSelect = document.getElementById('modalConsultStatus');
+        const statusText = statusSelect.options[statusSelect.selectedIndex].text;
+
+        const rejectReasonEl = document.getElementById('modalRejectReason');
+        const rejectReason = rejectReasonEl ? rejectReasonEl.value.trim() : '';
+
+        if (String(newStatus) === '4' && !rejectReason) {
+            alert('거절 사유를 입력해주세요.');
+            if (rejectReasonEl) rejectReasonEl.focus();
+            return;
+        }
+
+        if (!confirm("해당 상담의 상태를 '" + statusText + "'(으)로 변경하시겠습니까?")) return;
+
+        $.ajax({
+            url: '/consult/updateStatus',
+            type: 'POST',
+            data: {
+                consultId: consultId,
+                status: newStatus,
+                reason: rejectReason
+            },
+            success: function() {
+                const consultType = document.getElementById('modalConsultType').innerText || '';
+                const savedConsultId = document.getElementById('modalConsultId').value;
+
+                alert('상태가 성공적으로 변경되었습니다.');
+
+                if (consultType.includes('채팅') && String(newStatus) === '2') {
+                    window.location.href = '/consult/chat/room/' + savedConsultId;
+                    return;
+                }
+
+                window.location.reload();
+            },
+            error: function() {
+                alert('상태 변경에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            }
+        });
+    }
+
+    function openRejectReasonModal() {
+        if (!expertRejectReasonModalInstance) {
+            const modalEl = document.getElementById('expertRejectReasonModal');
+            expertRejectReasonModalInstance = new bootstrap.Modal(modalEl);
+        }
+        expertRejectReasonModalInstance.show();
+    }
+
+    function acceptInstantChat() {
+        const consultId = document.getElementById('instantConsultId').value;
+
+        if (!consultId) {
+            alert('상담 정보가 없습니다.');
+            return;
+        }
+
+        $.ajax({
+            url: '/consult/chat/accept',
+            type: 'POST',
+            data: { consultId: consultId },
+            success: function(response) {
+                if (response === 'success') {
+                    updateInstantBadge(false);
+                    lastInstantConsultId = String(consultId);
+
+                    if (expertChatDecisionModalInstance) {
+                        expertChatDecisionModalInstance.hide();
+                    }
+                    if (expertRejectReasonModalInstance) {
+                        expertRejectReasonModalInstance.hide();
+                    }
+
+                    alert('즉시 상담을 수락했습니다.');
+                    window.location.href = '/consult/chat/room/' + consultId;
+                } else if (response === 'login') {
+                    alert('로그인이 필요합니다.');
+                    window.location.href = '/auth/login';
+                } else {
+                    alert('즉시 상담 수락에 실패했습니다.');
+                }
+            },
+            error: function() {
+                alert('즉시 상담 수락에 실패했습니다.');
+            }
+        });
+    }
+
+    function rejectInstantChat() {
+        const consultId = document.getElementById('instantConsultId').value;
+        const reason = document.getElementById('instantRejectReason').value.trim();
+
+        if (!consultId) {
+            alert('상담 정보가 없습니다.');
+            return;
+        }
+
+        if (!reason) {
+            alert('거절 사유를 입력해주세요.');
+            document.getElementById('instantRejectReason').focus();
+            return;
+        }
+
+        $.ajax({
+            url: '/consult/chat/reject',
+            type: 'POST',
+            data: {
+                consultId: consultId,
+                reason: reason
+            },
+            success: function(response) {
+                if (response === 'success') {
+                    updateInstantBadge(false);
+                    lastInstantConsultId = String(consultId);
+
+                    alert('즉시 상담을 거절했습니다.');
+
+                    if (expertRejectReasonModalInstance) expertRejectReasonModalInstance.hide();
+                    if (expertChatDecisionModalInstance) expertChatDecisionModalInstance.hide();
+
+                    document.getElementById('instantRejectReason').value = '';
+                    window.location.reload();
+                } else if (response === 'login') {
+                    alert('로그인이 필요합니다.');
+                    window.location.href = '/auth/login';
+                } else {
+                    alert('즉시 상담 거절에 실패했습니다.');
+                }
+            },
+            error: function() {
+                alert('즉시 상담 거절에 실패했습니다.');
+            }
+        });
+    }
+
+    function pollLatestAlert() {
+        $.ajax({
+            url: '/consult/chat/expert/latest-alert',
+            type: 'GET',
+            success: function(response) {
+                const hasNewChat = !!(response && response.newChat);
+                updateInstantBadge(hasNewChat);
+            },
+            error: function() {
+                updateInstantBadge(false);
+            }
+        });
+    }
+
+    function startInstantConsultPolling() {
+        if (instantPollingStarted) return;
+        instantPollingStarted = true;
+
+        pollLatestAlert();
+
+        setInterval(function() {
+            pollLatestAlert();
+
+            $.ajax({
+                url: '/consult/chat/poll',
+                type: 'GET',
+                success: function(response) {
+                    if (!response || !response.consultId) return;
+
+                    const consultId = String(response.consultId);
+                    updateInstantBadge(true);
+
+                    if (lastInstantConsultId === consultId) return;
+
+                    if (
+                        document.getElementById('instantConsultId').value === consultId &&
+                        expertChatDecisionModalInstance &&
+                        document.getElementById('expertChatDecisionModal').classList.contains('show')
+                    ) {
+                        return;
+                    }
+
+                    document.getElementById('instantConsultId').value = consultId;
+                    document.getElementById('instantConsultUserName').innerText = response.userName || '-';
+                    document.getElementById('instantConsultType').innerText = response.consultType || '채팅';
+                    document.getElementById('instantConsultContent').innerText = response.consultContent || '요청 내용 없음';
+
+                    if (!expertChatDecisionModalInstance) {
+                        const modalEl = document.getElementById('expertChatDecisionModal');
+                        expertChatDecisionModalInstance = new bootstrap.Modal(modalEl);
+                    }
+
+                    expertChatDecisionModalInstance.show();
+                },
+                error: function() {
+                    // polling 실패는 조용히 처리
+                }
+            });
+        }, 5000);
+    }
+
+    async function loadCallNote(consultId) {
+        try {
+            const res = await fetch(`/consult/call-note?consultId=${consultId}`);
+            if (!res.ok) return;
+
+            const data = await res.json();
+
+            const noteEl = document.getElementById('callNoteContent');
+            const fileEl = document.getElementById('callNoteFile');
+
+            if (noteEl) {
+                noteEl.value = data && data.content ? data.content : '';
+            }
+            if (fileEl) {
+                fileEl.value = '';
+            }
+        } catch (e) {
+            console.error('전화상담 기록 조회 실패', e);
+        }
+    }
+
+    function saveCallNote() {
+        const consultId = document.getElementById('modalConsultId').value;
+        const content = document.getElementById('callNoteContent').value.trim();
+        const fileInput = document.getElementById('callNoteFile');
+
+        if (!content) {
+            alert("상담 내용을 입력해주세요.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("consultId", consultId);
+        formData.append("content", content);
+
+        if (fileInput && fileInput.files.length > 0) {
+            formData.append("file", fileInput.files[0]);
+        }
+
+        fetch('/consult/call-note/save', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(result => {
+            if (result === 'success') {
+                alert("전화상담 기록 저장 완료");
+                if (fileInput) fileInput.value = '';
+            } else if (result === 'login') {
+                alert("로그인이 필요합니다.");
+                window.location.href = '/auth/login';
+            } else {
+                alert("저장 실패");
+            }
+        })
+        .catch(() => alert("서버 오류"));
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('.no-expire-check').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const targetInputId = this.getAttribute('data-target');
+                const targetInput = document.getElementById(targetInputId);
+
+                if (this.checked) {
+                    targetInput.value = '';
+                    targetInput.setAttribute('disabled', 'disabled');
+                    targetInput.style.backgroundColor = '#e9ecef';
+                } else {
+                    targetInput.removeAttribute('disabled');
+                    targetInput.style.backgroundColor = '#ffffff';
+                }
+            });
+        });
+
+        flatpickr(".flatpickr-past", {
+            locale: "ko",
+            dateFormat: "Y-m-d",
+            maxDate: "today"
+        });
+
+        flatpickr(".flatpickr-future", {
+            locale: "ko",
+            dateFormat: "Y-m-d"
+        });
+
+        const editCertModal = document.getElementById('editCertModal');
+        if (editCertModal) {
+            editCertModal.addEventListener('show.bs.modal', function(event) {
+                const btn = event.relatedTarget;
+
+                document.getElementById('e_certId').value = btn.getAttribute('data-id');
+                document.getElementById('e_certName').value = btn.getAttribute('data-name');
+                document.getElementById('e_certNo').value = btn.getAttribute('data-certno');
+                document.getElementById('e_issuer').value = btn.getAttribute('data-issuer');
+                document.getElementById('e_issuedDate').value = btn.getAttribute('data-issued');
+
+                const expiredVal = btn.getAttribute('data-expired');
+                const targetInput = document.getElementById('e_expiredDate');
+                const noExpireCheck = document.getElementById('editNoExpire');
+
+                if (!expiredVal || expiredVal === 'null' || expiredVal === '') {
+                    targetInput.value = '';
+                    targetInput.setAttribute('disabled', 'disabled');
+                    targetInput.style.backgroundColor = '#e9ecef';
+                    noExpireCheck.checked = true;
+                } else {
+                    targetInput.value = expiredVal;
+                    targetInput.removeAttribute('disabled');
+                    targetInput.style.backgroundColor = '#ffffff';
+                    noExpireCheck.checked = false;
+                }
+            });
+        }
+
+        const editEduModal = document.getElementById('editEduModal');
+        if (editEduModal) {
+            editEduModal.addEventListener('show.bs.modal', function(event) {
+                const btn = event.relatedTarget;
+                document.getElementById('e_eduId').value = btn.getAttribute('data-id');
+                document.getElementById('e_expertSchool').value = btn.getAttribute('data-school');
+                document.getElementById('e_expertMajor').value = btn.getAttribute('data-major');
+                document.getElementById('e_degreeName').value = btn.getAttribute('data-degreename');
+                document.getElementById('e_graduationYn').value = btn.getAttribute('data-grad');
+            });
+        }
+
+        const editExpModal = document.getElementById('editExpModal');
+        if (editExpModal) {
+            editExpModal.addEventListener('show.bs.modal', function(event) {
+                const btn = event.relatedTarget;
+                document.getElementById('e_expId').value = btn.getAttribute('data-id');
+                document.getElementById('e_org').value = btn.getAttribute('data-org');
+                document.getElementById('e_year').value = btn.getAttribute('data-year');
+                document.getElementById('e_month').value = btn.getAttribute('data-month');
+            });
+        }
+
+        const consultDetailModal = document.getElementById('consultDetailModal');
+        if (consultDetailModal) {
+            consultDetailModal.addEventListener('show.bs.modal', async function(event) {
+                const btn = event.relatedTarget;
+                const status = String(btn.getAttribute('data-status') || '');
+                const consultId = btn.getAttribute('data-id');
+                const consultType = btn.getAttribute('data-type') || '';
+
+                document.getElementById('modalConsultId').value = consultId;
+                document.getElementById('modalConsultDate').innerText = btn.getAttribute('data-date') || '미정';
+                document.getElementById('modalConsultType').innerText = consultType || '미정';
+                document.getElementById('modalConsultContent').innerText = btn.getAttribute('data-content') || '작성된 요청 내용이 없습니다.';
+
+                const statusSelect = document.getElementById('modalConsultStatus');
+                if (statusSelect) {
+                    statusSelect.value = status;
+                    toggleRejectReasonByStatus(status);
+                }
+
+                const rejectReason = document.getElementById('modalRejectReason');
+                if (rejectReason) {
+                    rejectReason.value = '';
+                }
+
+                const callNoteSection = document.getElementById('callNoteSection');
+                const noteEl = document.getElementById('callNoteContent');
+                const fileEl = document.getElementById('callNoteFile');
+
+                if (callNoteSection) {
+                    const isCall = consultType.includes('전화');
+                    callNoteSection.classList.toggle('d-none', !isCall);
+
+                    if (noteEl) noteEl.value = '';
+                    if (fileEl) fileEl.value = '';
+
+                    if (isCall) {
+                        await loadCallNote(consultId);
+                    }
+                }
+
+                const actionBtn = document.getElementById('consultActionBtn');
+                if (actionBtn) {
+                    actionBtn.classList.add('d-none');
+                    actionBtn.removeAttribute('href');
+
+                    const hasMessage = String(btn.getAttribute('data-has-message') || '0') === '1';
+                    const isChat = consultType.includes('채팅');
+
+                    if (isChat) {
+                        if (status === '3' || status === '4') {
+                            actionBtn.href = '/consult/chat/history/' + consultId;
+                            actionBtn.innerText = '채팅 내역 보기';
+                            actionBtn.classList.remove('d-none');
+                        } else {
+                            actionBtn.href = '/consult/chat/room/' + consultId;
+                            actionBtn.innerText = hasMessage ? '채팅 이어보기' : '채팅 시작하기';
+                            actionBtn.classList.remove('d-none');
+                        }
+                    }
+                }
+            });
+        }
+
+        const modalConsultStatus = document.getElementById('modalConsultStatus');
+        if (modalConsultStatus) {
+            modalConsultStatus.addEventListener('change', function() {
+                toggleRejectReasonByStatus(this.value);
+            });
+        }
+
+        startInstantConsultPolling();
+    });
+</script>
+
+</div>

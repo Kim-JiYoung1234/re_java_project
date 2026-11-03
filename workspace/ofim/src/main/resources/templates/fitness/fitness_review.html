@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${center != null ? center.name + ' - 전체 후기' : '전체 후기'}">전체 후기</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; }
+        .review-reply-box { border-left: 3px solid #4f46e5; background-color: #f8f9fa; border-radius: 8px; padding: 16px; margin-top: 12px; }
+        .btn-helpful { border: 1px solid #dee2e6; background-color: white; color: #4f46e5; font-size: 12px; padding: 4px 12px; font-weight: 600; transition: all 0.2s; }
+        .btn-helpful.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .progress { height: 8px; }
+        .progress-bar { background-color: #ffc107; }
+    </style>
+</head>
+<body>
+
+    <header th:replace="~{header :: header}"></header>
+
+    <div class="container my-5" th:if="${center != null}">
+        <div class="row">
+            <div class="col-lg-8 mx-auto bg-white rounded-4 shadow-sm p-4 p-md-5">
+                
+                <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                    <button class="btn btn-light rounded-circle me-3 border shadow-sm" style="width: 48px; height: 48px;" th:onclick="'location.href=\'/fitness_detail?id=' + ${center.id} + '\''">
+                        <i class="bi bi-arrow-left fs-5"></i>
+                    </button>
+                    <div>
+                        <h3 class="fw-bold mb-0" th:text="${center.name}">센터 이름</h3>
+                        <div class="text-muted mt-1" style="font-size: 14px;">이용 후기 전체보기</div>
+                    </div>
+                </div>
+
+                <div class="bg-light rounded-3 p-4 mb-5 row align-items-center">
+                    <div class="col-md-4 text-center border-md-end mb-3 mb-md-0">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <span class="display-4 fw-bold me-2 text-dark" th:text="${center.rating}">4.5</span>
+                            <span class="text-muted fs-5">/ 5.0</span>
+                        </div>
+                        <div class="text-warning fs-4 mb-1">
+                            <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                <i class="bi bi-star-fill" th:if="${center.rating >= i}"></i>
+                                <i class="bi bi-star-half" th:if="${center.rating >= (i - 0.5) and center.rating < i}"></i>
+                                <i class="bi bi-star" th:if="${center.rating < (i - 0.5)}"></i>
+                            </th:block>
+                        </div>
+                        <div class="text-muted small" th:text="'총 ' + ${center.reviewCount} + '개의 후기'">총 37개의 후기</div>
+                    </div>
+                    <div class="col-md-8 px-4">
+                        <div class="d-flex align-items-center mb-2"><span class="text-muted small" style="width: 40px;">5점</span><div class="progress flex-grow-1 mx-2"><div class="progress-bar" style="width: 90%"></div></div><span class="text-muted small" style="width: 40px; text-align: right;">90%</span></div>
+                        <div class="d-flex align-items-center mb-2"><span class="text-muted small" style="width: 40px;">4점</span><div class="progress flex-grow-1 mx-2"><div class="progress-bar" style="width: 8%"></div></div><span class="text-muted small" style="width: 40px; text-align: right;">8%</span></div>
+                        <div class="d-flex align-items-center mb-2"><span class="text-muted small" style="width: 40px;">3점</span><div class="progress flex-grow-1 mx-2"><div class="progress-bar" style="width: 2%"></div></div><span class="text-muted small" style="width: 40px; text-align: right;">2%</span></div>
+                    </div>
+                </div>
+
+                <div id="fullReviewContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 푸터 호출 경로 수정: header -> footer -->
+    <footer th:replace="~{footer :: footer}"></footer>
+
+    <script th:if="${center != null}" th:inline="javascript">
+        const reviewDataPool = [
+            { name: "득근머신", text: "시설이 정말 깔끔하고 관리가 잘 되어 있습니다. 기구 간격도 넓어서 동선 꼬일 일 없고 너무 쾌적해요! 헬창들에게 성지입니다.", reply: "회원님 안녕하세요! 만족스럽게 이용 중이시라니 정말 다행입니다. 앞으로도 쾌적한 환경 유지하도록 최선을 다하겠습니다. 오늘도 득근하세요!" },
+            { name: "헬린이성장기", text: "처음 등록했는데 트레이너 선생님이 기구 사용법도 친절하게 알려주셔서 적응하기 쉬웠어요. 샤워실도 깨끗합니다.", reply: "안녕하세요! 처음 운동 시작하시는 분들도 부담 없이 이용하실 수 있도록 항상 노력하고 있습니다. 모르는 기구 있으시면 언제든 편하게 인포에 물어보세요!" },
+            { name: "익명의 회원", text: "운동하기 좋은 분위기입니다. 다만 저녁 피크타임에는 사람이 좀 많아서 인기 렉이나 기구는 살짝 대기해야 할 때가 있네요.", reply: "솔직한 리뷰 감사합니다! 피크타임 혼잡도를 줄이기 위해 하반기에 기구 추가 도입을 검토 중입니다. 조금 더 편안하게 이용하실 수 있도록 개선해 나가겠습니다." },
+            { name: "다이어터", text: "집 주변 센터 중 제일 시설이 좋은 것 같아요. 환기도 잘 돼서 땀 냄새도 안 나고 쾌적해서 너무 만족하며 다니고 있습니다.", reply: "좋은 평가 감사드립니다! 저희 센터는 대형 공기청정 및 환기 시스템을 가동하여 상쾌한 환경을 유지하고 있습니다. 목표하신 다이어트 성공을 응원합니다!" },
+            { name: "운동하는직장인", text: "야근하고 늦게 가도 눈치 안 보이고 편하게 운동할 수 있어서 좋습니다. 가격 대비 시설이 훌륭해요.", reply: "회원님 감사합니다! 직장인 분들도 편하게 이용하실 수 있도록 언제나 열려있습니다. 피곤하신 와중에도 운동 나오시는 열정 정말 멋지십니다." }
+        ];
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var centerId = /*[[${center.id}]]*/ 1;
+            var centerName = /*[[${center.name}]]*/ '';
+            var container = document.getElementById('fullReviewContainer');
+
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                let idx = (centerId * 3 + i * 7) % reviewDataPool.length;
+                let review = reviewDataPool[idx];
+                let daysAgo = (centerId * 2 + i * 14) % 90 + 1; 
+                let d = new Date(); d.setDate(d.getDate() - daysAgo);
+                let dateStr = d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+                let helpfulCount = (centerId + i * 5) % 15 + 1;
+
+                html += `
+                <div class="py-4 border-bottom">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 48px; height: 48px; font-weight: 700; font-size: 18px;">
+                            ${review.name.substring(0, 1)}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark" style="font-size: 15px;">${review.name}</div>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <span class="text-muted" style="font-size: 12px;">오핌결제</span>
+                                <span class="text-muted" style="font-size: 10px;">|</span>
+                                <span class="text-muted" style="font-size: 12px;">${dateStr}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-2 text-warning fs-6"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                    <p class="mb-3 text-dark" style="font-size: 14px; line-height: 1.6;">${review.text}</p>
+                    <div class="review-reply-box">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-dark" style="font-size: 14px;">${centerName}</span>
+                            <span class="text-muted" style="font-size: 12px;">${dateStr}</span>
+                        </div>
+                        <p class="mb-0 text-secondary mt-2" style="font-size: 14px; line-height: 1.6;">${review.reply}</p>
+                    </div>
+                    <div class="mt-3 d-flex align-items-center gap-2">
+                        <button class="btn btn-helpful rounded-1" onclick="this.classList.toggle('active')">도움돼요</button>
+                        <span class="text-muted" style="font-size: 12px;">${helpfulCount}명에게 도움이 됐어요.</span>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        });
+    </script>
+</body>
+</html>

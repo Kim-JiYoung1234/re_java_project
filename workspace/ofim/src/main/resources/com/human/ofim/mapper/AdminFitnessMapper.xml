@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.human.ofim.mapper.AdminFitnessMapper">
+
+    <resultMap id="PartnerResultMap" type="com.human.ofim.dto.PartnerUserDto">
+        <id property="memberId" column="member_id" />
+        <result property="loginId" column="login_id" />
+        <result property="createdDate" column="created_date" />
+        
+        <result property="businessNo" column="business_no" />
+        <result property="ceoName" column="ceo_name" />
+        <result property="openDate" column="open_date" />
+        <result property="companyName" column="company_name" />
+        <result property="mailOrderNo" column="mail_order_no" />
+        <result property="businessDocsPath" column="business_docs_path" />
+        <result property="mailOrderDocsPath" column="mail_order_docs_path" />
+        <result property="approveStatus" column="approve_status" />
+        <result property="approveDate" column="approve_date" />
+    </resultMap>
+
+    <select id="selectAllPartnerList" resultMap="PartnerResultMap">
+        SELECT p.member_id, p.business_no, p.ceo_name, p.open_date, 
+               p.approve_status, p.approve_date, p.company_name, 
+               p.mail_order_no, p.business_docs_path, p.mail_order_docs_path, 
+               u.login_id, u.created_date
+        FROM partner_user p
+        LEFT JOIN user u ON p.member_id = u.member_id
+        ORDER BY u.created_date DESC
+    </select>
+
+    <update id="updatePartnerApproveStatus">
+        UPDATE partner_user
+        SET approve_status = #{approveStatus},
+            approve_date = NOW()
+        WHERE member_id = #{memberId}
+    </update>
+
+    <resultMap id="CenterResultMap" type="com.human.ofim.dto.FitnessCenterDto">
+        <id property="centerNo" column="center_no"/>
+        <result property="memberId" column="member_id"/>
+        <result property="type" column="type"/>
+        <result property="centerName" column="center_name"/>
+        <result property="centerPhone" column="center_phone"/>
+        <result property="facilityAddr" column="facility_addr"/>
+        <result property="reviewScore" column="review_score"/>
+        <result property="dayCost" column="day_cost"/>
+        <result property="is24h" column="is_24h"/>
+        <result property="approveStatus" column="approve_status"/>
+        <result property="partnerName" column="partner_name"/>
+        <result property="loginId" column="login_id"/>
+    </resultMap>
+
+    <select id="selectAdminCenterList" resultMap="CenterResultMap">
+        SELECT c.*, p.company_name as partner_name, u.login_id
+        FROM fitness_center c
+        LEFT JOIN partner_user p ON c.member_id = p.member_id
+        LEFT JOIN user u ON p.member_id = u.member_id
+        <where>
+            <if test="memberId != null"> AND c.member_id = #{memberId} </if>
+            <if test="keyword != null and keyword != ''">
+                AND (c.center_name LIKE CONCAT('%', #{keyword}, '%') 
+                  OR p.company_name LIKE CONCAT('%', #{keyword}, '%')
+                  OR c.facility_addr LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY c.center_no DESC
+    </select>
+
+    <update id="updateCenterApproveStatus">
+        UPDATE fitness_center
+        SET approve_status = #{approveStatus}
+        WHERE center_no = #{centerNo}
+    </update>
+
+    <select id="selectCenterDetail" resultMap="CenterResultMap">
+        SELECT c.*, p.company_name as partner_name 
+        FROM fitness_center c 
+        LEFT JOIN partner_user p ON c.member_id = p.member_id 
+        WHERE c.center_no = #{centerNo}
+    </select>
+
+    <delete id="deleteCenter">
+        DELETE FROM fitness_center WHERE center_no = #{centerNo}
+    </delete>
+</mapper>

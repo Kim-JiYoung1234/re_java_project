@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.human.ofim.mapper.FitnessMapper">
+
+    <insert id="insertFitnessCenter" parameterType="com.human.ofim.dto.FitnessCenterDto" useGeneratedKeys="true" keyProperty="centerNo">
+        INSERT INTO fitness_center (
+            member_id, type, center_name, center_phone, oper_time, facility_addr, facility_addr_detail, 
+            facility_amenities, homepage_url, description, day_pass_yn, month_cost, day_cost, sns_link1, 
+            sns_link2, addon, lat, `long`, approve_status
+        ) VALUES (
+            #{memberId}, #{type}, #{centerName}, #{centerPhone}, #{operTime}, #{facilityAddr}, #{facilityAddrDetail}, 
+            #{facilityAmenities}, #{homepageUrl}, #{description}, #{dayPassYn}, #{monthCost}, #{dayCost}, #{sns_link1}, 
+            #{snsLink2}, #{addon}, #{lat}, #{lon}, 0
+        )
+    </insert>
+
+    <insert id="insertWorkingHours" parameterType="com.human.ofim.dto.FitnessCenterDto">
+        INSERT INTO fitness_center_working_hours (
+            center_no, weekday_open, weekday_close, sat_open, sat_close, sun_open, sun_close, holiday_open, 
+            holiday_close, break_start, break_end, regular_holiday, is_24h, pt_avail_start, pt_avail_end, 
+            gx_schedule_link, holiday_notice
+        ) VALUES (
+            #{centerNo}, #{weekdayOpen}, #{weekdayClose}, #{satOpen}, #{satClose}, #{sunOpen}, #{sunClose}, 
+            #{holidayOpen}, #{holidayClose}, #{breakStart}, #{breakEnd}, #{regularHoliday}, #{is24h}, 
+            #{ptAvailStart}, #{ptAvailEnd}, #{gxScheduleLink}, #{holidayNotice}
+        )
+    </insert>
+
+    <insert id="insertCenterTickets" parameterType="java.util.List">
+        INSERT INTO center_ticket (center_no, ticket_name, ticket_price, discount_price, period_months)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.centerNo}, #{item.ticketName}, #{item.ticketPrice}, #{item.discountPrice}, #{item.periodMonths})
+        </foreach>
+    </insert>
+
+    <!-- 🌟 [결제 시스템 2단계] 특정 시설에 속한 회원권들 조회 -->
+    <select id="selectTicketsByCenterNo" resultType="com.human.ofim.dto.CenterTicketDto">
+        SELECT ticket_no AS ticketNo, center_no AS centerNo, ticket_name AS ticketName,
+               ticket_price AS ticketPrice, discount_price AS discountPrice, period_months AS periodMonths
+        FROM center_ticket
+        WHERE center_no = #{centerNo}
+        ORDER BY ticket_price ASC
+    </select>
+
+    <select id="findAll" resultType="com.human.ofim.dto.FitnessCenterDto">
+        SELECT * FROM (
+            SELECT c.center_no as centerNo, c.member_id as memberId, c.type, c.center_name as centerName,
+                   c.center_phone as centerPhone, c.oper_time as operTime, c.facility_addr as facilityAddr, 
+                   c.facility_addr_detail as facilityAddrDetail, c.facility_amenities as facilityAmenities, 
+                   c.homepage_url as homepageUrl, c.description, c.review_score as reviewScore, 
+                   c.day_pass_yn as dayPassYn, c.month_cost as monthCost, c.day_cost as dayCost, 
+                   c.sns_link1 as snsLink1, c.sns_link2 as snsLink2, c.addon, c.lat, c.`long` as lon,
+                   (SELECT COUNT(*) FROM review WHERE center_no = c.center_no) as reviewCount,
+                   (SELECT COUNT(*) FROM fitness_like WHERE center_no = c.center_no) as recommendCount,
+                   (CASE WHEN EXISTS (
+                        SELECT 1 FROM advertisement a
+                        WHERE a.center_no = c.center_no
+                          AND a.ad_status = 1
+                          AND NOW() BETWEEN a.start_date AND a.end_date
+                   ) THEN 1 ELSE 0 END) as isAd,
+                   <choose>
+                       <when test="keyword != null and keyword != ''">
+                           (IFNULL((SELECT 100 FROM advertisement a WHERE a.center_no = c.center_no AND a.ad_status = 1 AND a.ad_type = '상위노출형' AND NOW() BETWEEN a.start_date AND a.end_date AND REPLACE(IFNULL(a.target_keyword, ''), ' ', '') LIKE CONCAT('%', REPLACE(#{keyword}, ' ', ''), '%') LIMIT 1), 0)
+                           + (CASE WHEN REPLACE(c.facility_addr, ' ', '') LIKE CONCAT('%', REPLACE(#{keyword}, ' ', ''), '%') THEN 50 ELSE 0 END)
+                           + (CASE WHEN REPLACE(c.center_name, ' ', '') LIKE CONCAT('%', REPLACE(#{keyword}, ' ', ''), '%') THEN 10 ELSE 0 END)) as matchScore
+                       </when>
+                       <otherwise>
+                           IFNULL((SELECT 100 FROM advertisement a WHERE a.center_no = c.center_no AND a.ad_status = 1 AND a.ad_type = '상위노출형' AND NOW() BETWEEN a.start_date AND a.end_date LIMIT 1), 0) as matchScore
+                       </otherwise>
+                   </choose>
+            FROM fitness_center c
+            LEFT JOIN fitness_center_working_hours w ON c.center_no = w.center_no
+            WHERE c.approve_status = 1 
+            <if test="type != null and type != ''"> AND c.type = #{type} </if>
+            <if test="dayPassYn != null and dayPassYn == true"> AND c.day_pass_yn = 1 </if>
+            <if test="is24h != null and is24h == true"> AND w.is_24h = 1 </if>
+        ) AS ranking_table
+        <where><if test="keyword != null and keyword != ''"> matchScore > 0 </if></where>
+        ORDER BY matchScore DESC, centerNo DESC
+    </select>
+
+    <select id="findById" resultType="com.human.ofim.dto.FitnessCenterDto">
+        SELECT c.*, c.`long` as lon, w.*, (SELECT COUNT(*) FROM review WHERE center_no = c.center_no) as reviewCount
+        FROM fitness_center c LEFT JOIN fitness_center_working_hours w ON c.center_no = w.center_no WHERE c.center_no = #{centerNo}
+    </select>
+
+    <select id="checkRecommend" resultType="int"> SELECT COUNT(*) FROM fitness_like WHERE center_no = #{centerNo} AND member_id = #{memberId} </select>
+    <insert id="insertRecommend"> INSERT INTO fitness_like (center_no, member_id, recommend_date) VALUES (#{centerNo}, #{memberId}, NOW()) </insert>
+    <delete id="deleteRecommend"> DELETE FROM fitness_like WHERE center_no = #{centerNo} AND member_id = #{memberId} </delete>
+    <select id="getRecommendCount" resultType="int"> SELECT COUNT(*) FROM fitness_like WHERE center_no = #{centerNo} </select>
+
+    <select id="checkBookmark" resultType="int"> SELECT COUNT(*) FROM fitness_bookmark WHERE center_no = #{centerNo} AND member_id = #{memberId} </select>
+    <insert id="insertBookmark"> INSERT INTO fitness_bookmark (center_no, member_id, regi_date) VALUES (#{centerNo}, #{memberId}, CURDATE()) </insert>
+    <delete id="deleteBookmark"> DELETE FROM fitness_bookmark WHERE center_no = #{centerNo} AND member_id = #{memberId} </delete>
+
+    <insert id="insertReview"> INSERT INTO review (center_no, member_id, content, review_score, created_date) VALUES (#{centerNo}, #{memberId}, #{content}, #{rating}, NOW()) </insert>
+    <select id="selectBestReviews" resultType="com.human.ofim.dto.ReviewDto">
+        SELECT r.*, u.nickname, (SELECT COUNT(*) FROM review_like WHERE review_id = r.review_id) as recommendCount
+        FROM review r JOIN user u ON r.member_id = u.member_id WHERE r.center_no = #{centerNo} ORDER BY recommendCount DESC, r.created_date DESC LIMIT 2
+    </select>
+    <update id="updateCenterReviewStats"> UPDATE fitness_center SET review_score = (SELECT IFNULL(ROUND(AVG(review_score), 1), 0) FROM review WHERE center_no = #{centerNo}) WHERE center_no = #{centerNo} </update>
+
+    <select id="selectPremiumBanners" resultType="com.human.ofim.dto.FitnessCenterDto">
+        SELECT c.*, a.ad_title as adTitle, a.ad_content as adContent
+        FROM advertisement a JOIN fitness_center c ON a.center_no = c.center_no 
+        WHERE a.ad_type = '배너형' AND a.ad_status = 1 AND NOW() BETWEEN a.start_date AND a.end_date 
+        ORDER BY RAND() LIMIT 3
+    </select>
+    
+    <select id="selectMyReviewsPaging" resultType="com.human.ofim.dto.ReviewDto">
+        SELECT r.review_id AS reviewId, r.center_no AS centerNo, r.member_id AS memberId, r.content AS content, r.review_score AS rating, r.created_date AS createdDate, c.center_name AS centerName 
+        FROM review r LEFT JOIN fitness_center c ON r.center_no = c.center_no WHERE r.member_id = #{memberId}
+        <if test="keyword != null and keyword != ''"> AND r.content LIKE CONCAT('%', #{keyword}, '%') </if>
+        ORDER BY r.created_date DESC LIMIT #{size} OFFSET #{startRow}
+    </select>
+	
+    <select id="countMyReviewsPaging" resultType="int">
+        SELECT COUNT(*) FROM review r WHERE r.member_id = #{memberId}
+        <!-- 🌟 여기가 문제였습니다! </font> 를 </if> 로 수정 완료 -->
+        <if test="keyword != null and keyword != ''"> AND r.content LIKE CONCAT('%', #{keyword}, '%') </if>
+    </select>
+	
+    <delete id="deleteReview"> 
+        DELETE FROM review WHERE review_id = #{reviewId} AND member_id = #{memberId} 
+    </delete>
+
+    <select id="selectMyBookmarkedCenters" resultType="map">
+        SELECT b.center_no AS centerNo, c.center_name AS centerName, c.facility_addr AS address, c.review_score AS rating,  b.regi_date AS bookmarkDate
+        FROM fitness_bookmark b JOIN fitness_center c ON b.center_no = c.center_no
+        WHERE b.member_id = #{memberId} ORDER BY b.regi_date DESC LIMIT #{size} OFFSET #{startRow}
+    </select>
+	
+    <select id="countMyBookmarkedCenters" resultType="int">
+        SELECT COUNT(*) FROM fitness_bookmark b JOIN fitness_center c ON b.center_no = c.center_no WHERE b.member_id = #{memberId}
+    </select>
+
+    <select id="selectReviewsByPartnerPaging" resultType="com.human.ofim.dto.ReviewDto">
+        SELECT r.review_id AS reviewId, r.center_no AS centerNo, r.member_id AS memberId, r.content AS content, 
+               r.review_score AS rating, r.created_date AS createdDate, r.reply_content AS replyContent, r.reply_date AS replyDate, 
+               c.center_name AS centerName, IFNULL(u.nickname, '알수없음') AS nickname
+        FROM review r JOIN fitness_center c ON r.center_no = c.center_no LEFT JOIN user u ON r.member_id = u.member_id
+        WHERE c.member_id = #{partnerId} ORDER BY r.created_date DESC LIMIT #{size} OFFSET #{startRow}
+    </select>
+
+    <select id="countReviewsByPartner" resultType="int">
+        SELECT COUNT(*) FROM review r JOIN fitness_center c ON r.center_no = c.center_no WHERE c.member_id = #{partnerId}
+    </select>
+
+    <update id="updateReviewReply">
+        UPDATE review SET reply_content = #{replyContent}, reply_date = NOW() WHERE review_id = #{reviewId}
+    </update>
+
+    <select id="selectAllReviewsByCenterNo" resultType="com.human.ofim.dto.ReviewDto">
+        SELECT r.review_id AS reviewId, r.center_no AS centerNo, r.member_id AS memberId,
+               r.content AS content, r.review_score AS rating, r.created_date AS createdDate,
+               r.reply_content AS replyContent, r.reply_date AS replyDate,
+               IFNULL(u.nickname, '알수없음') AS nickname
+        FROM review r
+        LEFT JOIN user u ON r.member_id = u.member_id
+        WHERE r.center_no = #{centerNo}
+        ORDER BY r.created_date DESC
+    </select>
+	
+</mapper>

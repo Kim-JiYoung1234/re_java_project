@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{admin/layout :: layout(~{::content})}">
+
+<div th:fragment="content">
+
+	<!-- Summary Cards -->
+	<div class="row g-3">
+		<div class="col-md-4 col-xl-2">
+			<div class="card card-soft p-3">
+				<div class="text-secondary small">전체 회원</div>
+				<div class="fs-3 fw-bold" th:text="${dashboard.totalUserCount}">0</div>
+				<div class="small muted mt-1">
+					오늘 가입 <span class="fw-semibold text-dark"
+						th:text="${dashboard.todayJoinCount}">0</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-4 col-xl-2">
+			<div class="card card-soft p-3">
+				<div class="text-secondary small">일반 회원</div>
+				<div class="fs-3 fw-bold" th:text="${dashboard.totalPersonalCount}">0</div>
+			</div>
+		</div>
+
+		<div class="col-md-4 col-xl-2">
+			<div class="card card-soft p-3">
+				<div class="text-secondary small">파트너</div>
+				<div class="fs-3 fw-bold" th:text="${dashboard.totalPartnerCount}">0</div>
+			</div>
+		</div>
+
+		<div class="col-md-4 col-xl-2">
+			<div class="card card-soft p-3">
+				<div class="text-secondary small">전문가</div>
+				<div class="fs-3 fw-bold" th:text="${dashboard.totalExpertCount}">0</div>
+			</div>
+		</div>
+
+		<div class="col-md-4 col-xl-2">
+			<div class="card card-soft p-3">
+				<div class="text-secondary small">관리자</div>
+				<div class="fs-3 fw-bold" th:text="${dashboard.totalAdminCount}">0</div>
+			</div>
+		</div>
+
+		<div class="col-md-4 col-xl-2">
+			<div class="card card-soft p-3">
+				<div class="text-secondary small">매출(더미)</div>
+				<div class="fs-3 fw-bold">0</div>
+				<div class="small muted mt-1">오늘은 결제테이블 미연결</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ROW 1 -->
+	<div class="row g-3 mt-3 align-items-stretch">
+
+		<!-- 6개월 추이 -->
+		<div class="col-lg-8">
+			<div class="card card-soft h-100">
+				<div class="card-body">
+
+					<div
+						class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+						<div>
+							<div class="fw-semibold">최근 6개월 추이</div>
+							<div class="small text-secondary">지표/범위를 선택하면 그래프가 갱신됩니다.</div>
+						</div>
+
+						<div class="d-flex align-items-center gap-2 flex-nowrap"
+							style="white-space: nowrap;">
+							<select id="metricSelect" class="form-select form-select-sm"
+								style="width: 150px;">
+								<option value="SIGNUP" selected>월별 가입자</option>
+								<option value="AD_REVENUE">광고매출(더미)</option>
+								<option value="PAID_REVENUE">유료매출(더미)</option>
+							</select> <select id="scopeSelect" class="form-select form-select-sm"
+								style="width: 110px;">
+								<option value="ALL" selected>전체</option>
+								<option value="PERSONAL">일반</option>
+								<option value="PARTNER">파트너</option>
+								<option value="EXPERT">전문가</option>
+								<option value="ADMIN">관리자</option>
+							</select>
+
+							<button id="refreshBtn" class="btn btn-sm btn-outline-secondary"
+								type="button">
+								<i class="bi bi-arrow-clockwise me-1"></i> 새로고침
+							</button>
+						</div>
+					</div>
+
+					<canvas id="dashChart" height="140"></canvas>
+
+					<div class="small text-secondary mt-2">* 광고/유료매출은 더미(0)로
+						표시됩니다.</div>
+
+				</div>
+			</div>
+		</div>
+
+		<!-- 고객문의 요약 -->
+		<div class="col-lg-4">
+			<div class="card card-soft h-100">
+				<div class="card-body">
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<div>
+							<div class="fw-semibold">고객문의</div>
+							<div class="small text-secondary">게시판 문의 현황</div>
+						</div>
+						<a class="btn btn-sm btn-outline-secondary"
+							th:href="@{/community/main(categoryId=5)}">전체보기</a>
+					</div>
+
+					<div class="row g-2">
+						<div class="col-12">
+							<div
+								class="p-3 rounded-3 bg-light d-flex justify-content-between align-items-center">
+								<div class="text-secondary small">총 문의</div>
+								<div class="fs-5 fw-bold"
+									th:text="${dashboard.inquiryTotalCount}">0</div>
+							</div>
+						</div>
+
+						<div class="col-12">
+							<div
+								class="p-3 rounded-3 bg-light d-flex justify-content-between align-items-center">
+								<div class="text-secondary small">신규(오늘)</div>
+								<div class="fs-5 fw-bold" th:text="${dashboard.inquiryNewCount}">0</div>
+							</div>
+						</div>
+
+						<div class="col-12">
+							<div
+								class="p-3 rounded-3 bg-light d-flex justify-content-between align-items-center">
+								<div class="text-secondary small">미확인(미답변)</div>
+								<div class="fs-5 fw-bold"
+									th:text="${dashboard.inquiryUnreadCount}">0</div>
+							</div>
+						</div>
+
+						<div class="col-12">
+							<div
+								class="p-3 rounded-3 bg-light d-flex justify-content-between align-items-center">
+								<div class="text-secondary small">진행중(답변완료)</div>
+								<div class="fs-5 fw-bold"
+									th:text="${dashboard.inquiryInProgressCount}">0</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="small text-secondary mt-2">* 댓글 존재 여부로 상태를 계산합니다.
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- ROW 2 -->
+	<div class="row g-3 mt-3 align-items-stretch">
+
+		<!-- 방문자 + 게시판 통계 -->
+		<div class="col-lg-8">
+			<div class="card card-soft h-100">
+				<div class="card-body">
+
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<div>
+							<div class="fw-semibold">일일 방문자 추이</div>
+							<div class="small text-secondary">최근 7일 방문자</div>
+						</div>
+						<button class="btn btn-sm btn-outline-secondary" type="button"
+							id="visitorRefreshBtn">
+							<i class="bi bi-arrow-clockwise me-1"></i> 새로고침
+						</button>
+					</div>
+
+					<canvas id="visitorChart" height="140"></canvas>
+
+					<hr class="my-3" />
+
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<div>
+							<div class="fw-semibold">게시판별 글 수</div>
+							<div class="small text-secondary">총글수(오늘 신규글수)</div>
+						</div>
+
+						<div class="text-end">
+							<div class="small text-secondary">총 게시글</div>
+							<div class="fw-bold fs-5" th:text="${dashboard.totalPostCount}">
+								0</div>
+						</div>
+					</div>
+
+					<div class="row g-3 align-items-center">
+						<div class="col-md-5">
+							<canvas id="boardPieChart" height="160"></canvas>
+						</div>
+
+						<div class="col-md-7">
+							<div class="vstack gap-2">
+								<div class="d-flex justify-content-between">
+									<div class="small text-secondary">자유게시판</div>
+									<div class="fw-semibold">
+										<span th:text="${dashboard.freeCount}">0</span> <span
+											class="text-muted">(<span
+											th:text="${dashboard.freeTodayCount}">0</span>)
+										</span>
+									</div>
+								</div>
+
+								<div class="d-flex justify-content-between">
+									<div class="small text-secondary">건강Q&amp;A</div>
+									<div class="fw-semibold">
+										<span th:text="${dashboard.qnaCount}">0</span> <span
+											class="text-muted">(<span
+											th:text="${dashboard.qnaTodayCount}">0</span>)
+										</span>
+									</div>
+								</div>
+
+								<div class="d-flex justify-content-between">
+									<div class="small text-secondary">카드뉴스</div>
+									<div class="fw-semibold">
+										<span th:text="${dashboard.cardnewsCount}">0</span> <span
+											class="text-muted">(<span
+											th:text="${dashboard.cardnewsTodayCount}">0</span>)
+										</span>
+									</div>
+								</div>
+
+								<div class="d-flex justify-content-between">
+									<div class="small text-secondary">고객문의</div>
+									<div class="fw-semibold">
+										<span th:text="${dashboard.inquiryPostCount}">0</span> <span
+											class="text-muted">(<span
+											th:text="${dashboard.inquiryTodayPostCount}">0</span>)
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<div class="small text-secondary mt-2">* 대분류 기준 통계</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+		<!-- 방문자 요약 + 챌린지 요약 -->
+		<div class="col-lg-4">
+			<div class="card card-soft h-100">
+				<div class="card-body">
+
+					<div class="fw-semibold mb-2">방문자 요약</div>
+
+					<div class="row g-2 mb-3">
+						<div class="col-6">
+							<div class="p-3 rounded-3 bg-light">
+								<div class="text-secondary small">오늘 방문</div>
+								<div class="fs-5 fw-bold"
+									th:text="${visitorSummary.todayVisitors != null ? visitorSummary.todayVisitors : 0}">
+									0</div>
+							</div>
+						</div>
+
+						<div class="col-6">
+							<div class="p-3 rounded-3 bg-light">
+								<div class="text-secondary small">주간 평균</div>
+								<div class="fs-5 fw-bold"
+									th:text="${visitorSummary.weekAvgVisitors != null ? visitorSummary.weekAvgVisitors : 0}">
+									0</div>
+							</div>
+						</div>
+					</div>
+
+					<hr class="my-3" />
+
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<div class="fw-semibold">챌린지 요약</div>
+						<a class="small text-decoration-none"
+							th:href="@{/community/main(categoryId=6)}">더보기</a>
+					</div>
+
+					<div class="row g-2">
+						<div class="col-6">
+							<div class="p-3 rounded-3 bg-light">
+								<div class="text-secondary small">전체 챌린지</div>
+								<div class="fs-5 fw-bold"
+									th:text="${challengeSummary != null ? challengeSummary.totalChallengeCount : 0}">0</div>
+							</div>
+						</div>
+						<div class="col-6">
+							<div class="p-3 rounded-3 bg-light">
+								<div class="text-secondary small">진행중</div>
+								<div class="fs-5 fw-bold"
+									th:text="${challengeSummary != null ? challengeSummary.activeChallengeCount : 0}">0</div>
+							</div>
+						</div>
+						<div class="col-6">
+							<div class="p-3 rounded-3 bg-light">
+								<div class="text-secondary small">종료</div>
+								<div class="fs-5 fw-bold"
+									th:text="${challengeSummary != null ? challengeSummary.endedChallengeCount : 0}">0</div>
+							</div>
+						</div>
+						<div class="col-6">
+							<div class="p-3 rounded-3 bg-light">
+								<div class="text-secondary small">총 참여자</div>
+								<div class="fs-5 fw-bold"
+									th:text="${challengeSummary != null ? challengeSummary.totalParticipantCount : 0}">0</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="small text-secondary mt-2">* 챌린지 데이터 미연결 시 0으로 표시
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- ROW 3 -->
+	<div class="row g-3 mt-3">
+		<div class="col-lg-6">
+			<div class="card card-soft h-100">
+				<div class="card-body">
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<div class="fw-semibold">인기 콘텐츠</div>
+						<a class="small text-decoration-none"
+							th:href="@{/admin/board/list}">더보기</a>
+					</div>
+
+					<div
+						th:if="${dashboard.popularContents != null and !#lists.isEmpty(dashboard.popularContents)}">
+						<div
+							class="d-flex justify-content-between align-items-start py-2 border-bottom"
+							th:each="c : ${dashboard.popularContents}">
+
+							<div class="flex-grow-1 pe-3" style="min-width: 0;">
+								<a class="text-decoration-none text-dark d-block text-truncate"
+									th:text="${c.title}"
+									th:href="@{/community/detail/{id}(id=${c.postId})}"
+									target="_blank"> 제목 </a>
+								<div class="small text-secondary mt-1">
+									<span th:text="${c.categoryName}">카테고리</span>
+								</div>
+							</div>
+
+							<div class="small text-secondary text-end flex-shrink-0"
+								style="width: 140px;">
+								조회 <span th:text="${c.viewCount}">0</span> <span class="mx-2">|</span>
+								추천 <span th:text="${c.likeCount}">0</span>
+							</div>
+
+						</div>
+					</div>
+
+					<div
+						th:if="${dashboard.popularContents == null or #lists.isEmpty(dashboard.popularContents)}"
+						class="small text-secondary">표시할 데이터가 없습니다.</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-lg-6">
+			<div class="card card-soft h-100">
+				<div class="card-body">
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<div class="fw-semibold">새로 올라온 글</div>
+						<a class="small text-decoration-none"
+							th:href="@{/admin/board/list}">더보기</a>
+					</div>
+
+					<div
+						th:if="${dashboard.latestPosts != null and !#lists.isEmpty(dashboard.latestPosts)}">
+						<div class="py-2 border-bottom"
+							th:each="p : ${dashboard.latestPosts}">
+							<a class="text-decoration-none text-dark d-block text-truncate"
+								th:text="${p.title}"
+								th:href="@{/community/detail/{id}(id=${p.postId})}"
+								target="_blank"> </a>
+
+							<div
+								class="small text-secondary d-flex justify-content-between mt-1">
+								<span> <span th:text="${p.categoryName}">카테고리</span>
+								</span> <span th:text="${p.createdDate}">2026-03-05 11:30</span>
+							</div>
+						</div>
+					</div>
+					<div
+						th:if="${dashboard.latestPosts == null or #lists.isEmpty(dashboard.latestPosts)}"
+						class="small text-secondary">표시할 데이터가 없습니다.</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+	<script th:inline="javascript">
+    let chart;
+    let visitorChart;
+    let boardPieChart;
+
+    function setScopeEnabled(metric) {
+      const scope = document.getElementById('scopeSelect');
+      if (!scope) return;
+      scope.disabled = (metric !== 'SIGNUP');
+    }
+
+    async function loadChart() {
+      const metricSelect = document.getElementById('metricSelect');
+      const scopeSelect  = document.getElementById('scopeSelect');
+      const canvas = document.getElementById('dashChart');
+      if (!metricSelect || !scopeSelect || !canvas) return;
+
+      const metric = metricSelect.value;
+      const scope  = scopeSelect.value;
+
+      setScopeEnabled(metric);
+
+      const res = await fetch(`/admin/api/dashboard/chart?metric=${metric}&scope=${scope}`);
+      const data = await res.json();
+
+      const ctx = canvas.getContext('2d');
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: (metric === 'SIGNUP') ? '가입자 수' : '매출',
+            data: data.values
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: true } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function loadVisitorChart() {
+      const canvas = document.getElementById('visitorChart');
+      if (!canvas) return;
+
+      const visitorLabels = /*[[${dashboard.visitorLabels}]]*/ [];
+      const visitorValues = /*[[${dashboard.visitorValues}]]*/ [];
+
+      const ctx = canvas.getContext('2d');
+      if (visitorChart) visitorChart.destroy();
+
+      visitorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: visitorLabels,
+          datasets: [{
+            label: '방문자 수',
+            data: visitorValues,
+            fill: false,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: true } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function loadBoardPieChart() {
+      const canvas = document.getElementById('boardPieChart');
+      if (!canvas) return;
+
+      const labels = ['자유게시판', '건강Q&A', '카드뉴스', '고객문의'];
+      const values = [
+        /*[[${dashboard.freeCount}]]*/ 0,
+        /*[[${dashboard.qnaCount}]]*/ 0,
+        /*[[${dashboard.cardnewsCount}]]*/ 0,
+        /*[[${dashboard.inquiryPostCount}]]*/ 0
+      ];
+
+      const ctx = canvas.getContext('2d');
+      if (boardPieChart) boardPieChart.destroy();
+
+      boardPieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          cutout: '65%'
+        }
+      });
+    }
+
+    document.getElementById('metricSelect')?.addEventListener('change', loadChart);
+    document.getElementById('scopeSelect')?.addEventListener('change', loadChart);
+    document.getElementById('refreshBtn')?.addEventListener('click', loadChart);
+    document.getElementById('visitorRefreshBtn')?.addEventListener('click', loadVisitorChart);
+
+    loadChart();
+    loadVisitorChart();
+    loadBoardPieChart();
+  </script>
+		<div th:replace="~{admin/fragments/security_alert :: footer}"></div>
+</div>
+</html>

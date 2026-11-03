@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.AdminExpertMapper">
+
+    <!-- =========================================================
+         expert-review 공통 FROM / WHERE
+    ========================================================== -->
+    <sql id="expertReviewFromSql">
+        FROM expert_user eu
+        JOIN user u
+          ON u.member_id = eu.member_id
+    </sql>
+
+    <sql id="expertReviewWhereSql">
+        <where>
+            AND u.member_type = '전문가회원'
+
+            <if test="approveStatus != null">
+                AND eu.approve_status = #{approveStatus}
+            </if>
+
+            <if test="memberStatus != null and memberStatus != ''">
+                AND u.member_status = #{memberStatus}
+            </if>
+
+            <if test="onlineYn != null and onlineYn != ''">
+                <choose>
+                    <when test="onlineYn == 'Y'">
+                        AND eu.is_online = 1
+                    </when>
+                    <when test="onlineYn == 'N'">
+                        AND (eu.is_online = 0 OR eu.is_online IS NULL)
+                    </when>
+                </choose>
+            </if>
+
+            <if test="keyword != null and keyword.trim() != ''">
+                <choose>
+                    <when test="searchType == 'expertId'">
+                        AND CAST(eu.member_id AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'loginId'">
+                        AND u.login_id LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'userName'">
+                        AND u.user_name LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'specialty'">
+                        AND eu.specialty LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <otherwise>
+                        AND (
+                            CAST(eu.member_id AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+                            OR u.login_id LIKE CONCAT('%', #{keyword}, '%')
+                            OR u.user_name LIKE CONCAT('%', #{keyword}, '%')
+                            OR eu.specialty LIKE CONCAT('%', #{keyword}, '%')
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </sql>
+
+    <!-- =========================================================
+         expert-review 상단 요약 카드
+    ========================================================== -->
+    <select id="selectExpertReviewSummary"
+            resultType="com.human.ofim.dto.AdminExpertReviewSummaryDto">
+        SELECT
+            COUNT(*) AS totalCount,
+            SUM(CASE WHEN DATE(u.created_date) = CURDATE() THEN 1 ELSE 0 END) AS todayAppliedCount,
+            SUM(CASE WHEN eu.approve_status = 1 AND DATE(eu.approved_date) = CURDATE() THEN 1 ELSE 0 END) AS todayApprovedCount,
+            SUM(CASE WHEN eu.approve_status = 0 THEN 1 ELSE 0 END) AS waitingCount,
+            SUM(CASE WHEN eu.approve_status = 2 THEN 1 ELSE 0 END) AS rejectedCount
+        <include refid="expertReviewFromSql"/>
+        WHERE u.member_type = '전문가회원'
+    </select>
+
+    <!-- =========================================================
+         expert-review 목록
+    ========================================================== -->
+    <select id="selectExpertReviewList"
+            resultType="com.human.ofim.dto.ExpertUserDto">
+        SELECT
+            eu.member_id          AS memberId,
+            u.login_id            AS loginId,
+            u.user_name           AS userName,
+            u.email               AS email,
+            u.phone               AS phone,
+            u.created_date        AS createdDate,
+            u.member_status       AS memberStatus,
+            u.status_reason       AS statusReason,
+
+            eu.specialty          AS specialty,
+            eu.expert_introduce   AS expertIntroduce,
+            eu.is_online          AS isOnline,
+            eu.approve_status     AS approveStatus,
+            eu.approved_date      AS approvedDate,
+            eu.profile_image_path AS profileImagePath
+        <include refid="expertReviewFromSql"/>
+        <include refid="expertReviewWhereSql"/>
+
+        ORDER BY
+            CASE WHEN eu.approve_status = 0 THEN 0 ELSE 1 END,
+            u.created_date DESC,
+            eu.member_id DESC
+
+        <if test="size != null and offset != null">
+            LIMIT #{size} OFFSET #{offset}
+        </if>
+    </select>
+
+    <!-- expert-review 목록 수 -->
+    <select id="countExpertReviewList" resultType="int">
+        SELECT COUNT(*)
+        <include refid="expertReviewFromSql"/>
+        <include refid="expertReviewWhereSql"/>
+    </select>
+
+    <!-- =========================================================
+         expert-review 상세 기본정보
+    ========================================================== -->
+    <select id="selectExpertReviewDetail"
+            resultType="com.human.ofim.dto.ExpertUserDto">
+        SELECT
+            eu.member_id          AS memberId,
+            u.login_id            AS loginId,
+            u.user_name           AS userName,
+            u.nickname            AS nickname,
+            u.email               AS email,
+            u.phone               AS phone,
+            u.gender              AS gender,
+            u.birth_date          AS birthDate,
+            u.zipcode             AS zipcode,
+            u.address             AS address,
+            u.address2            AS address2,
+            u.member_type         AS memberType,
+            u.member_status       AS memberStatus,
+            u.status_reason       AS statusReason,
+            u.created_date        AS createdDate,
+            u.updated_date        AS updatedDate,
+            u.last_login_date     AS lastLoginDate,
+
+            eu.specialty          AS specialty,
+            eu.expert_introduce   AS expertIntroduce,
+            eu.is_online          AS isOnline,
+            eu.approve_status     AS approveStatus,
+            eu.approved_date      AS approvedDate,
+            eu.profile_image_path AS profileImagePath
+        FROM expert_user eu
+        JOIN user u
+          ON u.member_id = eu.member_id
+        WHERE eu.member_id = #{memberId}
+    </select>
+    
+    <update id="updateExpertRejectReason">
+    UPDATE user
+    SET status_reason = #{reason},
+        updated_date = NOW()
+    WHERE member_id = #{memberId}
+</update>
+
+    <!-- =========================================================
+         기존 전문가 목록
+    ========================================================== -->
+    <select id="selectExpertList" resultType="com.human.ofim.dto.ExpertUserDto">
+        SELECT
+            eu.member_id            AS memberId,
+            u.login_id              AS loginId,
+            u.user_name             AS userName,
+            u.email                 AS email,
+            u.created_date          AS createdDate,
+            u.member_status         AS memberStatus,
+
+            eu.specialty            AS specialty,
+            eu.expert_introduce     AS expertIntroduce,
+            eu.is_online            AS isOnline,
+            eu.approve_status       AS approveStatus,
+            eu.approved_date        AS approvedDate,
+            eu.profile_image_path   AS profileImagePath,
+
+            COUNT(c.consult_id) AS totalConsultCount,
+            IFNULL(SUM(TIMESTAMPDIFF(MINUTE, c.consult_start_date, c.consult_end_date)), 0) AS totalMinutes,
+
+            IFNULL(rv.avgRating, 0)  AS avgRating,
+            IFNULL(rv.reviewCount, 0) AS reviewCount
+
+        FROM expert_user eu
+        JOIN user u
+          ON u.member_id = eu.member_id
+
+        LEFT JOIN consultation c
+          ON c.expert_id = eu.member_id
+
+        LEFT JOIN (
+            SELECT
+                cs.expert_id,
+                ROUND(COALESCE(AVG(cr.consult_like_level), 0), 1) AS avgRating,
+                COUNT(cr.review_id) AS reviewCount
+            FROM consultation cs
+            LEFT JOIN consult_review cr
+              ON cr.consult_id = cs.consult_id
+            GROUP BY cs.expert_id
+        ) rv
+          ON rv.expert_id = eu.member_id
+
+        <where>
+            <if test="status != null">
+                eu.approve_status = #{status}
+            </if>
+
+            <if test="keyword != null and keyword.trim() != ''">
+                <if test="status != null">AND</if>
+                (
+                    u.user_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u.login_id LIKE CONCAT('%', #{keyword}, '%')
+                    OR u.email LIKE CONCAT('%', #{keyword}, '%')
+                    OR eu.specialty LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+
+        GROUP BY
+            eu.member_id,
+            u.login_id,
+            u.user_name,
+            u.email,
+            u.created_date,
+            u.member_status,
+            eu.specialty,
+            eu.expert_introduce,
+            eu.is_online,
+            eu.approve_status,
+            eu.approved_date,
+            eu.profile_image_path,
+            rv.avgRating,
+            rv.reviewCount
+
+        <if test="minConsult != null">
+            HAVING COUNT(c.consult_id) <![CDATA[>=]]> #{minConsult}
+        </if>
+
+        ORDER BY
+        <choose>
+            <when test="sort == 'CONSULT_DESC'">
+                totalConsultCount DESC, eu.member_id DESC
+            </when>
+            <when test="sort == 'CONSULT_ASC'">
+                totalConsultCount ASC, eu.member_id DESC
+            </when>
+            <when test="sort == 'MINUTES_DESC'">
+                totalMinutes DESC, eu.member_id DESC
+            </when>
+            <when test="sort == 'MINUTES_ASC'">
+                totalMinutes ASC, eu.member_id DESC
+            </when>
+            <when test="sort == 'RATING_DESC'">
+                avgRating DESC, reviewCount DESC, eu.member_id DESC
+            </when>
+            <when test="sort == 'RATING_ASC'">
+                avgRating ASC, reviewCount ASC, eu.member_id DESC
+            </when>
+            <when test="sort == 'APPROVED_DESC'">
+                eu.approved_date DESC, eu.member_id DESC
+            </when>
+            <otherwise>
+                u.created_date DESC, eu.member_id DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 가입 정보 조회 -->
+    <select id="selectExpertJoinInfo" resultType="com.human.ofim.dto.ExpertUserDto">
+        SELECT
+            u.member_id       AS memberId,
+            u.login_id        AS loginId,
+            u.user_name       AS userName,
+            u.nickname        AS nickname,
+            u.birth_date      AS birthDate,
+            u.gender          AS gender,
+            u.phone           AS phone,
+            u.email           AS email,
+            u.zipcode         AS zipcode,
+            u.address         AS address,
+            u.address2        AS address2,
+            u.member_status   AS memberStatus,
+            u.status_reason   AS statusReason,
+            u.member_type     AS memberType,
+            u.created_date    AS createdDate,
+            u.updated_date    AS updatedDate,
+            u.last_login_date AS lastLoginDate
+        FROM user u
+        WHERE u.member_id = #{memberId}
+    </select>
+    
+ <!-- 경력 -->
+<select id="selectExpertCareer" resultType="map">
+    SELECT
+        organization,
+        career_year,
+        career_month,
+        medical_departments,
+        is_employed
+    FROM expert_career
+    WHERE expert_id = #{memberId}
+    ORDER BY career_year DESC, career_month DESC
+</select>
+
+<!-- 학력 -->
+<select id="selectExpertEducation" resultType="map">
+    SELECT
+        expert_school,
+        expert_major,
+        degree_name,
+        graduation_yn
+    FROM expert_career2
+    WHERE expert_id = #{memberId}
+</select>
+
+<select id="selectExpertSettlement" resultType="map">
+    SELECT
+        bank_name,
+        acct_no
+    FROM expert_settlement
+    WHERE member_id = #{memberId}
+</select>
+
+<!-- 정산정보 -->
+<select id="selectSettlementList"
+        resultType="com.human.ofim.dto.ExpertSettlementDto">
+
+    SELECT
+        DATE_FORMAT(c.consult_end_date, '%Y-%m') AS settlementMonth,
+        eu.member_id AS expertId,
+        u.user_name AS expertName,
+
+        COUNT(c.consult_id) AS consCnt,
+
+        CAST(SUM(
+            CASE 
+                WHEN c.consult_type = '채팅' THEN 5000
+                WHEN c.consult_type = '전화' THEN 5000
+                WHEN c.consult_type = '1:1문의' THEN 2000
+                ELSE 0
+            END
+        ) AS DECIMAL(15,2)) AS currAmt,
+
+        CAST(SUM(
+            CASE 
+                WHEN c.consult_type = '채팅' THEN 5000
+                WHEN c.consult_type = '전화' THEN 5000
+                WHEN c.consult_type = '1:1문의' THEN 2000
+                ELSE 0
+            END
+        ) AS DECIMAL(15,2)) AS totAmt,
+
+        CAST(0 AS DECIMAL(15,2)) AS paidAmt,
+
+        IFNULL(es.settlement_status, '대기') AS status,
+        es.settlement_date AS settlementDate,
+        es.bank_name AS bankName,
+        es.acct_no AS acctNo
+
+    FROM expert_user eu
+    JOIN user u
+      ON u.member_id = eu.member_id
+
+    LEFT JOIN consultation c
+      ON c.expert_id = eu.member_id
+     AND c.status = 3
+     <if test="month != null and month != ''">
+        AND DATE_FORMAT(c.consult_end_date, '%Y-%m') = #{month}
+     </if>
+
+    LEFT JOIN expert_settlement es
+      ON es.member_id = eu.member_id
+     <if test="month != null and month != ''">
+        AND es.settlement_month = #{month}
+     </if>
+
+    GROUP BY DATE_FORMAT(c.consult_end_date, '%Y-%m'),
+             eu.member_id,
+             u.user_name,
+             es.settlement_status,
+             es.settlement_date,
+             es.bank_name,
+             es.acct_no
+
+    ORDER BY settlementMonth DESC, eu.member_id DESC
+
+</select>
+	<select id="selectSettlementDetail"
+        resultType="com.human.ofim.dto.ExpertSettlementDto">
+
+    SELECT
+        c.consult_id AS consultId,
+        c.expert_id AS expertId,
+        m.user_name AS memberName,
+        c.consult_type AS consultType,
+        c.consult_start_date AS consultStartDate,
+        c.consult_end_date AS consultEndDate,
+        CAST(
+            CASE
+                WHEN c.consult_type = '채팅' THEN 5000
+                WHEN c.consult_type = '전화' THEN 5000
+                WHEN c.consult_type = '1:1문의' THEN 2000
+                ELSE 0
+            END
+        AS DECIMAL(15,2)) AS amount
+    FROM consultation c
+    JOIN user m
+      ON m.member_id = c.member_id
+    WHERE c.expert_id = #{expertId}
+      AND c.status = 3
+      AND DATE_FORMAT(c.consult_end_date, '%Y-%m') = #{month}
+    ORDER BY c.consult_end_date DESC
+
+</select>
+
+<select id="selectSettlementHeader"
+        resultType="com.human.ofim.dto.ExpertSettlementDto">
+
+    SELECT
+        c.expert_id AS expertId,
+        u.user_name AS expertName,
+
+        COUNT(c.consult_id) AS consCnt,
+
+        CAST(SUM(
+            CASE 
+                WHEN c.consult_type = '채팅' THEN 5000
+                WHEN c.consult_type = '전화' THEN 5000
+                WHEN c.consult_type = '1:1문의' THEN 2000
+                ELSE 0
+            END
+        ) AS DECIMAL(15,2)) AS currAmt,
+
+        CAST(SUM(
+            CASE 
+                WHEN c.consult_type = '채팅' THEN 5000
+                WHEN c.consult_type = '전화' THEN 5000
+                WHEN c.consult_type = '1:1문의' THEN 2000
+                ELSE 0
+            END
+        ) AS DECIMAL(15,2)) AS totAmt,
+
+        CAST(0 AS DECIMAL(15,2)) AS paidAmt,
+
+        es.bank_name AS bankName,
+        es.acct_no AS acctNo,
+
+        MIN(DATE(c.consult_start_date)) AS startDt,
+        MAX(DATE(c.consult_end_date)) AS endDt
+
+    FROM consultation c
+    JOIN user u ON u.member_id = c.expert_id
+    LEFT JOIN expert_settlement es ON es.member_id = c.expert_id
+
+    WHERE c.status = 3
+      AND c.expert_id = #{expertId}
+      AND DATE_FORMAT(c.consult_end_date, '%Y-%m') = #{month}
+
+    GROUP BY c.expert_id, u.user_name, es.bank_name, es.acct_no
+
+</select>
+    <!-- 전문가 상세 -->
+    <select id="selectExpertDetail" resultType="com.human.ofim.dto.ExpertUserDto">
+        SELECT
+            eu.member_id          AS memberId,
+            u.login_id            AS loginId,
+            u.user_name           AS userName,
+            u.email               AS email,
+            eu.specialty          AS specialty,
+            eu.expert_introduce   AS expertIntroduce,
+            eu.is_online          AS isOnline,
+            eu.approve_status     AS approveStatus,
+            eu.approved_date      AS approvedDate,
+            eu.profile_image_path AS profileImagePath
+        FROM expert_user eu
+        JOIN user u ON u.member_id = eu.member_id
+        WHERE eu.member_id = #{memberId}
+    </select>
+
+    <!-- 전문가 승인/반려 -->
+    <update id="updateExpertApproveStatus">
+        UPDATE expert_user
+        SET
+            approve_status = #{status},
+            approved_date = CASE
+                                WHEN #{status} = 1 THEN NOW()
+                                ELSE NULL
+                            END
+        WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 자격증 리스트 -->
+    <select id="selectCertListByMemberId" resultType="com.human.ofim.dto.CertificateDto">
+        SELECT
+            certification_id AS certificationId,
+            member_id        AS memberId,
+            cert_name        AS certName,
+            issuer           AS issuer,
+            cert_no          AS certNo,
+            issued_date      AS issuedDate,
+            expired_date     AS expiredDate,
+            cert_file_path   AS certFilePath,
+            verify_status    AS verifyStatus,
+            reject_reason    AS rejectReason,
+            created_date     AS createdDate
+        FROM certification
+        WHERE member_id = #{memberId}
+        ORDER BY created_date DESC
+    </select>
+
+    <select id="selectCertById" resultType="com.human.ofim.dto.CertificateDto">
+        SELECT
+            certification_id AS certificationId,
+            member_id        AS memberId,
+            cert_name        AS certName,
+            issuer           AS issuer,
+            cert_no          AS certNo,
+            issued_date      AS issuedDate,
+            expired_date     AS expiredDate,
+            cert_file_path   AS certFilePath,
+            verify_status    AS verifyStatus,
+            reject_reason    AS rejectReason,
+            created_date     AS createdDate
+        FROM certification
+        WHERE certification_id = #{certId}
+    </select>
+
+    <update id="updateCertVerifyStatus">
+        UPDATE certification
+        SET
+            verify_status = #{status},
+            verified_date = NOW(),
+            reject_reason = #{reason}
+        WHERE certification_id = #{certId}
+    </update>
+
+    <!-- 전문가 상담 통계 -->
+    <select id="selectExpertConsultStats"
+            resultType="com.human.ofim.dto.AdminExpertConsultStatsDto">
+        SELECT
+            COUNT(*) AS totalConsultCount,
+            COUNT(DISTINCT member_id) AS totalClientCount,
+            IFNULL(SUM(TIMESTAMPDIFF(MINUTE, consult_start_date, consult_end_date)), 0) AS totalMinutes
+        FROM consultation
+        WHERE expert_id = #{memberId}
+    </select>
+
+    <!-- 전문가 상담 목록 -->
+    <select id="selectExpertConsultList"
+            resultType="com.human.ofim.dto.ConsultDto">
+        SELECT
+            c.consult_id         AS consultId,
+            c.consult_start_date AS consultStartDate,
+            c.consult_end_date   AS consultEndDate,
+            c.consult_type       AS consultType,
+            c.status             AS status,
+
+            u.member_id          AS memberId,
+            u.login_id           AS clientLoginId,
+            u.user_name          AS clientName,
+            u.email              AS clientEmail,
+
+            IFNULL(TIMESTAMPDIFF(MINUTE, c.consult_start_date, c.consult_end_date), 0) AS minutes
+        FROM consultation c
+        JOIN user u ON u.member_id = c.member_id
+        WHERE c.expert_id = #{memberId}
+        ORDER BY c.consult_start_date DESC
+    </select>
+
+    <!-- 전문가 고객 목록 -->
+    <select id="selectExpertClientList"
+            resultType="com.human.ofim.dto.AdminExpertClientDto">
+        SELECT
+            u.member_id AS memberId,
+            u.login_id  AS clientLoginId,
+            u.user_name AS clientName,
+            u.email     AS clientEmail,
+
+            COUNT(*) AS consultCount,
+            IFNULL(SUM(TIMESTAMPDIFF(MINUTE, c.consult_start_date, c.consult_end_date)), 0) AS totalMinutes,
+            MAX(c.consult_start_date) AS lastConsultAt
+        FROM consultation c
+        JOIN user u ON u.member_id = c.member_id
+        WHERE c.expert_id = #{memberId}
+        GROUP BY u.member_id, u.login_id, u.user_name, u.email
+        ORDER BY consultCount DESC, totalMinutes DESC
+    </select>
+
+    <update id="updateExpertMemberStatus">
+        UPDATE user
+        SET
+            member_status = #{memberStatus},
+            status_reason = #{reason},
+            updated_date = NOW()
+        WHERE member_id = #{memberId}
+    </update>
+
+</mapper>

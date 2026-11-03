@@ -1,0 +1,601 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.ConsultMapper">
+
+    <!-- ========================================================= -->
+    <!-- 전문가 리스트 -->
+    <!-- ========================================================= -->
+    <select id="selectExpertList" resultType="com.human.ofim.dto.ConsultDto">
+        SELECT
+            eu.member_id AS expertId,
+            u.user_name AS name,
+            eu.profile_image_path AS profileImagePath,
+            eu.specialty AS specialty,
+            eu.expert_introduce AS description,
+            IFNULL(ec.careerYear, 0) AS careerYear,
+            (eu.is_online = 1) AS isOnline
+        FROM expert_user eu
+        JOIN user u ON u.member_id = eu.member_id
+        LEFT JOIN (
+            SELECT
+                expert_id,
+                SUM(IFNULL(career_year, 0)) AS careerYear
+            FROM expert_career
+            GROUP BY expert_id
+        ) ec ON ec.expert_id = eu.member_id
+        WHERE 1=1
+          <if test="keyword != null and keyword != ''">
+            AND (
+                u.user_name LIKE CONCAT('%', #{keyword}, '%')
+                OR eu.specialty LIKE CONCAT('%', #{keyword}, '%')
+                OR eu.expert_introduce LIKE CONCAT('%', #{keyword}, '%')
+            )
+          </if>
+          <if test="specialty != null and specialty != ''">
+            AND eu.specialty = #{specialty}
+          </if>
+          <if test="onlineOnly != null and onlineOnly">
+            AND eu.is_online = 1
+          </if>
+        <choose>
+            <when test="sort == 'career'">
+                ORDER BY IFNULL(ec.careerYear, 0) DESC, eu.member_id DESC
+            </when>
+            <otherwise>
+                ORDER BY eu.member_id DESC
+            </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countExperts" resultType="long">
+        SELECT COUNT(*)
+        FROM expert_user eu
+        JOIN user u ON u.member_id = eu.member_id
+        WHERE 1=1
+          <if test="keyword != null and keyword != ''">
+            AND (
+                u.user_name LIKE CONCAT('%', #{keyword}, '%')
+                OR eu.specialty LIKE CONCAT('%', #{keyword}, '%')
+                OR eu.expert_introduce LIKE CONCAT('%', #{keyword}, '%')
+            )
+          </if>
+          <if test="specialty != null and specialty != ''">
+            AND eu.specialty = #{specialty}
+          </if>
+          <if test="onlineOnly != null and onlineOnly">
+            AND eu.is_online = 1
+          </if>
+    </select>
+
+    <select id="selectSpecialtyOptions" resultType="string">
+        SELECT DISTINCT specialty
+        FROM expert_user
+        WHERE specialty IS NOT NULL
+          AND specialty != ''
+        ORDER BY specialty
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- 전문가 상세 -->
+    <!-- ========================================================= -->
+    <select id="selectExpertDetail" resultType="com.human.ofim.dto.ConsultDto">
+        SELECT
+            eu.member_id AS expertId,
+            u.user_name AS name,
+            eu.profile_image_path AS profileImagePath,
+            eu.specialty AS specialty,
+            eu.expert_introduce AS description,
+            eu.expert_introduce AS longDescription,
+            (eu.is_online = 1) AS isOnline
+        FROM expert_user eu
+        JOIN user u ON u.member_id = eu.member_id
+        WHERE eu.member_id = #{expertId}
+    </select>
+
+    <select id="selectCareerList" resultType="map">
+    SELECT
+        career_id AS careerId,
+        expert_id AS expertId,
+        organization AS organization,
+        career_month AS careerMonth,
+        career_year AS careerYear,
+        medical_departments AS medicalDepartments,
+        is_employed AS isEmployed
+    FROM expert_career
+    WHERE expert_id = #{expertId}
+    ORDER BY career_id DESC
+</select>
+
+    <select id="selectEducationList" resultType="map">
+    SELECT
+        career_id AS careerId,
+        expert_id AS expertId,
+        expert_school AS expertSchool,
+        expert_major AS expertMajor,
+        degree_name AS degreeName,
+        graduation_yn AS graduationYn
+    FROM expert_career2
+    WHERE expert_id = #{expertId}
+    ORDER BY career_id DESC
+</select>
+
+    <select id="selectCertificateList" resultType="map">
+    SELECT
+        certification_id AS certificationId,
+        member_id AS memberId,
+        cert_name AS certName,
+        issuer AS issuer,
+        cert_no AS certNo,
+        issued_date AS issuedDate,
+        expired_date AS expiredDate,
+        cert_file_path AS certFilePath,
+        verify_status AS verifyStatus,
+        verified_date AS verifiedDate,
+        reject_reason AS rejectReason,
+        created_date AS createdDate
+    FROM certification
+    WHERE member_id = #{expertId}
+    ORDER BY certification_id DESC
+</select>
+
+    <select id="selectReviewSummary" resultType="map">
+    SELECT
+        COALESCE(AVG(cr.consult_like_level), 0) AS avgRating,
+        COUNT(cr.review_id) AS reviewCount
+    FROM consult_review cr
+    JOIN consultation c
+      ON c.consult_id = cr.consult_id
+    WHERE c.expert_id = #{expertId}
+</select>
+
+    <select id="selectReserveExpertInfo" resultType="map">
+        SELECT
+            eu.member_id AS expertId,
+            u.user_name AS name,
+            eu.profile_image_path AS profileImagePath,
+            eu.specialty AS specialty,
+            eu.expert_introduce AS description,
+            (eu.is_online = 1) AS isOnline
+        FROM expert_user eu
+        JOIN user u ON u.member_id = eu.member_id
+        WHERE eu.member_id = #{expertId}
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- 예약 -->
+    <!-- ========================================================= -->
+    <insert id="insertReservation" parameterType="com.human.ofim.dto.ConsultDto"
+            useGeneratedKeys="true" keyProperty="consultId">
+        INSERT INTO consultation (
+            consult_start_date,
+            consult_end_date,
+            consult_type,
+            expert_id,
+            member_id,
+            status,
+            created_date,
+            contact_phone
+        ) VALUES (
+            #{consultStartDate},
+            #{consultEndDate},
+            #{consultType},
+            #{expertId},
+            #{memberId},
+            #{status},
+            NOW(),
+            #{contactPhone}
+        )
+    </insert>
+
+    <update id="updateReservation" parameterType="com.human.ofim.dto.ConsultDto">
+        UPDATE consultation
+        SET
+            consult_start_date = #{consultStartDate},
+            consult_end_date = #{consultEndDate},
+            consult_type = #{consultType},
+            expert_id = #{expertId},
+            contact_phone = #{contactPhone}
+        WHERE consult_id = #{consultId}
+          AND member_id = #{memberId}
+          AND status = 1
+    </update>
+
+    <select id="selectReservationDetailForEdit" resultType="map">
+        SELECT
+            c.consult_id,
+            c.consult_start_date,
+            c.consult_end_date,
+            c.consult_type,
+            c.expert_id,
+            c.member_id,
+            c.status,
+            c.contact_phone,
+            u.user_name AS name,
+            eu.specialty,
+            eu.profile_image_path
+        FROM consultation c
+        JOIN expert_user eu ON eu.member_id = c.expert_id
+        JOIN user u ON u.member_id = c.expert_id
+        WHERE c.consult_id = #{consultId}
+          AND c.member_id = #{memberId}
+    </select>
+
+   <select id="selectMyReservations" resultType="map">
+    SELECT
+        c.consult_id,
+        c.consult_start_date,
+        c.consult_end_date,
+        c.consult_type,
+        c.status,
+        c.contact_phone,
+        u.user_name AS expertName,
+        eu.specialty,
+        q.content AS consultContent,
+        a.content AS answerContent
+    FROM consultation c
+    JOIN expert_user eu ON eu.member_id = c.expert_id
+    JOIN user u ON u.member_id = c.expert_id
+
+    LEFT JOIN inquiry q
+           ON q.inquiry_id = (
+                SELECT iq.inquiry_id
+                FROM inquiry iq
+                WHERE iq.consult_id = c.consult_id
+                  AND iq.comment_type = '질문'
+                ORDER BY iq.write_date DESC, iq.inquiry_id DESC
+                LIMIT 1
+           )
+
+    LEFT JOIN inquiry a
+           ON a.inquiry_id = (
+                SELECT ia.inquiry_id
+                FROM inquiry ia
+                WHERE ia.consult_id = c.consult_id
+                  AND ia.comment_type IN ('전문가답변', '관리자답변')
+                ORDER BY ia.write_date DESC, ia.inquiry_id DESC
+                LIMIT 1
+           )
+
+    WHERE c.member_id = #{memberId}
+    ORDER BY c.created_date DESC, c.consult_id DESC
+</select>
+
+    <select id="selectConsultsForExpert" resultType="map">
+   SELECT
+    c.consult_id,
+    c.expert_id,
+    c.member_id,
+    c.consult_type AS category,
+    c.consult_start_date,
+    c.consult_end_date,
+    c.consult_start_date AS regDate,
+    c.contact_phone,
+    c.status,
+    iq.content AS consultContent,
+    u.user_name AS userName,
+
+    -- 🔥 추가 부분 (핵심)
+    CASE 
+        WHEN EXISTS (
+            SELECT 1 
+            FROM consult_chat_message m
+            WHERE m.consult_id = c.consult_id
+              AND m.message_type = 'TALK'
+        ) THEN 1
+        ELSE 0
+    END AS hasChatMessage
+    FROM consultation c
+    JOIN user u ON u.member_id = c.member_id
+    LEFT JOIN (
+        SELECT i1.consult_id, i1.content
+        FROM inquiry i1
+        JOIN (
+            SELECT consult_id, MAX(write_date) AS max_dt
+            FROM inquiry
+            WHERE comment_type = '질문'
+            GROUP BY consult_id
+        ) t
+          ON t.consult_id = i1.consult_id
+         AND t.max_dt = i1.write_date
+        WHERE i1.comment_type = '질문'
+    ) iq ON iq.consult_id = c.consult_id
+    WHERE c.expert_id = #{expertId}
+    ORDER BY c.consult_start_date DESC
+</select>
+
+    <update id="cancelReservation">
+        UPDATE consultation
+        SET status = 4
+        WHERE consult_id = #{consultId}
+          AND member_id = #{memberId}
+          AND status IN (1, 2)
+    </update>
+
+    <update id="autoCompleteConsultation">
+        UPDATE consultation
+        SET status = 3
+        WHERE status = 2
+          AND consult_end_date <![CDATA[ < ]]> NOW()
+    </update>
+    
+    <update id="updateConsultStatus">
+	    UPDATE consultation
+	    SET status = #{status}
+	    WHERE consult_id = #{consultId}
+	</update>
+
+    <select id="selectAvailableTimeSlots" resultType="string">
+        SELECT time_slot
+        FROM (
+            SELECT '09:00' AS time_slot
+            UNION ALL SELECT '10:00'
+            UNION ALL SELECT '11:00'
+            UNION ALL SELECT '13:00'
+            UNION ALL SELECT '14:00'
+            UNION ALL SELECT '15:00'
+            UNION ALL SELECT '16:00'
+            UNION ALL SELECT '17:00'
+        ) t
+        WHERE time_slot NOT IN (
+            SELECT DATE_FORMAT(consult_start_date, '%H:%i')
+            FROM consultation
+            WHERE expert_id = #{expertId}
+              AND DATE(consult_start_date) = #{date}
+              AND status IN (1, 2)
+        )
+    </select>
+    
+    <!-- 전화상담 기록 저장 -->
+<insert id="insertCallNote">
+    INSERT INTO inquiry (
+        consult_id,
+        content,
+        write_date,
+        comment_type,
+        file_original_name,
+        file_stored_name,
+        file_path
+    ) VALUES (
+        #{consultId},
+        #{content},
+        NOW(),
+        '전화상담기록',
+        #{fileOriginalName},
+        #{fileStoredName},
+        #{filePath}
+    )
+</insert>
+
+<!-- 전화상담 기록 조회 -->
+<select id="selectCallNoteByConsultId" resultType="com.human.ofim.dto.InquiryDto">
+    SELECT
+        inquiry_id AS inquiryId,
+        consult_id AS consultId,
+        content,
+        write_date AS writeDate,
+        comment_type AS commentType,
+        file_original_name AS fileOriginalName,
+        file_stored_name AS fileStoredName,
+        file_path AS filePath
+    FROM inquiry
+    WHERE consult_id = #{consultId}
+      AND comment_type = '전화상담기록'
+    ORDER BY write_date DESC, inquiry_id DESC
+    LIMIT 1
+</select>
+
+    <!-- ========================================================= -->
+    <!-- 1:1 문의 -->
+    <!-- ========================================================= -->
+    <insert id="insertInquiryConsultation"
+            parameterType="com.human.ofim.dto.ConsultDto"
+            useGeneratedKeys="true"
+            keyProperty="consultId">
+        INSERT INTO consultation (
+            consult_start_date,
+            consult_end_date,
+            consult_type,
+            expert_id,
+            member_id,
+            status,
+            created_date,
+            contact_phone
+        ) VALUES (
+            #{consultStartDate},
+            #{consultEndDate},
+            #{consultType},
+            #{expertId},
+            #{memberId},
+            #{status},
+            NOW(),
+            NULL
+        )
+    </insert>
+
+    <insert id="insertInquiry"
+            parameterType="com.human.ofim.dto.InquiryDto"
+            useGeneratedKeys="true"
+            keyProperty="inquiryId">
+        INSERT INTO inquiry (
+            consult_id,
+            content,
+            write_date,
+            comment_type
+        ) VALUES (
+            #{consultId},
+            #{content},
+            NOW(),
+            #{commentType}
+        )
+    </insert>
+    
+    <select id="getInquiryList" resultType="com.human.ofim.dto.InquiryDto">
+        SELECT 
+            inquiry_id AS inquiryId,
+            consult_id AS consultId,
+            content,
+            write_date AS writeDate,
+            comment_type AS commentType
+        FROM inquiry
+        WHERE consult_id = #{consultId}
+        ORDER BY write_date ASC
+    </select>
+    
+   <select id="getConsultListByMemberId" resultType="map">
+	    SELECT 
+	        c.consult_id,
+	        c.consult_start_date,
+	        c.consult_end_date,
+	        c.consult_type AS category,   c.status,
+	        c.contact_phone,
+	        u.user_name AS expertName,    eu.specialty,
+	        iq.content AS consultContent  FROM consultation c
+	    JOIN user u ON u.member_id = c.expert_id
+	    JOIN expert_user eu ON eu.member_id = c.expert_id
+	    
+	    LEFT JOIN (
+	        SELECT i1.consult_id, i1.content
+	        FROM inquiry i1
+	        JOIN (
+	            SELECT consult_id, MAX(write_date) AS max_dt
+	            FROM inquiry
+	            WHERE comment_type = '질문'
+	            GROUP BY consult_id
+	        ) t ON t.consult_id = i1.consult_id AND t.max_dt = i1.write_date
+	        WHERE i1.comment_type = '질문'
+	    ) iq ON iq.consult_id = c.consult_id
+	
+	    WHERE c.member_id = #{memberId}
+	    ORDER BY c.consult_start_date DESC, c.consult_id DESC
+	</select>
+	
+	<!-- 내 상담인지 확인 -->
+<select id="selectConsultByIdAndMember" resultType="map">
+	SELECT
+		c.consult_id,
+		c.member_id,
+		c.expert_id,
+		c.consult_type,
+		c.status,
+		c.consult_start_date,
+		c.consult_end_date,
+		c.created_date,
+		c.contact_phone
+	FROM consultation c
+	WHERE c.consult_id = #{consultId}
+	  AND c.member_id = #{memberId}
+</select>
+
+<!-- 상담 메시지 조회 -->
+<select id="selectChatMessagesByConsultId" resultType="com.human.ofim.dto.ConsultChatMessageDto">
+	SELECT
+		chat_id AS messageId,
+		consult_id AS consultId,
+		sender_id AS senderId,
+		message_type AS messageType,
+		message_content AS messageContent,
+		created_date AS createdDate
+	FROM consult_chat_message
+	WHERE consult_id = #{consultId}
+	ORDER BY created_date ASC, chat_id ASC
+</select>
+
+<!-- 상담 이력 검색 -->
+<select id="selectConsultHistory" resultType="map">
+    SELECT
+        c.consult_id,
+        c.consult_type,
+        c.consult_start_date,
+        c.consult_end_date,
+        c.created_date,
+        c.status,
+        c.contact_phone,
+        u.user_name AS expertName,
+        eu.specialty,
+        iq.content AS consultContent,
+        cn.content AS callNoteContent
+    FROM consultation c
+    JOIN user u
+      ON u.member_id = c.expert_id
+    JOIN expert_user eu
+      ON eu.member_id = c.expert_id
+
+    LEFT JOIN (
+        SELECT i1.consult_id, i1.content
+        FROM inquiry i1
+        JOIN (
+            SELECT consult_id, MAX(write_date) AS max_dt
+            FROM inquiry
+            WHERE comment_type = '질문'
+            GROUP BY consult_id
+        ) t
+          ON t.consult_id = i1.consult_id
+         AND t.max_dt = i1.write_date
+        WHERE i1.comment_type = '질문'
+    ) iq ON iq.consult_id = c.consult_id
+
+    LEFT JOIN (
+        SELECT i1.consult_id, i1.content
+        FROM inquiry i1
+        JOIN (
+            SELECT consult_id, MAX(write_date) AS max_dt
+            FROM inquiry
+            WHERE comment_type = '전화상담기록'
+            GROUP BY consult_id
+        ) t
+          ON t.consult_id = i1.consult_id
+         AND t.max_dt = i1.write_date
+        WHERE i1.comment_type = '전화상담기록'
+    ) cn ON cn.consult_id = c.consult_id
+
+    WHERE c.member_id = #{memberId}
+
+    <if test="expertName != null and expertName != ''">
+        AND u.user_name LIKE CONCAT('%', #{expertName}, '%')
+    </if>
+
+    <if test="consultType != null and consultType != ''">
+        AND c.consult_type = #{consultType}
+    </if>
+
+    <if test="status != null">
+        AND c.status = #{status}
+    </if>
+
+    <if test="dateFrom != null and dateFrom != ''">
+        AND DATE(c.consult_start_date) <![CDATA[>=]]> #{dateFrom}
+    </if>
+
+    <if test="dateTo != null and dateTo != ''">
+        AND DATE(c.consult_start_date) <![CDATA[<=]]> #{dateTo}
+    </if>
+
+    ORDER BY c.consult_start_date DESC, c.consult_id DESC
+</select>
+
+<select id="countCallNoteByConsultId" resultType="int">
+    SELECT COUNT(*)
+    FROM inquiry
+    WHERE consult_id = #{consultId}
+      AND comment_type = '전화상담기록'
+</select>
+
+<update id="updateCallNote">
+    UPDATE inquiry
+    SET
+        content = #{content},
+        write_date = NOW()
+        <if test="fileOriginalName != null and fileOriginalName != ''">
+            , file_original_name = #{fileOriginalName}
+            , file_stored_name = #{fileStoredName}
+            , file_path = #{filePath}
+        </if>
+    WHERE consult_id = #{consultId}
+      AND comment_type = '전화상담기록'
+</update>
+
+</mapper>

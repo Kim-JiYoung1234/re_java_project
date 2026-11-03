@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title th:text="${readonly} ? '상담 내역 열람 | OFIM' : '1:1 상담 채팅 | OFIM'">1:1 상담 채팅 | OFIM</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f7f8fb;
+}
+.chat-wrap {
+    max-width: 900px;
+    margin: 40px auto;
+}
+.chat-card {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+.chat-header {
+    background: #ffffff;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+}
+.chat-body {
+    background: #f9fafc;
+    height: 560px;
+    overflow-y: auto;
+    padding: 24px;
+}
+.chat-footer {
+    background: #fff;
+    border-top: 1px solid #eee;
+    padding: 16px;
+}
+.msg-row {
+    display: flex;
+    margin-bottom: 14px;
+}
+.msg-row.mine {
+    justify-content: flex-end;
+}
+.msg-bubble {
+    padding: 12px 14px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    display: inline-block;
+    max-width: 320px;
+}
+.msg-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 4px;
+    padding-left: 2px;
+}
+.msg-row.mine .msg-bubble {
+    background: #0d6efd;
+    color: #fff;
+    border-bottom-right-radius: 6px;
+}
+.msg-row.other .msg-bubble {
+    background: #fff;
+    color: #222;
+    border: 1px solid #e9ecef;
+    border-bottom-left-radius: 6px;
+}
+.msg-time {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 6px;
+}
+.system-msg {
+    text-align: center;
+    color: #888;
+    font-size: 0.86rem;
+    margin: 16px 0;
+}
+.chat-disabled {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffe69c;
+    padding: 10px 14px;
+    border-radius: 10px;
+}
+.chat-top-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+</style>
+</head>
+<body>
+
+<div class="container chat-wrap">
+    <div class="chat-card">
+        <div class="chat-header d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1 fw-bold" th:text="${readonly} ? '상담 내역 열람' : '1:1 상담 채팅'">1:1 상담 채팅</h4>
+                <div class="text-muted small">
+                    상담번호 <span th:text="${consultId}"></span>
+                </div>
+            </div>
+
+            <div class="text-end" th:if="${!readonly}">
+                <div class="small text-muted">안 읽은 메시지</div>
+                <div id="unreadCount" class="fw-bold" th:text="${room.unreadCount}">0</div>
+            </div>
+        </div>
+
+        <div class="px-3 pt-3" th:if="${readonly}">
+            <div class="chat-disabled mb-0">
+                이 화면은 상담 내역 열람 전용입니다. 메시지를 새로 보낼 수 없습니다.
+            </div>
+        </div>
+
+        <div class="px-3 pt-3 chat-top-actions" th:if="${canChat and !readonly}">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshMessages()">새로고침</button>
+        </div>
+
+        <div id="chatBody" class="chat-body"></div>
+
+        <div class="chat-footer" th:if="${!readonly}">
+            <div th:if="${!canChat}" id="chatDisabledNotice" class="chat-disabled mb-3">
+    			현재 상담 상태에서는 채팅을 보낼 수 없습니다.
+    		</div>
+
+            <div class="input-group">
+                <input type="text" id="messageInput" class="form-control"
+                       placeholder="메시지를 입력하세요"
+                       th:disabled="${!canChat}">
+                <button type="button" id="sendButton" class="btn btn-primary"
+                        onclick="sendMessage()"
+                        th:disabled="${!canChat}">
+                    전송
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const consultId = /*[[${consultId}]]*/ 0;
+    const loginMemberId = /*[[${loginMemberId}]]*/ 0;
+    const canChat = /*[[${canChat}]]*/ false;
+    const readonly = /*[[${readonly}]]*/ false;
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<script>
+let stompClient = null;
+const chatBody = document.getElementById('chatBody');
+const messageInput = document.getElementById('messageInput');
+let chatEnabled = canChat;
+let statusTimer = null;
+
+function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatTime(dateString) {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    const yy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
+function scrollBottom() {
+    if (chatBody) {
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+}
+
+function setChatEnabled(enabled) {
+    chatEnabled = enabled;
+
+    const input = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const notice = document.getElementById('chatDisabledNotice');
+
+    if (input) {
+        input.disabled = !enabled;
+    }
+
+    if (sendButton) {
+        sendButton.disabled = !enabled;
+    }
+
+    if (notice) {
+        notice.style.display = enabled ? 'none' : 'block';
+    }
+
+    if (enabled && input) {
+        input.focus();
+    }
+}
+
+function appendMessage(msg) {
+    if (!chatBody) return;
+
+    if (msg.messageType !== 'TALK') {
+        const div = document.createElement('div');
+        div.className = 'system-msg';
+        div.textContent = msg.messageContent || '';
+        chatBody.appendChild(div);
+        scrollBottom();
+        return;
+    }
+
+    const mine = Number(msg.senderId) === Number(loginMemberId);
+
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (mine ? 'mine' : 'other');
+
+    row.innerHTML = `
+        <div>
+            <div class="msg-name">${escapeHtml(msg.displayName ?? '')}</div>
+            <div class="msg-bubble">${escapeHtml(msg.messageContent)}</div>
+            <div class="msg-time">${formatTime(msg.createdDate)}</div>
+        </div>
+    `;
+
+    chatBody.appendChild(row);
+    scrollBottom();
+}
+
+async function loadMessages() {
+    const res = await fetch(`/consult/chat/room/${consultId}/messages`);
+    if (!res.ok) return;
+
+    const list = await res.json();
+    chatBody.innerHTML = '';
+    list.forEach(msg => appendMessage(msg));
+
+    if (!readonly) {
+        await markAsRead();
+    }
+
+    scrollBottom();
+}
+
+async function markAsRead() {
+    await fetch(`/consult/chat/room/${consultId}/read`, {
+        method: 'POST'
+    });
+}
+
+async function loadSummary() {
+    if (readonly) return null;
+
+    const res = await fetch(`/consult/chat/room/${consultId}/summary`);
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    const unreadEl = document.getElementById('unreadCount');
+    if (unreadEl) {
+        unreadEl.innerText = data.unreadCount ?? 0;
+    }
+
+    return data;
+}
+
+async function checkChatStatus() {
+    const summary = await loadSummary();
+    if (!summary) return;
+
+    // status: 1=대기, 2=진행중, 3=완료, 4=취소
+    const enabled = Number(summary.status) === 2;
+    setChatEnabled(enabled);
+}
+
+function connectChat() {
+    if (readonly) return;
+
+    const socket = new SockJS('/ws-chat');
+    stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+
+    stompClient.connect({}, function() {
+        stompClient.subscribe('/topic/consult/' + consultId, async function(message) {
+            const msg = JSON.parse(message.body);
+            appendMessage(msg);
+
+            // 상대 메시지면 읽음 처리
+            if (Number(msg.senderId) !== Number(loginMemberId)) {
+                await markAsRead();
+            }
+
+            // 시스템 메시지나 수락 이후 상태 반영
+            await checkChatStatus();
+        });
+    }, function() {
+        console.error('웹소켓 연결 실패');
+    });
+}
+
+function sendMessage() {
+    if (readonly) return;
+    if (!chatEnabled) return;
+    if (!stompClient || !stompClient.connected) return;
+    if (!messageInput) return;
+
+    const content = messageInput.value.trim();
+    if (!content) return;
+
+    stompClient.send('/app/consult/chat/send', {}, JSON.stringify({
+        consultId: consultId,
+        messageType: 'TALK',
+        messageContent: content
+    }));
+
+    messageInput.value = '';
+    messageInput.focus();
+}
+
+async function refreshMessages() {
+    await loadMessages();
+    await checkChatStatus();
+}
+
+messageInput?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+window.addEventListener('load', async function() {
+    await loadMessages();
+    await checkChatStatus();
+    connectChat();
+
+    // 전문가 수락 후 회원 화면 자동 활성화용
+    statusTimer = setInterval(async () => {
+        await checkChatStatus();
+    }, 2000);
+});
+
+window.addEventListener('beforeunload', function() {
+    if (statusTimer) {
+        clearInterval(statusTimer);
+    }
+
+    if (stompClient && stompClient.connected) {
+        stompClient.disconnect();
+    }
+});
+</script>
+
+</body>
+</html>

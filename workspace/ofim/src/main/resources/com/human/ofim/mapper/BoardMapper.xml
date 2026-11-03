@@ -1,0 +1,784 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.BoardMapper">
+
+	<select id="selectAll" resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		b.post_id AS postId,
+		b.title AS title,
+		b.content AS content,
+		b.created_date AS createdDate,
+		b.view_count AS viewCount,
+		b.deleted AS
+		deleted,
+		b.category_id AS categoryId,
+		b.writer_id AS writerId,
+		b.sub_category AS subCategory,
+		b.image_name AS imageName,
+		b.video_url AS
+		videoUrl,
+		b.end_date AS endDate, u.nickname AS writerName,
+		u.member_type AS memberType,
+		u.grade_id AS gradeId,
+		u.activity_point AS
+		activityPoint,
+		u.profile AS writerProfile,
+		c.category_name AS
+		categoryName,
+		(SELECT
+		COUNT(*) FROM board_like bl
+		WHERE bl.post_id =
+		b.post_id) AS
+		likeCount,
+		(SELECT COUNT(*) FROM
+		board_reply br WHERE
+		br.post_id = b.post_id) AS
+		replyCount,
+		(
+		SELECT
+		COUNT(*)
+		FROM board_reply r
+		JOIN user ru ON
+		r.writer_id = ru.member_id
+		WHERE r.post_id = b.post_id
+		AND
+		ru.member_type = '관리자'
+		) AS
+		adminReplyCount
+		FROM board b
+		LEFT JOIN user
+		u
+		ON b.writer_id =
+		u.member_id
+		LEFT JOIN category c
+		ON b.category_id =
+		c.category_id
+		<where>
+			b.deleted = 0
+			<if test="writerId != null">
+				AND b.writer_id = #{writerId}
+			</if>
+			<if test="categoryId != null and categoryId != 0">
+				AND b.category_id = #{categoryId}
+			</if>
+			<if
+				test="subCategory != null and subCategory != '' and subCategory != '전체'">
+				AND b.sub_category = #{subCategory}
+			</if>
+			<if test="keyword != null and keyword != ''">
+				AND (
+				b.title LIKE CONCAT('%', #{keyword}, '%')
+				OR
+				b.content LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+		</where>
+		ORDER BY
+		CASE WHEN b.category_id = 1 THEN 0 ELSE 1 END ASC,
+		<choose>
+			<when test="sort == 'createdDate_asc'"> b.created_date ASC </when>
+			<when test="sort == 'createdDate_desc'"> b.created_date DESC </when>
+			<when test="sort == 'viewCount_asc'"> b.view_count ASC </when>
+			<when test="sort == 'viewCount_desc'"> b.view_count DESC </when>
+			<when test="sort == 'likeCount_asc'"> likeCount ASC </when>
+			<when test="sort == 'likeCount_desc'"> likeCount DESC </when>
+			<otherwise> b.post_id DESC </otherwise>
+		</choose>
+		LIMIT #{size} OFFSET #{startRow}
+	</select>
+
+	<select id="countAll" resultType="int">
+		SELECT COUNT(*)
+		FROM board
+		<where>
+			deleted = 0
+			<if test="writerId != null">
+				AND writer_id = #{writerId}
+			</if>
+			<if test="categoryId != null and categoryId != 0">
+				AND category_id = #{categoryId}
+			</if>
+			<if
+				test="subCategory != null and subCategory != '' and subCategory != '전체'">
+				AND sub_category = #{subCategory}
+			</if>
+			<if test="keyword != null and keyword != ''">
+				AND (
+				title LIKE CONCAT('%', #{keyword}, '%')
+				OR content
+				LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+		</where>
+	</select>
+
+	<select id="selectById" parameterType="int"
+		resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		b.post_id AS postId,
+		b.title AS title,
+		b.content AS
+		content,
+		b.created_date AS createdDate,
+		b.view_count AS viewCount,
+		b.deleted AS deleted,
+		b.category_id AS categoryId,
+		b.sub_category AS
+		subCategory,
+		b.writer_id AS writerId,
+		b.image_name AS imageName,
+		b.video_url AS videoUrl,
+		b.end_date AS endDate,
+		u.nickname AS
+		writerName,
+		u.member_type AS memberType,
+		u.grade_id AS gradeId,
+		u.activity_point AS
+		activityPoint, -- 🌟 [추가] 이게 있어야 '언더아머'가 뜹니다!
+		u.profile AS writerProfile,
+		c.category_name AS
+		categoryName,
+		(SELECT
+		COUNT(*) FROM board_like bl WHERE bl.post_id =
+		b.post_id) AS
+		likeCount,
+		(SELECT COUNT(*) FROM board_reply br WHERE
+		br.post_id = b.post_id) AS
+		replyCount,
+		(
+		SELECT COUNT(*)
+		FROM board_reply
+		r
+		JOIN user ru ON
+		r.writer_id = ru.member_id
+		WHERE r.post_id = b.post_id
+		AND
+		ru.member_type = '관리자'
+		) AS adminReplyCount
+		FROM board b
+		LEFT JOIN
+		user u
+		ON b.writer_id = u.member_id
+		LEFT JOIN category c ON
+		b.category_id =
+		c.category_id
+		WHERE b.post_id = #{postId}
+	</select>
+
+	<select id="selectByWriterId" parameterType="int"
+		resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		b.post_id AS postId,
+		b.category_id AS categoryId,
+		b.writer_id AS writerId,
+		b.title AS title,
+		b.content AS content,
+		b.created_date AS createdDate,
+		b.view_count AS viewCount,
+		b.deleted AS
+		deleted,
+		b.sub_category AS subCategory,
+		b.video_url AS videoUrl,
+		b.image_name AS imageName,
+		b.end_date AS endDate, c.category_name AS
+		categoryName,
+		u.nickname
+		AS writerName,
+		u.member_type AS memberType,
+		u.grade_id AS gradeId,
+		(SELECT COUNT(*) FROM
+		board_like bl WHERE
+		bl.post_id = b.post_id) AS
+		likeCount,
+		(SELECT
+		COUNT(*) FROM board_reply
+		br WHERE br.post_id =
+		b.post_id) AS
+		replyCount,
+		(
+		SELECT COUNT(*)
+		FROM
+		board_reply r
+		JOIN user ru
+		ON
+		r.writer_id = ru.member_id
+		WHERE r.post_id
+		=
+		b.post_id
+		AND
+		ru.member_type = '관리자'
+		) AS adminReplyCount
+		FROM board b
+		LEFT JOIN
+		category c
+		ON b.category_id = c.category_id
+		LEFT JOIN user u
+		ON
+		b.writer_id = u.member_id
+		WHERE b.writer_id = #{writerId}
+		ORDER BY
+		b.post_id DESC
+	</select>
+
+	<insert id="insertBoard"
+		parameterType="com.human.ofim.dto.BoardDto">
+		INSERT INTO board (
+		category_id,
+		writer_id,
+		title,
+		content,
+		created_date,
+		view_count,
+		deleted,
+		sub_category,
+		image_name,
+		video_url,
+		end_date ) VALUES
+		(
+		#{categoryId},
+		#{writerId},
+		#{title},
+		#{content},
+		NOW(),
+		0,
+		0,
+		<choose>
+			<when test="categoryId == 1">'공지'</when>
+			<otherwise>#{subCategory}</otherwise>
+		</choose>
+		,
+		#{imageName},
+		#{videoUrl},
+		#{endDate} )
+	</insert>
+
+	<insert id="insertReport"
+		parameterType="com.human.ofim.dto.BoardReportDto">
+		INSERT INTO report (
+		post_id,
+		member_id,
+		accusation_date,
+		accepted_date,
+		sanction_date, admin_memo, content,
+		code,
+		status
+		) VALUES (
+		#{postId},
+		#{memberId},
+		NOW(), NULL, NULL, NULL, #{content},
+		#{code},
+		0 )
+	</insert>
+
+	<update id="updateBoard"
+		parameterType="com.human.ofim.dto.BoardDto">
+		UPDATE board
+		SET
+		title = #{title},
+		content = #{content},
+		category_id =
+		#{categoryId},
+		image_name = #{imageName},
+		video_url = #{videoUrl},
+		end_date = #{endDate}, sub_category =
+		<choose>
+			<when test="categoryId == 1">'공지'</when>
+			<otherwise>#{subCategory}</otherwise>
+		</choose>
+		WHERE post_id = #{postId}
+	</update>
+
+	<update id="deleteById" parameterType="int">
+		UPDATE board
+		SET deleted =
+		1
+		WHERE post_id = #{postId}
+	</update>
+
+	<delete id="deleteMyPost">
+		DELETE FROM board
+		WHERE post_id = #{postId} AND
+		writer_id = #{memberId}
+	</delete>
+
+	<update id="updateHit" parameterType="int">
+		UPDATE board
+		SET view_count
+		= view_count + 1
+		WHERE post_id = #{postId}
+	</update>
+
+	<select id="selectRepliesByPostId" parameterType="map"
+		resultType="com.human.ofim.dto.BoardReplyDto">
+		SELECT
+		r.reply_id AS replyId,
+		r.post_id AS postId,
+		r.writer_id AS
+		writerId,
+		r.content AS content,
+		r.created_date AS createdDate,
+		r.parent_id AS parentId,
+		u.nickname AS writerName,
+		u.member_type AS
+		memberType,
+		u.grade_id AS gradeId,
+		u.activity_point AS activityPoint,
+		u.profile AS writerProfile,
+		(SELECT COUNT(*) FROM
+		board_reply_like brl
+		WHERE brl.reply_id =
+		r.reply_id)
+		AS likeCount,
+		<choose>
+			<when test="memberId != null">
+				(SELECT COUNT(*) FROM board_reply_like brl WHERE
+				brl.reply_id = r.reply_id
+				AND brl.member_id = #{memberId})
+			</when>
+			<otherwise>0</otherwise>
+		</choose>
+		AS isLiked
+		FROM
+		board_reply r
+		LEFT JOIN user u ON r.writer_id =
+		u.member_id
+		WHERE
+		r.post_id = #{postId}
+		ORDER BY
+		IFNULL(r.parent_id,
+		r.reply_id) ASC,
+		r.created_date ASC
+	</select>
+
+	<insert id="insertReply"
+		parameterType="com.human.ofim.dto.BoardReplyDto">
+		INSERT INTO board_reply (
+		post_id,
+		writer_id,
+		content,
+		created_date,
+		parent_id
+		) VALUES (
+		#{postId},
+		#{writerId},
+		#{content},
+		NOW(),
+		#{parentId}
+		)
+	</insert>
+
+	<select id="checkReplyLike" resultType="int">
+		SELECT COUNT(*)
+		FROM
+		board_reply_like
+		WHERE reply_id = #{replyId} AND member_id =
+		#{memberId}
+	</select>
+
+	<insert id="insertReplyLike">
+		INSERT INTO board_reply_like (
+		reply_id,
+		member_id,
+		recommend_date
+		) VALUES (
+		#{replyId},
+		#{memberId},
+		NOW()
+		)
+	</insert>
+
+	<delete id="deleteReplyLike">
+		DELETE FROM board_reply_like
+		WHERE reply_id =
+		#{replyId} AND member_id = #{memberId}
+	</delete>
+
+	<select id="countReplyLikes" resultType="int">
+		SELECT COUNT(*)
+		FROM
+		board_reply_like
+		WHERE reply_id = #{replyId}
+	</select>
+
+	<select id="selectMyReplies"
+		resultType="com.human.ofim.dto.BoardReplyDto">
+		SELECT
+		r.reply_id AS replyId,
+		r.post_id AS postId,
+		r.writer_id AS writerId,
+		r.content AS content,
+		r.created_date AS
+		createdDate,
+		b.title AS title,
+		c.category_name AS categoryName FROM
+		board_reply r
+		JOIN board b ON r.post_id = b.post_id
+		LEFT JOIN category c
+		ON b.category_id = c.category_id WHERE r.writer_id =
+		#{writerId}
+		ORDER
+		BY r.created_date DESC
+	</select>
+
+	<select id="selectMyRepliesPaging"
+		resultType="com.human.ofim.dto.BoardReplyDto">
+		SELECT
+		r.reply_id AS replyId,
+		r.post_id AS postId,
+		r.content AS content,
+		r.created_date AS createdDate,
+		b.title AS title,
+		c.category_name AS
+		categoryName,
+		b.sub_category AS subCategory
+		FROM board_reply r
+		JOIN board
+		b ON r.post_id = b.post_id
+		LEFT JOIN category c ON b.category_id =
+		c.category_id
+		WHERE r.writer_id = #{memberId}
+
+		<if test="keyword != null and keyword != ''">
+			AND r.content LIKE CONCAT('%', #{keyword}, '%')
+		</if>
+
+		ORDER BY r.created_date DESC
+		LIMIT #{size} OFFSET #{startRow}
+	</select>
+
+	<select id="countMyRepliesPaging" resultType="int">
+		SELECT COUNT(*)
+		FROM board_reply r
+		WHERE r.writer_id = #{memberId}
+		<if test="keyword != null and keyword != ''">
+			AND r.content LIKE CONCAT('%', #{keyword}, '%')
+		</if>
+	</select>
+
+	<delete id="deleteMyReply">
+		DELETE FROM board_reply
+		WHERE reply_id = #{replyId}
+		AND writer_id = #{memberId}
+	</delete>
+
+	<delete id="deleteReplyById" parameterType="int">
+		DELETE FROM
+		board_reply
+		WHERE reply_id = #{replyId}
+	</delete>
+
+	<select id="checkLike" resultType="int">
+		SELECT COUNT(*)
+		FROM board_like
+		WHERE post_id = #{postId}
+		AND member_id = #{memberId}
+	</select>
+
+	<insert id="insertLike">
+		INSERT INTO board_like (
+		post_id,
+		member_id,
+		created_date
+		) VALUES (
+		#{postId},
+		#{memberId},
+		NOW()
+		)
+	</insert>
+
+	<delete id="deleteLike">
+		DELETE FROM board_like
+		WHERE post_id = #{postId}
+		AND
+		member_id = #{memberId}
+	</delete>
+
+	<select id="countLikes" resultType="int" parameterType="int">
+		SELECT
+		COUNT(*)
+		FROM board_like
+		WHERE post_id = #{postId}
+	</select>
+
+	<select id="selectMyLikedPosts"
+		resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		b.*,
+		c.category_name AS categoryName,
+		b.sub_category AS
+		subCategory
+		FROM board b
+		JOIN board_like l ON b.post_id = l.post_id
+		LEFT
+		JOIN category c ON b.category_id = c.category_id
+		WHERE l.member_id =
+		#{memberId}
+		ORDER BY l.created_date DESC
+	</select>
+
+	<select id="selectMyLikedPostsPaging"
+		resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		b.post_id AS postId,
+		b.title AS title,
+		b.content AS content,
+		b.created_date AS createdDate,
+		b.view_count AS viewCount,
+		b.sub_category AS subCategory,
+		c.category_name AS categoryName,
+		(SELECT
+		COUNT(*) FROM board_like bl WHERE bl.post_id = b.post_id) AS
+		likeCount,
+		(SELECT COUNT(*) FROM board_reply br WHERE br.post_id =
+		b.post_id) AS
+		replyCount
+		FROM board_like bl
+		JOIN board b ON bl.post_id =
+		b.post_id
+		LEFT JOIN category c ON b.category_id = c.category_id
+		WHERE
+		bl.member_id = #{memberId}
+		AND b.deleted = 0
+
+		<if test="keyword != null and keyword != ''">
+			AND (b.title LIKE CONCAT('%', #{keyword}, '%') OR
+			b.content LIKE
+			CONCAT('%', #{keyword}, '%'))
+		</if>
+
+		ORDER BY bl.created_date DESC LIMIT #{size} OFFSET #{startRow}
+	</select>
+
+	<select id="countMyLikedPostsPaging" resultType="int">
+		SELECT COUNT(*)
+		FROM board_like bl
+		JOIN board b ON bl.post_id =
+		b.post_id
+		WHERE bl.member_id = #{memberId}
+		AND b.deleted = 0
+		<if test="keyword != null and keyword != ''">
+			AND (b.title LIKE CONCAT('%', #{keyword}, '%') OR
+			b.content LIKE
+			CONCAT('%', #{keyword}, '%'))
+		</if>
+	</select>
+
+	<delete id="deleteMyLike">
+		DELETE FROM board_like
+		WHERE post_id = #{postId} AND
+		member_id = #{memberId}
+	</delete>
+
+	<select id="checkReport" resultType="int">
+		SELECT COUNT(*)
+		FROM report
+		WHERE post_id = #{postId}
+		AND member_id = #{memberId}
+	</select>
+
+	<select id="checkReplyWriter" resultType="int">
+		SELECT COUNT(*)
+		FROM
+		board_reply
+		WHERE reply_id = #{replyId}
+		AND writer_id = #{memberId}
+	</select>
+
+	<select id="countMyPosts" parameterType="int" resultType="int">
+		SELECT
+		COUNT(*)
+		FROM board
+		WHERE writer_id = #{writerId}
+		AND deleted = 0
+	</select>
+
+	<select id="countMyReplies" parameterType="int" resultType="int">
+		SELECT COUNT(*)
+		FROM board_reply
+		WHERE writer_id = #{writerId}
+	</select>
+
+	<select id="selectPost" resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		b.post_id AS postId,
+		b.title AS title,
+		b.content AS content,
+		b.created_date AS createdDate,
+		b.view_count AS viewCount,
+		b.end_date AS endDate, (SELECT COUNT(*) FROM
+		board_reply br WHERE
+		br.post_id =
+		b.post_id) AS
+		replyCount,
+		u.nickname AS
+		writerName,
+		u.grade_id AS gradeId,
+		c.category_name AS
+		categoryName
+		FROM
+		board b
+		JOIN user u
+		ON
+		b.writer_id =
+		u.member_id
+		LEFT
+		JOIN category c
+		ON
+		b.category_id =
+		c.category_id
+		WHERE
+		b.post_id =
+		#{postId}
+	</select>
+
+	<select id="adminPostList"
+		resultType="com.human.ofim.dto.BoardDto">
+		SELECT
+		b.post_id AS postId,
+		b.title AS title,
+		b.content AS content,
+		b.created_date AS createdDate,
+		b.view_count AS viewCount,
+		b.deleted AS deleted,
+		b.sub_category AS subCategory,
+		u.nickname AS writerName,
+		c.category_name AS categoryName,
+		(SELECT COUNT(*) FROM board_reply br
+		WHERE br.post_id = b.post_id) AS
+		replyCount,
+		(SELECT COUNT(*) FROM
+		report r WHERE r.post_id = b.post_id) AS reportCount
+		FROM board b
+		JOIN
+		user u ON b.writer_id = u.member_id
+		LEFT JOIN category
+		c ON
+		b.category_id = c.category_id
+		<where>
+			<if test="deleted != null">
+				AND b.deleted = #{deleted}
+			</if>
+
+			<if
+				test="categoryId != null and categoryId != '' and categoryId != 0">
+				AND b.category_id = #{categoryId}
+			</if>
+
+			<if test="keyword != null and keyword != ''">
+				AND (
+				b.title LIKE CONCAT('%', #{keyword}, '%')
+				OR
+				u.nickname LIKE CONCAT('%', #{keyword}, '%')
+				OR b.sub_category LIKE
+				CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+		</where>
+		ORDER BY b.post_id DESC
+		LIMIT #{size} OFFSET #{offset}
+	</select>
+
+	<select id="adminPostCount" resultType="int">
+		SELECT COUNT(*)
+		FROM board b
+		JOIN user u ON b.writer_id = u.member_id
+		<where>
+			<if test="deleted != null">
+				AND b.deleted = #{deleted}
+			</if>
+
+			<if
+				test="categoryId != null and categoryId != '' and categoryId != 0">
+				AND b.category_id = #{categoryId}
+			</if>
+
+			<if test="keyword != null and keyword != ''">
+				AND (
+				b.title LIKE CONCAT('%', #{keyword}, '%')
+				OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
+				OR b.sub_category LIKE CONCAT('%', #{keyword}, '%')
+				)
+			</if>
+		</where>
+	</select>
+
+	<update id="updateDeletedStatus">
+		UPDATE board
+		SET deleted = #{status}
+		WHERE post_id =
+		#{postId}
+	</update>
+
+	<select id="selectCategoryList" resultType="map">
+		SELECT category_id AS
+		categoryId, category_name AS categoryName
+		FROM category
+		ORDER BY
+		category_id ASC
+	</select>
+
+	<select id="selectAllReports"
+		resultType="com.human.ofim.dto.BoardReportDto">
+		SELECT
+		r.post_id AS postId,
+		r.member_id AS memberId,
+		r.content AS content,
+		r.code AS code,
+		r.status AS status,
+		r.admin_memo AS
+		adminMemo,
+		r.accusation_date AS accusationDate,
+		r.accepted_date AS
+		acceptedDate,
+		r.sanction_date AS sanctionDate,
+		b.title AS postTitle,
+		u.nickname AS reporterName,
+		b.deleted AS deleted
+		FROM report r
+		JOIN board b
+		ON r.post_id =
+		b.post_id
+		JOIN user u
+		ON r.member_id = u.member_id
+		ORDER BY
+		r.accusation_date DESC
+	</select>
+
+	<update id="updateReportStatus">
+		UPDATE report
+		SET
+		status = #{status},
+		admin_memo =
+		#{adminMemo},
+		accepted_date = CASE
+		WHEN #{status} = 1 AND accepted_date
+		IS NULL THEN NOW()
+		ELSE accepted_date
+		END,
+		sanction_date = CASE
+		WHEN
+		#{status} = 2 THEN NOW()
+		ELSE sanction_date
+		END
+		WHERE post_id = #{postId}
+		AND member_id = #{memberId}
+	</update>
+
+	<update id="updateReply" parameterType="map">
+		UPDATE board_reply
+		SET
+		content = #{content},
+		updated_date = NOW() WHERE
+		reply_id = #{replyId}
+	</update>
+
+	<select id="selectReplyWriterId" resultType="java.lang.Integer">
+		SELECT writer_id
+		FROM board_reply
+		WHERE reply_id = #{replyId}
+	</select>
+
+</mapper>

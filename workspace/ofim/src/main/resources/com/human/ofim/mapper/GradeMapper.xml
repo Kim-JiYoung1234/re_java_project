@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.GradeMapper">
+
+	<update id="updateMembership">
+		UPDATE member
+		SET grade_id = (
+		SELECT grade_id
+		FROM user_grade
+		WHERE grade_name = #{gradeName}
+		)
+		WHERE member_id = #{memberId}
+	</update>
+</mapper>

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.human.ofim.mapper.RecordMapper">
+
+	<insert id="insertHealthInfo"
+		parameterType="com.human.ofim.dto.HealthInfoDto">
+		INSERT INTO health_info(
+		member_id, record_date, weight,
+		fat, muscle
+		) VALUES (
+		#{memberId}, #{recordDate}, #{weight},
+		#{fat},
+		#{muscle})
+	</insert>
+
+	<update id="updateHealthInfo"
+		parameterType="com.human.ofim.dto.HealthInfoDto">
+		UPDATE health_info SET
+		record_date = #{recordDate},
+		weight = #{weight},
+		fat = #{fat},
+		muscle = #{muscle}
+		WHERE member_id = #{memberId}
+		and record_date = curdate()
+	</update>
+
+	<select id="selectHealthInfoByDate" parameterType="long"
+		resultType="com.human.ofim.dto.HealthInfoDto">
+		SELECT
+		member.member_id,
+		member.height,
+		health_info.weight,
+		ROUND(health_info.weight / ((member.height / 100) * (member.height /
+		100)), 1) AS bmi,
+		health_info.fat, health_info.muscle,
+		health_info.record_date
+		FROM member
+		JOIN health_info ON member.member_id
+		=
+		health_info.member_id
+		WHERE member.member_id = #{memberId}
+		AND
+		health_info.weight > 0 AND health_info.weight IS NOT NULL
+		ORDER BY
+		health_info.record_date DESC, health_record_id DESC
+		LIMIT 1;
+	</select>
+
+	<insert id="insertUserPlan"
+		parameterType="com.human.ofim.dto.HealthInfoDto">
+		INSERT INTO member (
+		member_id, height,
+		goal_weight,
+		diet_period, grade_id, base_activity_level, daily_intake_kcal,
+		daily_burn_kcal
+		) VALUES (
+		#{memberId}, #{height}, #{goalWeight},
+		#{dietPeriod}, 1, #{baseActivityLevel}, #{dailyIntakeKcal},
+		#{dailyBurnKcal})
+	</insert>
+
+	<update id="updateUserPlan"
+		parameterType="com.human.ofim.dto.HealthInfoDto">
+		UPDATE member SET
+		height = #{height},
+		goal_weight =
+		#{goalWeight},
+		diet_period =#{dietPeriod},
+		base_activity_level =
+		#{baseActivityLevel},
+		daily_intake_kcal = #{dailyIntakeKcal},
+		daily_burn_kcal = #{dailyBurnKcal}
+		WHERE member_id
+		= #{memberId}
+	</update>
+
+	<select id="selectUserPlan" parameterType="long"
+		resultType="com.human.ofim.dto.HealthInfoDto">
+		select member.height, member.goal_weight,
+		member.diet_period, member.base_activity_level,
+		member.daily_intake_kcal, member.daily_burn_kcal,
+		health_info.weight
+		from member left join health_info
+		on
+		member.member_id =
+		health_info.member_id
+		where member.member_id = #{memberId}
+		ORDER BY
+		health_info.record_date DESC LIMIT 1
+	</select>
+
+	<select id="selectUserPlan2" parameterType="long"
+		resultType="com.human.ofim.dto.HealthInfoDto">
+		select member.height, member.weight, member.goal_weight,
+		member.diet_period,
+		member.base_activity_level,
+		user.birth_date,
+		user.gender
+		FROM
+		member inner join user
+		on member.member_id =
+		user.member_id WHERE
+		member.member_id = #{memberId}
+	</select>
+
+	<select id="selectChartData" parameterType="long"
+		resultType="com.human.ofim.dto.HealthInfoDto">
+		SELECT * FROM (
+		SELECT record_date, weight
+		FROM health_info
+		WHERE member_id = #{memberId}
+		AND weight > 0
+		ORDER BY record_date DESC
+		LIMIT 7
+		) AS
+		recent_data
+		ORDER BY record_date ASC
+	</select>
+
+	<insert id="insertUserHabit"
+		parameterType="com.human.ofim.dto.HealthInfoDto">
+		insert into health_info(
+		member_id, sleep_hour,
+		water_intake, bowel_count, record_date
+		) value (
+		#{memberId},
+		#{sleepHour}, #{waterIntake}, #{bowelCount}, curdate()
+		)
+	</insert>
+
+	<update id="updateUserHabit"
+		parameterType="com.human.ofim.dto.HealthInfoDto">
+		update health_info set
+		sleep_hour = #{sleepHour},
+		water_intake = #{waterIntake},
+		bowel_count = #{bowelCount}
+		where
+		member_id = #{memberId}
+		and date(record_date) = curdate()
+	</update>
+
+	<select id="selectUserHabit" parameterType="long"
+		resultType="com.human.ofim.dto.HealthInfoDto">
+		SELECT
+		sleep_hour AS sleepHour,
+		water_intake AS waterIntake,
+		bowel_count AS bowelCount
+		FROM health_info
+		WHERE member_id = #{memberId}
+		AND DATE(record_date) = CURDATE()
+		LIMIT 1
+	</select>
+
+
+	<select id="getHeightById" parameterType="long"
+		resultType="java.lang.Double">
+		select height from member where member_id = #{memberId}
+	</select>
+
+	<select id="getGoalWeightById" parameterType="long"
+		resultType="java.lang.Double">
+		select goal_weight from member where member_id =
+		#{memberId}
+	</select>
+
+	<select id="getDietPeriodById" parameterType="long"
+		resultType="java.lang.Integer">
+		select diet_period from member where member_id =
+		#{memberId}
+	</select>
+
+	<select id="getAllWeight" parameterType="long"
+		resultType="com.human.ofim.dto.HealthInfoDto">
+		select record_date, weight
+		from health_info
+		where member_id =
+		#{memberId}
+		and weight > 0
+		order by record_date desc
+	</select>
+
+	<select id="hasInfo" parameterType="long" resultType="int">
+		select
+		EXISTS(
+		select 1
+		from health_info
+		where member_id = #{memberId}
+		and
+		record_date = curdate()
+		)
+	</select>
+	
+	<select id="hasPlan" parameterType="long" resultType="int">
+		select
+		exists(
+		select 1
+		from member
+		where member_id = #{memberId}
+		)
+	</select>
+
+	<select id="selectAllHabit" parameterType="long"
+		resultType="com.human.ofim.dto.HealthInfoDto">
+		SELECT
+		record_date AS recordDate,
+		sleep_hour AS sleepHour,
+		water_intake AS waterIntake,
+		bowel_count AS bowelCount
+		FROM health_info
+		WHERE health_record_id IN (
+		SELECT MAX(health_record_id)
+		FROM health_info
+		WHERE member_id = #{memberId}
+		GROUP BY record_date
+		)
+		AND (
+		(sleep_hour IS NOT NULL AND sleep_hour > 0) OR
+		(water_intake IS NOT NULL AND water_intake > 0) OR
+		(bowel_count IS NOT NULL AND bowel_count > 0)
+		)
+		ORDER BY record_date DESC;
+	</select>
+</mapper>

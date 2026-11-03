@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.human.ofim.mapper.FitnessConsultMapper">
+
+    <insert id="insertConsult" parameterType="com.human.ofim.dto.FitnessConsultDto">
+        INSERT INTO fitness_consult (center_no, partner_id, customer_name, customer_phone, memo, status)
+        VALUES (#{centerNo}, (SELECT member_id FROM fitness_center WHERE center_no = #{centerNo}), #{customerName}, #{customerPhone}, #{memo}, 0)
+    </insert>
+
+    <insert id="upsertPhoneStats">
+        INSERT INTO fitness_phone_stats (center_no, stats_date, copy_count)
+        VALUES (#{centerNo}, CURDATE(), 1)
+        ON DUPLICATE KEY UPDATE copy_count = copy_count + 1
+    </insert>
+
+    <select id="selectTodayPhoneCopyCount" resultType="int">
+        SELECT IFNULL(SUM(fps.copy_count), 0)
+        FROM fitness_phone_stats fps
+        JOIN fitness_center fc ON fps.center_no = fc.center_no
+        WHERE fc.member_id = #{partnerId} AND fps.stats_date = CURDATE()
+    </select>
+
+    <select id="selectNewConsultCount" resultType="int">
+        SELECT COUNT(*) FROM fitness_consult 
+        WHERE partner_id = #{partnerId} AND status = 0
+    </select>
+
+    <select id="selectConsultListByPartnerId" resultType="com.human.ofim.dto.FitnessConsultDto">
+        SELECT fc.consult_no as consultNo, fc.center_no as centerNo, c.center_name as centerName,
+               fc.customer_name as customerName, fc.customer_phone as customerPhone, fc.memo as memo,
+               DATE_FORMAT(fc.reg_date, '%Y-%m-%d %H:%i') as regDate, fc.status as status,
+               fc.partner_memo as partnerMemo
+        FROM fitness_consult fc
+        JOIN fitness_center c ON fc.center_no = c.center_no
+        WHERE fc.partner_id = #{partnerId}
+        ORDER BY fc.status ASC, fc.consult_no DESC
+    </select>
+
+    <update id="updateConsultStatus">
+        UPDATE fitness_consult SET status = 1 WHERE consult_no = #{consultNo} AND partner_id = #{partnerId}
+    </update>
+
+    <select id="selectPhoneCopyTrend" resultType="java.util.Map">
+        SELECT DATE_FORMAT(fps.stats_date, '%m-%d') as dateLabel, SUM(fps.copy_count) as cnt
+        FROM fitness_phone_stats fps
+        JOIN fitness_center fc ON fps.center_no = fc.center_no
+        WHERE fc.member_id = #{partnerId} 
+          AND fps.stats_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+        GROUP BY fps.stats_date
+        ORDER BY fps.stats_date ASC
+    </select>
+
+    <select id="selectConsultTrend" resultType="java.util.Map">
+        SELECT DATE_FORMAT(reg_date, '%m-%d') as dateLabel, COUNT(*) as cnt
+        FROM fitness_consult
+        WHERE partner_id = #{partnerId}
+          AND reg_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+        GROUP BY DATE_FORMAT(reg_date, '%m-%d')
+        ORDER BY MIN(reg_date) ASC
+    </select>
+
+    <!-- [신규] 파트너 메모 업데이트 쿼리 -->
+    <update id="updateConsultMemo">
+        UPDATE fitness_consult 
+        SET partner_memo = #{partnerMemo} 
+        WHERE consult_no = #{consultNo} AND partner_id = #{partnerId}
+    </update>
+
+</mapper>

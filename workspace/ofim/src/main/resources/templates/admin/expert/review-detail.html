@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::content})}">
+
+<div th:fragment="content">
+
+    <style>
+        .review-page {
+            padding: 10px;
+        }
+
+        .review-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .review-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 800;
+            font-size: 1rem;
+            color: #0f172a;
+        }
+
+        .review-body {
+            padding: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px 20px;
+        }
+
+        .info-item {
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-weight: 700;
+            color: #0f172a;
+            word-break: break-all;
+        }
+
+        .badge-soft {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .wait {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .ok {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .no {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .cert-table td,
+        .cert-table th,
+        .data-table td,
+        .data-table th {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .final-box {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .reason-input {
+            width: 220px;
+            display: inline-block;
+        }
+
+        .empty-text {
+            color: #94a3b8;
+            text-align: center;
+            padding: 20px 0;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .reason-input {
+                width: 100%;
+                margin-top: 8px;
+                margin-bottom: 8px;
+            }
+
+            .final-box form {
+                display: block !important;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+
+    <div class="review-page">
+
+        <!-- 제목 -->
+        <div class="mb-4">
+            <h3 class="fw-bold mb-1">전문가 심사 상세</h3>
+            <p class="text-muted mb-0">제출된 서류, 경력, 학력, 정산 정보를 검토하고 승인/반려를 진행합니다.</p>
+        </div>
+
+        <!-- 기본정보 -->
+        <div class="review-card">
+            <div class="review-header">기본 정보</div>
+
+            <div class="review-body">
+                <div class="info-grid">
+
+                    <div class="info-item">
+                        <div class="info-label">전문가ID</div>
+                        <div class="info-value" th:text="${expert.memberId}">1</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">로그인ID</div>
+                        <div class="info-value" th:text="${expert.loginId}">expert01</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">이름</div>
+                        <div class="info-value" th:text="${expert.userName}">홍길동</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">이메일</div>
+                        <div class="info-value" th:text="${expert.email}">test@test.com</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">전문분야</div>
+                        <div class="info-value"
+                             th:text="${expert.specialty != null and expert.specialty != '' ? expert.specialty : '-'}">운동재활</div>
+                    </div>
+                    
+                    <div class="info-item">
+					    <div class="info-label">총 경력</div>
+					    <div class="info-value" th:text="${totalCareerText}">0년</div>
+					</div>
+
+                    <div class="info-item">
+                        <div class="info-label">승인상태</div>
+                        <div>
+                            <span th:if="${expert.approveStatus == 0}" class="badge-soft wait">승인대기</span>
+                            <span th:if="${expert.approveStatus == 1}" class="badge-soft ok">승인</span>
+                            <span th:if="${expert.approveStatus == 2}" class="badge-soft no">반려</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 제출 서류 -->
+        <div class="review-card">
+            <div class="review-header">제출 서류</div>
+
+            <div class="review-body">
+                <div class="table-responsive">
+                    <table class="table cert-table">
+                        <thead>
+                            <tr>
+                                <th>자격증명</th>
+                                <th>기관</th>
+                                <th>파일</th>
+                                <th>상태</th>
+                                <th>처리</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="cert : ${certList}">
+                                <td th:text="${cert.certName}">자격증명</td>
+                                <td th:text="${cert.issuer}">기관명</td>
+
+                                <td>
+                                    <a th:href="@{/admin/expert/cert/preview(certId=${cert.certificationId})}"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        보기
+                                    </a>
+
+                                    <a th:href="@{/admin/expert/cert/download(certId=${cert.certificationId})}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        다운로드
+                                    </a>
+                                </td>
+
+                                <td>
+                                    <span th:if="${cert.verifyStatus == 0}" class="badge-soft wait">대기</span>
+                                    <span th:if="${cert.verifyStatus == 1}" class="badge-soft ok">승인</span>
+                                    <span th:if="${cert.verifyStatus == 2}" class="badge-soft no">반려</span>
+                                </td>
+
+                                <td>
+                                    <div th:if="${cert.verifyStatus == 0}">
+                                        <form th:action="@{/admin/expert/cert/approve}" method="post" style="display:inline;">
+                                            <input type="hidden" name="certId" th:value="${cert.certificationId}">
+                                            <input type="hidden" name="memberId" th:value="${expert.memberId}">
+                                            <button type="submit" class="btn btn-sm btn-success">승인</button>
+                                        </form>
+
+                                        <form th:action="@{/admin/expert/cert/reject}" method="post" style="display:inline;">
+                                            <input type="hidden" name="certId" th:value="${cert.certificationId}">
+                                            <input type="hidden" name="memberId" th:value="${expert.memberId}">
+                                            <input type="text"
+                                                   name="reason"
+                                                   required
+                                                   placeholder="사유"
+                                                   class="form-control form-control-sm d-inline-block reason-input">
+                                            <button type="submit" class="btn btn-sm btn-danger">반려</button>
+                                        </form>
+                                    </div>
+
+                                    <span th:if="${cert.verifyStatus != 0}" class="text-muted">처리완료</span>
+                                </td>
+                            </tr>
+
+                            <tr th:if="${certList == null or #lists.isEmpty(certList)}">
+                                <td colspan="5" class="empty-text">제출된 서류가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 경력 -->
+        <div class="review-card">
+            <div class="review-header">경력 정보</div>
+
+            <div class="review-body">
+                <div class="table-responsive">
+                    <table class="table data-table">
+                        <thead>
+                            <tr>
+                                <th>기관명</th>
+                                <th>근무연수</th>
+                                <th>진료과/부서</th>
+                                <th>재직여부</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="career : ${careerList}">
+                                <td th:text="${career.organization != null ? career.organization : '-'}">기관명</td>
+                                <td>
+								    <span th:text="${career.career_year != null ? career.career_year : 0}">0</span>년
+								    <span th:if="${career.career_month != null and career.career_month > 0}">
+								        <span th:text="${career.career_month}">0</span>개월
+								    </span>
+								</td>
+                                <td th:text="${career.medical_departments != null ? career.medical_departments : '-'}">부서</td>
+                                <td th:text="${career.is_employed != null ? career.is_employed : '-'}">재직여부</td>
+                            </tr>
+
+                            <tr th:if="${careerList == null or #lists.isEmpty(careerList)}">
+                                <td colspan="4" class="empty-text">경력 정보가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 학력 -->
+        <div class="review-card">
+            <div class="review-header">학력 정보</div>
+
+            <div class="review-body">
+                <div class="table-responsive">
+                    <table class="table data-table">
+                        <thead>
+                            <tr>
+                                <th>학교명</th>
+                                <th>전공</th>
+                                <th>학위</th>
+                                <th>졸업여부</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="edu : ${educationList}">
+							    <td th:text="${edu.expert_school != null ? edu.expert_school : '-'}">학교명</td>
+							    <td th:text="${edu.expert_major != null ? edu.expert_major : '-'}">전공</td>
+							    <td th:text="${edu.degree_name != null ? edu.degree_name : '-'}">학위</td>
+							    <td th:text="${edu.graduation_yn != null ? edu.graduation_yn : '-'}">졸업여부</td>
+							</tr>
+
+                            <tr th:if="${educationList == null or #lists.isEmpty(educationList)}">
+                                <td colspan="4" class="empty-text">학력 정보가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 정산 정보 -->
+        <div class="review-card">
+            <div class="review-header">정산 정보</div>
+
+            <div class="review-body">
+                <div class="info-grid">
+
+                    <div class="info-item">
+                        <div class="info-label">은행명</div>
+                        <div class="info-value"
+                             th:text="${settlement != null and settlement.bank_name != null ? settlement.bank_name : '-'}">국민은행</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">계좌번호</div>
+                        <div class="info-value"
+                             th:text="${settlement != null and settlement.acct_no != null ? settlement.acct_no : '-'}">123-456-7890</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 최종 심사 -->
+        <div class="review-card">
+            <div class="review-header">최종 심사</div>
+
+            <div class="review-body final-box">
+
+                <div th:if="${expert.approveStatus == 0}">
+                     <form th:action="@{/admin/expert/approve}" method="post" style="display:inline;">
+        				<input type="hidden" name="memberId" th:value="${expert.memberId}">
+
+        				<button type="submit" class="btn btn-lg" 
+        				        th:classappend="${allCertApproved} ? 'btn-success' : 'btn-secondary'"
+                                th:disabled="${!allCertApproved}">최종 승인
+				        </button>
+				    </form>
+
+					<div th:if="${!allCertApproved}" class="text-danger mt-2">
+					    ※ 모든 서류가 승인되어야 최종 승인 가능합니다.
+					</div>
+					
+                    <form th:action="@{/admin/expert/reject}" method="post" style="display:inline;">
+                        <input type="hidden" name="memberId" th:value="${expert.memberId}">
+                        <input type="text" name="reason" required placeholder="반려 사유 입력"
+                               class="form-control d-inline-block mx-2 reason-input">
+                        <button type="submit" class="btn btn-lg btn-danger">최종 반려</button>
+                    </form>
+                </div>
+
+                <div th:if="${expert.approveStatus != 0}">
+                    <span class="text-muted">이미 처리된 전문가입니다.</span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</html>

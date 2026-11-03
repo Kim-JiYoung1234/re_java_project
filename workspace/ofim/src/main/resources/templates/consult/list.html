@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>전문가 리스트</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+<style>
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f8f9fa;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+.expert-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+
+.rating-text {
+    font-size: 0.95rem;
+}
+
+.search-card {
+    border-radius: 18px;
+}
+</style>
+</head>
+<body>
+
+<div th:replace="~{header :: header}"></div>
+
+<div class="container mt-5">
+    <div class="text-center mt-5 mb-5">
+        <h2 class="fw-bold display-6">
+            <i class="bi bi-person-badge-fill text-primary me-2"></i>전문가 상담
+        </h2>
+        <p class="text-muted fs-5">
+            혼자 고민말고 전문가와 상담해 보세요.<br> 24시간 365일 언제든지 편하게 상담받으세요.
+        </p>
+    </div>
+
+    <div class="card search-card p-4 mb-5 shadow-sm border-0">
+        <form id="searchForm" action="/consult/list" method="get" class="row g-3 align-items-center">
+
+            <div class="col-md-4">
+                <input type="text" name="keyword" th:value="${param.keyword}"
+                       class="form-control form-control-lg" placeholder="전문가 이름 또는 키워드 검색">
+            </div>
+
+            <div class="col-md-2">
+                <select name="specialty" class="form-select form-select-lg">
+                    <option value="">전문분야 전체</option>
+                    <option th:each="s : ${specialtyOptions}" th:value="${s}"
+                            th:text="${s}" th:selected="${param.specialty == s}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select name="sort" class="form-select form-select-lg">
+                    <option value="latest" th:selected="${param.sort == 'latest'}">최신등록순</option>
+                    <option value="career" th:selected="${param.sort == 'career'}">경력순</option>
+                    <option value="recommend" th:selected="${param.sort == 'recommend'}">추천순</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-center">
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox"
+                           id="onlineOnly" name="onlineOnly" value="true" th:checked="${param.onlineOnly}">
+                    <label class="form-check-label" for="onlineOnly">
+                        온라인만 보기
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100 btn-lg" type="submit">검색</button>
+            </div>
+        </form>
+
+        <div class="mt-4 mb-1">
+            <span class="text-muted">
+                총 <span class="fw-bold text-dark" th:text="${totalCount}">0</span> 명의 전문가
+            </span>
+        </div>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(expertList)}">
+        <div th:each="expert : ${expertList}" class="card p-4 mb-4 shadow-sm border-0">
+            <div class="row align-items-center">
+
+                <div class="col-md-2 text-center">
+                    <img th:src="${expert.profileImagePath != null ? expert.profileImagePath : '/images/default.png'}"
+                         class="rounded-circle expert-img">
+                </div>
+
+                <div class="col-md-7">
+                    <h5 class="fw-bold mb-1">
+                        <span th:text="${expert.name}">홍길동</span>
+                        <span th:if="${expert.isOnline}" class="badge bg-success ms-2">
+                            지금 상담 가능
+                        </span>
+                    </h5>
+
+                    <p class="text-primary mb-1" th:text="${expert.specialty}">운동상담</p>
+                    <p class="text-secondary small mb-2" th:text="${expert.description}">전문가 소개</p>
+
+                    <div class="rating-text mb-2">
+                        <span class="text-warning">
+                            <i class="bi bi-star-fill"></i>
+                            <span th:text="${#numbers.formatDecimal(expert.avgRating, 1, 1)}">0.0</span>
+                        </span>
+                        <span class="text-muted ms-1">
+                            (리뷰 <span th:text="${expert.reviewCount}">0</span>)
+                        </span>
+                    </div>
+
+                    <p class="text-muted small mb-0">
+                        경력 <span th:text="${expert.careerYear}">0</span>년
+                        <span th:if="${expert.careerYear != null and expert.careerYear >= 10}"
+                              class="badge bg-primary ms-2">베테랑</span>
+                    </p>
+                </div>
+
+                <div class="col-md-3 text-end">
+                    <a th:href="@{/consult/detail(expertId=${expert.expertId})}"
+                       class="btn btn-outline-secondary w-100 mb-2">
+                        상세보기
+                    </a>
+
+                    <a th:href="@{/consult/reserve(expertId=${expert.expertId}, type='채팅')}"
+                       class="btn btn-primary w-100">
+                        상담하기
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(expertList)}" class="text-center py-5">
+        <p class="text-muted">찾으시는 전문가가 없습니다.</p>
+    </div>
+
+    <nav aria-label="Page navigation" class="mt-5" th:if="${totalPages > 1}">
+        <ul class="pagination justify-content-center">
+
+            <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/consult/list(page=${currentPage - 1},
+                                           keyword=${param.keyword},
+                                           specialty=${param.specialty},
+                                           sort=${param.sort},
+                                           onlineOnly=${param.onlineOnly})}">
+                    &laquo;
+                </a>
+            </li>
+
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence(1, totalPages)}"
+                th:classappend="${i == currentPage} ? 'active'">
+                <a class="page-link"
+                   th:text="${i}"
+                   th:href="@{/consult/list(page=${i},
+                                           keyword=${param.keyword},
+                                           specialty=${param.specialty},
+                                           sort=${param.sort},
+                                           onlineOnly=${param.onlineOnly})}">
+                </a>
+            </li>
+
+            <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/consult/list(page=${currentPage + 1},
+                                           keyword=${param.keyword},
+                                           specialty=${param.specialty},
+                                           sort=${param.sort},
+                                           onlineOnly=${param.onlineOnly})}">
+                    &raquo;
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+</div>
+
+<footer th:replace="~{footer :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

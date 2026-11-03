@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.human.ofim.mapper.EmailAuthMapper">
+
+    <insert id="insertEmailAuth" useGeneratedKeys="true" keyProperty="authId">
+        INSERT INTO email_auth (email, token, type, expired_at)
+        VALUES (#{email}, #{token}, #{type}, #{expiredAt})
+    </insert>
+
+    <select id="getValidToken" resultType="com.human.ofim.dto.EmailAuthDto">
+        SELECT * FROM email_auth
+        WHERE email = #{email}
+          AND token = #{token}
+          AND type = #{type}
+          AND is_used = 0
+          AND expired_at > NOW()
+    </select>
+
+    <update id="updateTokenUsed">
+        UPDATE email_auth
+        SET is_used = 1
+        WHERE auth_id = #{authId}
+    </update>
+
+</mapper>

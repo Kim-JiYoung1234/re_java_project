@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="allUserInfo">
+
+	<style>
+.n-card {
+	background: #ffffff;
+	border-radius: 24px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+	border: 1px solid #f1f5f9;
+	margin-bottom: 20px;
+	overflow: hidden;
+	max-width: 1100px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.n-card-header {
+	padding: 25px 40px;
+	border-bottom: 1px solid #f1f5f9;
+	font-weight: 800;
+	font-size: 1.2rem;
+	background-color: #ffffff;
+}
+
+.n-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 22px 40px;
+	border-bottom: 1px solid #f8fafc;
+	transition: background-color 0.2s;
+}
+
+.n-row:hover {
+	background-color: #fafbfc;
+}
+
+.n-row:last-child {
+	border-bottom: none;
+}
+
+.n-icon-box {
+	width: 44px;
+	height: 44px;
+	background-color: #f1f5f9;
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 20px;
+	color: #64748b;
+	font-size: 1.2rem;
+}
+
+.n-text-wrap {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.n-title {
+	font-size: 0.85rem;
+	color: #94a3b8;
+	font-weight: 700;
+	margin-bottom: 4px;
+}
+
+.n-value {
+	font-size: 1.05rem;
+	color: #1e293b;
+	font-weight: 600;
+}
+
+.n-btn {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	color: #475569;
+	border-radius: 12px;
+	padding: 8px 18px;
+	font-size: 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.n-btn:hover {
+	background: #f8fafc;
+	border-color: #cbd5e1;
+	color: #212529;
+}
+</style>
+
+	<section id="section-basic" class="expert-tab-content"
+		style="display: block;">
+		<div class="n-card">
+			<div class="n-card-header" style="border-left: 8px solid #334155;">계정
+				기본 정보</div>
+			<div class="n-card-body p-0">
+				<div class="n-row">
+					<div class="d-flex align-items-center">
+						<div class="n-icon-box">
+							<i class="fas fa-fingerprint"></i>
+						</div>
+						<div class="n-text-wrap">
+							<span class="n-title">로그인 ID</span><span class="n-value"
+								th:text="${user?.loginId}">아이디</span>
+						</div>
+					</div>
+				</div>
+				<div class="n-row">
+					<div class="d-flex align-items-center">
+						<div class="n-icon-box">
+							<i class="far fa-id-badge"></i>
+						</div>
+						<div class="n-text-wrap">
+							<span class="n-title">이름</span><span class="n-value"
+								th:text="${user?.userName}">성함</span>
+						</div>
+					</div>
+				</div>
+				<div class="n-row">
+					<div class="d-flex align-items-center">
+						<div class="n-icon-box">
+							<i class="far fa-user"></i>
+						</div>
+						<div class="n-text-wrap">
+							<span class="n-title">닉네임</span><span class="n-value"
+								th:text="${user?.nickname}">닉네임</span>
+						</div>
+					</div>
+					<button class="n-btn" data-bs-toggle="modal"
+						data-bs-target="#editModal" data-field="nickname" data-title="닉네임"
+						th:data-value="${user?.nickname}">수정</button>
+				</div>
+				<div class="n-row">
+					<div class="d-flex align-items-center">
+						<div class="n-icon-box">
+							<i class="fas fa-mobile-alt"></i>
+						</div>
+						<div class="n-text-wrap">
+							<span class="n-title">연락처</span><span class="n-value"
+								th:text="${user?.phone}">010-0000-0000</span>
+						</div>
+					</div>
+					<button class="n-btn" data-bs-toggle="modal"
+						data-bs-target="#editModal" data-field="phone" data-title="연락처"
+						th:data-value="${user?.phone}">수정</button>
+				</div>
+				<div class="n-row">
+					<div class="d-flex align-items-center">
+						<div class="n-icon-box">
+							<i class="far fa-envelope"></i>
+						</div>
+						<div class="n-text-wrap">
+							<span class="n-title">이메일</span><span class="n-value"
+								th:text="${user?.email}">mail@test.com</span>
+						</div>
+					</div>
+					<button class="n-btn" data-bs-toggle="modal"
+						data-bs-target="#editModal" data-field="email" data-title="이메일"
+						th:data-value="${user?.email}">수정</button>
+				</div>
+				<div class="n-row">
+					<div class="d-flex align-items-center">
+						<div class="n-icon-box">
+							<i class="fas fa-venus-mars"></i>
+						</div>
+						<div class="n-text-wrap">
+							<span class="n-title">성별</span><span class="n-value"
+								th:text="${user?.gender == 'M' ? '남성' : '여성'}">성별</span>
+						</div>
+					</div>
+				</div>
+				<div class="n-row">
+					<div class="d-flex align-items-center">
+						<div class="n-icon-box">
+							<i class="far fa-calendar-alt"></i>
+						</div>
+						<div class="n-text-wrap">
+							<span class="n-title">생년월일</span><span class="n-value"
+								th:text="${user?.birthDate ?: '정보 없음'}">생일</span>
+						</div>
+					</div>
+				</div>
+				<div class="n-row">
+					<div class="d-flex align-items-center">
+						<div class="n-icon-box">
+							<i class="fas fa-map-marker-alt"></i>
+						</div>
+						<div class="n-text-wrap">
+							<span class="n-title">주소</span><span class="n-value"
+								th:text="${user?.address != null ? user.address + ' ' + (user.address2 ?: '') : '주소를 등록해주세요'}">주소</span>
+						</div>
+					</div>
+					<button class="n-btn" data-bs-toggle="modal"
+						data-bs-target="#addressModal">수정</button>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<div id="section-inquiry" class="expert-tab-content"
+		style="display: none;"
+		th:if="${userType != '전문가회원' and session.user?.memberType != 'EXPERT'}">
+		<div class="n-card border-0 shadow-sm rounded-4 mt-4"
+			style="max-width: 1100px; margin: 0 auto;">
+			<div class="n-card-header bg-white rounded-top-4"
+				style="border-left: 8px solid #38bdf8;">
+				<h5 class="mb-0 fw-bold">나의 1:1 문의 내역</h5>
+			</div>
+
+			<div class="n-card-body p-4 bg-light bg-opacity-50">
+				<th:block
+					th:with="inquiryList=${consultList != null ? consultList.?[category != null and (category.contains('문의') or category.contains('1:1'))] : null}">
+
+					<ul class="nav nav-pills mb-4"
+						th:unless="${#lists.isEmpty(inquiryList)}">
+						<li class="nav-item me-2"><a
+							class="nav-link active rounded-pill px-4 fw-bold shadow-sm"
+							href="javascript:void(0)" onclick="filterConsult('all', this)">전체보기</a></li>
+						<li class="nav-item me-2"><a
+							class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+							href="javascript:void(0)" onclick="filterConsult('1', this)">답변
+								대기중</a></li>
+						<li class="nav-item"><a
+							class="nav-link rounded-pill px-4 fw-bold shadow-sm bg-white text-secondary"
+							href="javascript:void(0)" onclick="filterConsult('3', this)">답변
+								완료</a></li>
+					</ul>
+
+					<div
+						class="n-empty-state m-0 text-center py-5 bg-white rounded-4 border border-light shadow-sm"
+						th:if="${#lists.isEmpty(inquiryList)}">
+						<i class="fas fa-pen-nib n-empty-icon mb-3"
+							style="color: #c7d2fe; font-size: 3.5rem;"></i>
+						<h5 class="n-empty-text fw-bold text-dark">작성하신 1:1 문의가 없습니다.</h5>
+						<p class="n-empty-sub text-secondary">궁금한 점이 있으시면 언제든 문의를
+							남겨주세요.</p>
+					</div>
+
+					<div class="row g-4" th:unless="${#lists.isEmpty(inquiryList)}">
+						<th:block th:each="item : ${inquiryList}">
+
+							<div class="col-12 col-xl-6 consult-card-item"
+								th:data-consult-status="${item.status}">
+								<div
+									class="bg-white rounded-4 p-4 hover-card-ui shadow-sm border border-light h-100 d-flex flex-column"
+									style="cursor: pointer;" data-bs-toggle="modal"
+									th:data-bs-target="'#inquiryModal-' + ${item.consult_id}">
+
+									<div
+										class="d-flex justify-content-between align-items-center mb-3">
+										<span class="badge px-3 py-2 rounded-pill shadow-sm"
+											th:classappend="${item.status == 1 ? 'bg-warning text-dark' : 'bg-success text-white'}">
+											<i class="fas"
+											th:classappend="${item.status == 1 ? 'fa-clock' : 'fa-check-circle'} + ' me-1'"></i>
+											<span th:text="${item.status == 1 ? '답변 대기중' : '답변 완료'}">상태</span>
+										</span> <small class="text-secondary fw-semibold text-end"> <i
+											class="far fa-calendar-alt me-1 text-primary opacity-75"></i>
+											<span
+											th:text="${#temporals.format(item.consult_start_date, 'yyyy.MM.dd HH:mm')}">날짜</span>
+										</small>
+									</div>
+									<div
+										class="bg-light bg-opacity-50 p-3 rounded-3 mb-2 mt-2 border border-light flex-grow-1">
+										<p class="text-secondary small mb-0"
+											style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;"
+											th:text="${item.consultContent}">문의 내용</p>
+									</div>
+									<div class="mt-auto text-end border-top pt-3 border-light">
+										<span class="text-primary small fw-bold">답변 확인하기 <i
+											class="fas fa-chevron-right ms-1"></i></span>
+									</div>
+								</div>
+							</div>
+
+							<div class="modal fade"
+								th:id="'inquiryModal-' + ${item.consult_id}" tabindex="-1"
+								aria-hidden="true">
+								<div
+									class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+									<div class="modal-content rounded-4 border-0 shadow">
+										<div
+											class="modal-header bg-light border-bottom-0 pb-3 pt-4 px-4">
+											<div>
+												<h5 class="modal-title fw-bold text-dark mb-1">📝 나의
+													1:1 문의 내역</h5>
+											</div>
+											<button type="button" class="btn-close"
+												data-bs-dismiss="modal"></button>
+										</div>
+										<div class="modal-body p-4 bg-light bg-opacity-50">
+											<div class="d-flex flex-column gap-3">
+												<th:block th:each="inq : ${item.inquiryList}">
+													<div th:if="${inq.commentType == '질문'}"
+														class="bg-white p-3 rounded-4 border shadow-sm me-4">
+														<label class="fw-bold text-secondary mb-1 small"><i
+															class="fas fa-question-circle me-1"></i>나의 질문</label>
+														<p class="text-dark small mb-1"
+															style="white-space: pre-wrap;" th:text="${inq.content}"></p>
+														<div class="text-end text-muted"
+															style="font-size: 0.7rem;"
+															th:text="${#temporals.format(inq.writeDate, 'yyyy.MM.dd HH:mm')}">날짜</div>
+													</div>
+													<div
+														th:if="${inq.commentType == '전문가답변' or inq.commentType == '관리자답변'}"
+														class="bg-primary bg-opacity-10 p-3 rounded-4 ms-4 shadow-sm">
+														<label class="fw-bold text-primary mb-1 small"><i
+															class="fas fa-reply me-1"></i>답변 내용</label>
+														<p class="text-dark small mb-1"
+															style="white-space: pre-wrap;" th:text="${inq.content}"></p>
+														<div class="text-end text-primary opacity-75"
+															style="font-size: 0.7rem;"
+															th:text="${#temporals.format(inq.writeDate, 'yyyy.MM.dd HH:mm')}">날짜</div>
+													</div>
+												</th:block>
+											</div>
+										</div>
+										<div
+											class="modal-footer border-top-0 bg-white p-3 d-flex justify-content-between align-items-center"
+											th:if="${item.status == 1}">
+											<span class="text-warning small fw-bold"><i
+												class="fas fa-clock me-1"></i>전문가의 답변을 기다리고 있습니다.</span>
+											<button type="button"
+												class="btn btn-secondary px-4 rounded-pill fw-bold"
+												data-bs-dismiss="modal">닫기</button>
+										</div>
+										<div class="modal-footer border-top-0 bg-white p-3"
+											th:unless="${item.status == 1}">
+											<button type="button"
+												class="btn btn-secondary px-4 rounded-pill fw-bold"
+												data-bs-dismiss="modal">닫기</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</th:block>
+					</div>
+				</th:block>
+			</div>
+		</div>
+	</div>
+
+	<div id="section-my-posts" class="expert-tab-content"
+		style="display: none;">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h4 class="fw-bold text-dark mb-0">내가 쓴 글/댓글</h4>
+		</div>
+		<ul class="nav nav-pills mb-4" id="myActivityTab" role="tablist">
+			<li class="nav-item" role="presentation">
+				<button class="nav-link active px-4 fw-bold rounded-pill"
+					id="post-tab" data-bs-toggle="pill" data-bs-target="#my-posts"
+					type="button" role="tab">내가 쓴 글</button>
+			</li>
+			<li class="nav-item ms-2" role="presentation">
+				<button class="nav-link px-4 fw-bold rounded-pill" id="comment-tab"
+					data-bs-toggle="pill" data-bs-target="#my-comments" type="button"
+					role="tab">내가 쓴 댓글</button>
+			</li>
+		</ul>
+		<div class="tab-content" id="myActivityTabContent">
+			<div class="tab-pane fade show active" id="my-posts" role="tabpanel">
+				<div th:fragment="my-posts-fragment" id="posts-fragment-container">
+					<div class="d-flex justify-content-end mb-4">
+						<div class="input-group" style="max-width: 300px;">
+							<input type="text" id="postSearchKeyword"
+								class="form-control border-light shadow-sm"
+								placeholder="내 글 검색..." th:value="${keyword}"
+								onkeyup="if(event.keyCode==13) loadMyPosts(1)">
+							<button class="btn btn-primary shadow-sm" type="button"
+								onclick="loadMyPosts(1)">
+								<i class="fas fa-search"></i>
+							</button>
+						</div>
+					</div>
+					<div th:if="${#lists.isEmpty(myPosts)}"
+						class="text-center py-5 my-4 bg-light rounded-4 border-dashed">
+						<i class="far fa-folder-open mb-3 text-secondary"
+							style="font-size: 3.5rem; opacity: 0.5;"></i>
+						<h6 class="text-muted fw-bold">작성한 글이 없습니다.</h6>
+					</div>
+					<div class="row g-4" th:unless="${#lists.isEmpty(myPosts)}">
+						<div class="col-12 col-md-6" th:each="post : ${myPosts}">
+							<a th:href="@{|/community/detail/${post.postId}|}"
+								class="d-block h-100 bg-white rounded-4 p-4 hover-card-ui text-decoration-none shadow-sm border border-light d-flex flex-column">
+								<div
+									class="d-flex justify-content-between align-items-center mb-3">
+									<span
+										class="badge bg-opacity-10 border px-3 py-2 rounded-pill fw-semibold"
+										th:with="cat=${post.categoryName}, sub=${post.subCategory}"
+										th:classappend="${cat == '공지사항' ? 'bg-danger text-danger border-danger-subtle' : 
+                                     cat == '자유게시판' ? 'bg-primary text-primary border-primary-subtle' : 
+                                     cat == '건강 Q&A' ? 'bg-success text-success border-success-subtle' : 
+                                     cat == '카드뉴스' ? 'bg-info text-info border-info-subtle' : 
+                                     cat == '🔥 챌린지' ? 'bg-warning text-warning-emphasis border-warning-subtle' : 
+                                     'bg-secondary text-secondary border-secondary-subtle'}"
+										th:text="${cat} + ${sub != null and sub != '전체' ? ' > ' + sub : ''}">자유게시판
+										> 일상/잡담 </span> <small class="text-muted fw-medium"><i
+										class="far fa-clock me-1"></i> <span
+										th:text="${#dates.format(post.createdDate, 'yyyy.MM.dd')}">2026.03.11</span></small>
+								</div>
+								<h5 class="fw-bold text-dark mb-4 text-truncate"
+									th:text="${post.title}">게시글 제목입니다</h5>
+								<div
+									class="d-flex align-items-center text-secondary small fw-medium mt-auto">
+									<span class="me-3 bg-light px-2 py-1 rounded-3"><i
+										class="far fa-eye me-1 text-muted"></i><span
+										th:text="${post.viewCount}">0</span></span> <span
+										class="me-3 bg-light px-2 py-1 rounded-3"><i
+										class="fas fa-heart me-1 text-danger opacity-75"></i><span
+										th:text="${post.likeCount}">0</span></span> <span
+										class="bg-light px-2 py-1 rounded-3"><i
+										class="far fa-comment-dots me-1 text-primary opacity-75"></i><span
+										th:text="${post.replyCount}">0</span></span>
+									<button
+										class="btn btn-sm btn-outline-danger border-0 ms-auto px-2 py-1 fw-bold"
+										style="font-size: 0.75rem;"
+										th:onclick="|event.preventDefault(); deleteActivity(${post.postId}, 'post')|">
+										<i class="far fa-trash-alt"></i> 삭제
+									</button>
+								</div>
+							</a>
+						</div>
+					</div>
+					<nav class="mt-5" th:if="${!#lists.isEmpty(myPosts)}">
+						<ul class="pagination justify-content-center">
+							<li class="page-item"
+								th:classappend="${currentPage == 1} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-start-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyPosts(${currentPage - 1})|">이전</a></li>
+							<li class="page-item"
+								th:each="p : ${#numbers.sequence(startPage, endPage)}"
+								th:classappend="${p == currentPage} ? 'active'"><a
+								class="page-link shadow-sm border-0 mx-1 rounded-circle"
+								style="width: 40px; height: 40px; text-align: center; line-height: 24px;"
+								href="javascript:void(0)" th:onclick="|loadMyPosts(${p})|"
+								th:text="${p}">1</a></li>
+							<li class="page-item"
+								th:classappend="${currentPage == totalPages} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-end-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyPosts(${currentPage + 1})|">다음</a></li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+			<div class="tab-pane fade" id="my-comments" role="tabpanel">
+				<div th:fragment="my-replies-fragment"
+					id="replies-fragment-container">
+					<div class="d-flex justify-content-end mb-4">
+						<div class="input-group" style="max-width: 300px;">
+							<input type="text" id="replySearchKeyword"
+								class="form-control border-light shadow-sm"
+								placeholder="내 댓글 검색..." th:value="${replyKeyword}"
+								onkeyup="if(event.keyCode==13) loadMyReplies(1)">
+							<button class="btn btn-primary shadow-sm" type="button"
+								onclick="loadMyReplies(1)">
+								<i class="fas fa-search"></i>
+							</button>
+						</div>
+					</div>
+					<div th:if="${#lists.isEmpty(myReplies)}"
+						class="text-center py-5 my-4 bg-light rounded-4 border-dashed">
+						<i class="far fa-comment-dots mb-3 text-secondary"
+							style="font-size: 3.5rem; opacity: 0.5;"></i>
+						<h6 class="text-muted fw-bold">작성한 댓글이 없습니다.</h6>
+					</div>
+					<div class="row g-4" th:unless="${#lists.isEmpty(myReplies)}">
+						<div class="col-12 col-md-6" th:each="reply : ${myReplies}">
+							<a th:href="@{|/community/detail/${reply.postId}|}"
+								class="d-block h-100 bg-white rounded-4 p-4 hover-card-ui text-decoration-none shadow-sm border border-light d-flex flex-column">
+								<div>
+									<div
+										class="d-flex justify-content-between align-items-center mb-2">
+										<span
+											class="badge bg-opacity-10 border px-2 py-1 rounded-pill"
+											style="font-size: 0.75rem;"
+											th:with="cat=${reply.categoryName}, sub=${reply.subCategory}"
+											th:classappend="${cat == '공지사항' ? 'bg-danger text-danger border-danger-subtle' : 
+                                         cat == '자유게시판' ? 'bg-primary text-primary border-primary-subtle' : 
+                                         cat == '건강 Q&A' ? 'bg-success text-success border-success-subtle' : 
+                                         cat == '카드뉴스' ? 'bg-info text-info border-info-subtle' : 
+                                         cat == '🔥 챌린지' ? 'bg-warning text-warning-emphasis border-warning-subtle' : 
+                                         'bg-secondary text-secondary border-secondary-subtle'}"
+											th:text="${cat} + ${sub != null and sub != '전체' ? '/' + sub : ''}">자유/일상</span>
+										<div class="d-flex align-items-center">
+											<small class="text-muted me-2"><i
+												class="far fa-clock me-1"></i> <span
+												th:text="${#dates.format(reply.createdDate, 'yyyy.MM.dd')}">2026.03.11</span></small>
+											<button
+												class="btn btn-sm btn-outline-danger border-0 px-2 py-1"
+												title="댓글 삭제"
+												th:onclick="|event.preventDefault(); deleteActivity(${reply.replyId}, 'reply')|">
+												<i class="fas fa-times"></i>
+											</button>
+										</div>
+									</div>
+									<h6 class="fw-bold text-dark text-truncate mb-0 mt-2"
+										th:text="${reply.title}">원문 게시글 제목입니다.</h6>
+								</div>
+								<hr class="border-light my-3">
+								<div class="bg-light rounded-3 p-3 mt-auto border border-light">
+									<div class="d-flex align-items-start">
+										<i class="fas fa-reply text-primary opacity-50 me-2 mt-1"
+											style="transform: rotate(180deg);"></i> <span
+											class="text-dark fw-medium"
+											style="font-size: 0.95rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+											th:text="${reply.content}">내가 작성한 댓글 내용입니다.</span>
+									</div>
+								</div>
+							</a>
+						</div>
+					</div>
+					<nav class="mt-5" th:if="${!#lists.isEmpty(myReplies)}">
+						<ul class="pagination justify-content-center">
+							<li class="page-item"
+								th:classappend="${replyCurrentPage == 1} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-start-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyReplies(${replyCurrentPage - 1})|">이전</a></li>
+							<li class="page-item"
+								th:each="p : ${#numbers.sequence(replyStartPage, replyEndPage)}"
+								th:classappend="${p == replyCurrentPage} ? 'active'"><a
+								class="page-link shadow-sm border-0 mx-1 rounded-circle"
+								style="width: 40px; height: 40px; text-align: center; line-height: 24px;"
+								href="javascript:void(0)" th:onclick="|loadMyReplies(${p})|"
+								th:text="${p}">1</a></li>
+							<li class="page-item"
+								th:classappend="${replyCurrentPage == replyTotalPages} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-end-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyReplies(${replyCurrentPage + 1})|">다음</a></li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="section-bookmarks" class="expert-tab-content"
+		style="display: none;">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h4 class="fw-bold text-dark mb-0">관심 목록 및 좋아요</h4>
+		</div>
+		<ul class="nav nav-pills mb-4" id="bookmarkTab" role="tablist">
+			<li class="nav-item ms-2" role="presentation">
+				<button class="nav-link active px-4 fw-bold rounded-pill"
+					id="bookmark-post-tab" data-bs-toggle="pill"
+					data-bs-target="#my-bookmarks" type="button" role="tab">즐겨찾기
+					한 글</button>
+			</li>
+			<li class="nav-item ms-2" role="presentation">
+				<button class="nav-link px-4 fw-bold rounded-pill"
+					id="liked-post-tab" data-bs-toggle="pill"
+					data-bs-target="#my-likes" type="button" role="tab">좋아요 한
+					글</button>
+			</li>
+			<li class="nav-item ms-2" role="presentation">
+				<button class="nav-link px-4 fw-bold rounded-pill"
+					id="center-pick-tab" data-bs-toggle="pill"
+					data-bs-target="#center-pick" type="button" role="tab"
+					onclick="loadMyCenters(1)">관심 센터</button>
+			</li>
+		</ul>
+		<div class="tab-content" id="bookmarkTabContent">
+
+			<div class="tab-pane fade show active" id="my-bookmarks" role="tabpanel">
+				<div th:fragment="my-bookmarks-fragment"
+					id="bookmarks-fragment-container">
+					<div class="d-flex justify-content-end mb-4">
+						<div class="input-group" style="max-width: 300px;">
+							<input type="text" id="bookmarkSearchKeyword"
+								class="form-control border-light shadow-sm"
+								placeholder="즐겨찾기 한 글 검색..." th:value="${bookmarkKeyword}"
+								onkeyup="if(event.keyCode==13) loadMyBookmarks(1)">
+							<button class="btn btn-primary shadow-sm" type="button"
+								onclick="loadMyBookmarks(1)">
+								<i class="fas fa-search"></i>
+							</button>
+						</div>
+					</div>
+
+					<div th:if="${#lists.isEmpty(myBookmarks)}"
+						class="text-center py-5 my-4 bg-light rounded-4 border-dashed">
+						<i class="far fa-bookmark mb-3 text-secondary"
+							style="font-size: 3.5rem; opacity: 0.5;"></i>
+						<h6 class="text-muted fw-bold">즐겨찾기 한 글이 없습니다.</h6>
+					</div>
+
+					<div class="row g-4" th:unless="${#lists.isEmpty(myBookmarks)}">
+						<div class="col-12 col-md-6" th:each="post : ${myBookmarks}">
+							<a th:href="@{|/community/detail/${post.postId}|}"
+								class="d-block h-100 bg-white rounded-4 p-4 hover-card-ui text-decoration-none shadow-sm border border-light d-flex flex-column">
+								<div
+									class="d-flex justify-content-between align-items-center mb-3">
+									<span
+										class="badge bg-opacity-10 border px-3 py-2 rounded-pill fw-semibold"
+										th:with="cat=${post.categoryName}, sub=${post.subCategory}"
+										th:classappend="${cat == '공지사항' ? 'bg-danger text-danger border-danger-subtle' : 
+                             cat == '자유게시판' ? 'bg-primary text-primary border-primary-subtle' : 
+                             cat == '건강 Q&A' ? 'bg-success text-success border-success-subtle' : 
+                             'bg-secondary text-secondary border-secondary-subtle'}"
+										th:text="${cat} + ${sub != null and sub != '전체' ? ' > ' + sub : ''}">카테고리</span>
+									<small class="text-muted fw-medium"><i
+										class="far fa-clock me-1"></i> <span
+										th:text="${#dates.format(post.createdDate, 'yyyy.MM.dd')}">날짜</span></small>
+								</div>
+								<h5 class="fw-bold text-dark mb-4 text-truncate"
+									th:text="${post.title}">게시글 제목</h5>
+								<div
+									class="d-flex align-items-center text-secondary small fw-medium mt-auto">
+									<span class="me-3 bg-light px-2 py-1 rounded-3"><i
+										class="far fa-eye me-1 text-muted"></i><span
+										th:text="${post.viewCount}">0</span></span> <span
+										class="me-3 bg-light px-2 py-1 rounded-3"><i
+										class="fas fa-heart me-1 text-danger opacity-75"></i><span
+										th:text="${post.likeCount}">0</span></span> <span
+										class="bg-light px-2 py-1 rounded-3"><i
+										class="far fa-comment-dots me-1 text-primary opacity-75"></i><span
+										th:text="${post.replyCount}">0</span></span>
+									<button
+										class="btn btn-sm btn-outline-danger border-0 ms-auto px-2 py-1 fw-bold"
+										style="font-size: 0.75rem;"
+										th:onclick="|event.preventDefault(); deleteActivity(${post.postId}, 'bookmark')|">
+										<i class="fas fa-bookmark"></i> 해제
+									</button>
+								</div>
+							</a>
+						</div>
+					</div>
+
+					<nav class="mt-5" th:if="${!#lists.isEmpty(myBookmarks)}">
+						<ul class="pagination justify-content-center">
+							<li class="page-item"
+								th:classappend="${bookmarkCurrentPage == 1} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-start-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyBookmarks(${bookmarkCurrentPage - 1})|">이전</a></li>
+							<li class="page-item"
+								th:each="p : ${#numbers.sequence(bookmarkStartPage, bookmarkEndPage)}"
+								th:classappend="${p == bookmarkCurrentPage} ? 'active'"><a
+								class="page-link shadow-sm border-0 mx-1 rounded-circle"
+								style="width: 40px; height: 40px; text-align: center; line-height: 24px;"
+								href="javascript:void(0)" th:onclick="|loadMyBookmarks(${p})|"
+								th:text="${p}">1</a></li>
+							<li class="page-item"
+								th:classappend="${bookmarkCurrentPage == bookmarkTotalPages} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-end-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyBookmarks(${bookmarkCurrentPage + 1})|">다음</a></li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+			<div class="tab-pane fade" id="my-likes" role="tabpanel">
+				<div th:fragment="my-likes-fragment" id="likes-fragment-container">
+					<div class="d-flex justify-content-end mb-4">
+						<div class="input-group" style="max-width: 300px;">
+							<input type="text" id="likeSearchKeyword"
+								class="form-control border-light shadow-sm"
+								placeholder="좋아요 한 글 검색..." th:value="${likedKeyword}"
+								onkeyup="if(event.keyCode==13) loadMyLikedPosts(1)">
+							<button class="btn btn-primary shadow-sm" type="button"
+								onclick="loadMyLikedPosts(1)">
+								<i class="fas fa-search"></i>
+							</button>
+						</div>
+					</div>
+					<div th:if="${#lists.isEmpty(myLikedPosts)}"
+						class="text-center py-5 my-4 bg-light rounded-4 border-dashed">
+						<i class="far fa-heart mb-3 text-secondary"
+							style="font-size: 3.5rem; opacity: 0.5;"></i>
+						<h6 class="text-muted fw-bold">좋아요 한 글이 없습니다.</h6>
+					</div>
+					<div class="row g-4" th:unless="${#lists.isEmpty(myLikedPosts)}">
+						<div class="col-12 col-md-6" th:each="post : ${myLikedPosts}">
+							<a th:href="@{|/community/detail/${post.postId}|}"
+								class="d-block h-100 bg-white rounded-4 p-4 hover-card-ui text-decoration-none shadow-sm border border-light d-flex flex-column">
+								<div
+									class="d-flex justify-content-between align-items-center mb-3">
+									<span
+										class="badge bg-opacity-10 border px-3 py-2 rounded-pill fw-semibold"
+										th:with="cat=${post.categoryName}, sub=${post.subCategory}"
+										th:classappend="${cat == '공지사항' ? 'bg-danger text-danger border-danger-subtle' : 
+                                     cat == '자유게시판' ? 'bg-primary text-primary border-primary-subtle' : 
+                                     cat == '건강 Q&A' ? 'bg-success text-success border-success-subtle' : 
+                                     'bg-secondary text-secondary border-secondary-subtle'}"
+										th:text="${cat} + ${sub != null and sub != '전체' ? ' > ' + sub : ''}">카테고리</span>
+									<small class="text-muted fw-medium"><i
+										class="far fa-clock me-1"></i> <span
+										th:text="${#dates.format(post.createdDate, 'yyyy.MM.dd')}">날짜</span></small>
+								</div>
+								<h5 class="fw-bold text-dark mb-4 text-truncate"
+									th:text="${post.title}">게시글 제목</h5>
+								<div
+									class="d-flex align-items-center text-secondary small fw-medium mt-auto">
+									<span class="me-3 bg-light px-2 py-1 rounded-3"><i
+										class="far fa-eye me-1 text-muted"></i><span
+										th:text="${post.viewCount}">0</span></span> <span
+										class="me-3 bg-light px-2 py-1 rounded-3"><i
+										class="fas fa-heart me-1 text-danger opacity-75"></i><span
+										th:text="${post.likeCount}">0</span></span> <span
+										class="bg-light px-2 py-1 rounded-3"><i
+										class="far fa-comment-dots me-1 text-primary opacity-75"></i><span
+										th:text="${post.replyCount}">0</span></span>
+									<button
+										class="btn btn-sm btn-outline-danger border-0 ms-auto px-2 py-1 fw-bold"
+										style="font-size: 0.75rem;"
+										th:onclick="|event.preventDefault(); deleteActivity(${post.postId}, 'like')|">
+										<i class="fas fa-heart-broken"></i> 취소
+									</button>
+								</div>
+							</a>
+						</div>
+					</div>
+					<nav class="mt-5" th:if="${!#lists.isEmpty(myLikedPosts)}">
+						<ul class="pagination justify-content-center">
+							<li class="page-item"
+								th:classappend="${likedCurrentPage == 1} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-start-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyLikedPosts(${likedCurrentPage - 1})|">이전</a></li>
+							<li class="page-item"
+								th:each="p : ${#numbers.sequence(likedStartPage, likedEndPage)}"
+								th:classappend="${p == likedCurrentPage} ? 'active'"><a
+								class="page-link shadow-sm border-0 mx-1 rounded-circle"
+								style="width: 40px; height: 40px; text-align: center; line-height: 24px;"
+								href="javascript:void(0)" th:onclick="|loadMyLikedPosts(${p})|"
+								th:text="${p}">1</a></li>
+							<li class="page-item"
+								th:classappend="${likedCurrentPage == likedTotalPages} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-end-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyLikedPosts(${likedCurrentPage + 1})|">다음</a></li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+
+			<div class="tab-pane fade" id="center-pick" role="tabpanel">
+				<div th:fragment="center-pick-fragment"
+					id="center-fragment-container">
+					<div class="d-flex justify-content-end mb-4">
+						<div class="input-group" style="max-width: 300px;">
+							<input type="text" id="centerSearchKeyword"
+								class="form-control border-light shadow-sm"
+								placeholder="센터명 또는 주소 검색..." th:value="${centerKeyword}"
+								onkeyup="if(event.keyCode==13) loadMyCenters(1)">
+							<button class="btn btn-primary shadow-sm" type="button"
+								onclick="loadMyCenters(1)">
+								<i class="fas fa-search"></i>
+							</button>
+						</div>
+					</div>
+					<div th:if="${#lists.isEmpty(myCenters)}"
+						class="text-center py-5 my-4 bg-light rounded-4 border-dashed">
+						<i class="far fa-building mb-3 text-secondary"
+							style="font-size: 3.5rem; opacity: 0.5;"></i>
+						<h6 class="text-muted fw-bold">관심 등록한 센터가 없습니다.</h6>
+					</div>
+					<div class="row g-3" th:unless="${#lists.isEmpty(myCenters)}">
+						<div class="col-md-6" th:each="center : ${myCenters}">
+							<div
+								class="card border-0 shadow-sm rounded-4 h-100 position-relative hover-card-ui">
+								<div class="card-body d-flex align-items-center p-3">
+									<div
+										class="rounded-3 me-3 bg-light d-flex align-items-center justify-content-center"
+										style="width: 80px; height: 80px; cursor: pointer;"
+										th:onclick="|location.href='/fitness_detail?id=${center.centerNo}'|">
+										<i class="fas fa-building text-muted fs-4"></i>
+									</div>
+									<div class="flex-grow-1" style="cursor: pointer;"
+										th:onclick="|location.href='/fitness_detail?id=${center.centerNo}'|">
+										<h6 class="fw-bold mb-1 text-dark text-truncate"
+											th:text="${center.centerName}">센터명</h6>
+										<p class="text-secondary small mb-1 text-truncate">
+											<i class="fas fa-map-marker-alt me-1"></i><span
+												th:text="${center.address}">주소</span>
+										</p>
+										<span class="badge bg-light text-dark border"><i
+											class="fas fa-star text-warning"></i> <span
+											th:text="${center.rating ?: '0.0'}">4.8</span></span>
+									</div>
+									<div class="position-absolute top-0 end-0 p-3">
+										<i class="fas fa-heart text-danger fs-5"
+											style="cursor: pointer; transition: 0.2s;"
+											th:onclick="|deleteCenterBookmark(${center.centerNo})|"
+											title="관심 취소"></i>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<nav class="mt-5" th:if="${!#lists.isEmpty(myCenters)}">
+						<ul class="pagination justify-content-center">
+							<li class="page-item"
+								th:classappend="${centerCurrentPage == 1} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-start-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyCenters(${centerCurrentPage - 1})|">이전</a></li>
+							<li class="page-item"
+								th:each="p : ${#numbers.sequence(centerStartPage, centerEndPage)}"
+								th:classappend="${p == centerCurrentPage} ? 'active'"><a
+								class="page-link shadow-sm border-0 mx-1 rounded-circle"
+								style="width: 40px; height: 40px; text-align: center; line-height: 24px;"
+								href="javascript:void(0)" th:onclick="|loadMyCenters(${p})|"
+								th:text="${p}">1</a></li>
+							<li class="page-item"
+								th:classappend="${centerCurrentPage == centerTotalPages} ? 'disabled'"><a
+								class="page-link shadow-sm border-0 rounded-end-pill px-3"
+								href="javascript:void(0)"
+								th:onclick="|loadMyCenters(${centerCurrentPage + 1})|">다음</a></li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="section-reviews" class="expert-tab-content"
+		style="display: none;">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h4 class="fw-bold text-dark mb-0">내가 쓴 리뷰 관리</h4>
+		</div>
+		<div th:fragment="my-reviews-fragment" id="reviews-fragment-container">
+			<div class="d-flex justify-content-end mb-4">
+				<div class="input-group" style="max-width: 300px;">
+					<input type="text" id="reviewSearchKeyword"
+						class="form-control border-light shadow-sm"
+						placeholder="리뷰 내용 검색..." th:value="${reviewKeyword}"
+						onkeyup="if(event.keyCode==13) loadMyReviews(1)">
+					<button class="btn btn-primary shadow-sm" type="button"
+						onclick="loadMyReviews(1)">
+						<i class="fas fa-search"></i>
+					</button>
+				</div>
+			</div>
+			<div th:if="${myReviews == null or #lists.isEmpty(myReviews)}"
+				class="text-center py-5 my-4 bg-light rounded-4 border-dashed">
+				<i class="far fa-star mb-3 text-secondary"
+					style="font-size: 3.5rem; opacity: 0.5;"></i>
+				<h6 class="text-muted fw-bold">작성하신 리뷰 내역이 없습니다.</h6>
+			</div>
+			<div class="row g-4"
+				th:if="${myReviews != null and !#lists.isEmpty(myReviews)}">
+				<div class="col-12 col-md-6" th:each="review : ${myReviews}">
+					<a th:href="@{/fitness_detail(id=${review.centerNo})}"
+						class="d-block card h-100 bg-white rounded-4 p-4 hover-card-ui shadow-sm border border-light d-flex flex-column text-decoration-none">
+						<div class="d-flex justify-content-between align-items-start mb-2">
+							<div>
+								<div class="text-warning mb-1" style="font-size: 1.1rem;"
+									th:with="safeRating=${review.rating ?: 5}">
+									<i th:each="i : ${#numbers.sequence(1, 5)}"
+										th:class="${i <= safeRating ? 'fas fa-star text-warning' : 'far fa-star text-muted opacity-25'}"></i>
+								</div>
+								<h6 class="fw-bold text-dark mb-0"
+									th:text="${review.centerName ?: '오핌 센터'}">센터 이름</h6>
+							</div>
+							<small class="text-muted"><i class="far fa-clock me-1"></i>
+								<span
+								th:text="${review.createdDate != null ? #strings.substring(review.createdDate, 0, 10) : '날짜 없음'}">날짜</span></small>
+						</div>
+						<hr class="border-light my-3">
+						<div
+							class="bg-light rounded-3 p-3 mt-auto border border-light flex-grow-1">
+							<span class="text-dark fw-medium"
+								style="font-size: 0.95rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
+								th:text="${review.content ?: '내용이 없습니다.'}">리뷰 내용입니다.</span>
+						</div>
+						<div class="d-flex justify-content-end mt-3">
+							<button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+								th:onclick="|event.preventDefault(); deleteReview(${review.reviewId})|">
+								<i class="far fa-trash-alt me-1"></i>삭제
+							</button>
+						</div>
+					</a>
+				</div>
+			</div>
+			<nav class="mt-5"
+				th:if="${myReviews != null and !#lists.isEmpty(myReviews)}">
+				<ul class="pagination justify-content-center">
+					<li class="page-item"
+						th:classappend="${reviewCurrentPage == 1} ? 'disabled'"><a
+						class="page-link shadow-sm border-0 rounded-start-pill px-3"
+						href="javascript:void(0)"
+						th:onclick="|loadMyReviews(${reviewCurrentPage - 1})|">이전</a></li>
+					<li class="page-item"
+						th:each="p : ${#numbers.sequence(reviewStartPage, reviewEndPage)}"
+						th:classappend="${p == reviewCurrentPage} ? 'active'"><a
+						class="page-link shadow-sm border-0 mx-1 rounded-circle"
+						style="width: 40px; height: 40px; text-align: center; line-height: 24px;"
+						href="javascript:void(0)" th:onclick="|loadMyReviews(${p})|"
+						th:text="${p}">1</a></li>
+					<li class="page-item"
+						th:classappend="${reviewCurrentPage == reviewTotalPages} ? 'disabled'"><a
+						class="page-link shadow-sm border-0 rounded-end-pill px-3"
+						href="javascript:void(0)"
+						th:onclick="|loadMyReviews(${reviewCurrentPage + 1})|">다음</a></li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+
+	<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form id="editSingleForm" th:action="@{/user/edit-single}"
+					method="post">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">정보 수정</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+
+					<div class="modal-body p-4 px-4 pt-3">
+						<input type="hidden" name="fieldName" id="modalFieldName">
+
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<label
+								class="form-label fw-bold mb-2 text-primary small text-uppercase"
+								id="modalInputLabel"> <i class="fas fa-edit me-1"></i>새로운
+								정보 입력
+							</label> <input type="text" name="fieldValue" id="modalFieldValue"
+								class="form-control form-control-lg border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+								required>
+
+							<div id="validationMsg" class="mt-2 text-danger fw-bold"
+								style="font-size: 0.85rem; display: none;">
+								<i class="fas fa-exclamation-circle me-1"></i>오류 메시지
+							</div>
+						</div>
+					</div>
+
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="button"
+							class="btn btn-dark px-5 py-2 fw-bold rounded-pill shadow-sm"
+							onclick="saveEditField()">변경사항 저장</button>
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="addressModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-lg"
+				style="border-radius: 24px;">
+				<form th:action="@{/user/edit-address}" method="post">
+					<div class="modal-header border-0 pb-0 pt-4 px-4">
+						<h5 class="modal-title fw-bold text-dark fs-4">주소 수정</h5>
+						<button type="button"
+							class="btn-close bg-light rounded-circle p-2"
+							data-bs-dismiss="modal"></button>
+					</div>
+
+					<div class="modal-body p-4 px-4 pt-3">
+						<div class="p-4 bg-light rounded-4 border border-light">
+							<label
+								class="form-label fw-bold mb-3 text-primary small text-uppercase">
+								<i class="fas fa-map-marker-alt me-1"></i>새로운 주소지 입력
+							</label>
+
+							<div class="input-group mb-3 shadow-sm rounded-3">
+								<input type="text" id="popZipcode" name="zipcode"
+									class="form-control border-0 bg-white fw-medium text-dark ps-3"
+									th:value="${user?.zipcode}" readonly placeholder="우편번호">
+								<button class="btn btn-primary fw-bold border-0 px-3"
+									type="button" onclick="execDaumPostcodePop()">
+									<i class="fas fa-search me-1"></i>찾기
+								</button>
+							</div>
+
+							<input type="text" id="popAddress" name="address"
+								class="form-control mb-3 border-0 shadow-sm rounded-3 bg-white fw-medium text-dark px-3"
+								th:value="${user?.address}" readonly
+								placeholder="기본 주소 (우편번호 찾기를 이용하세요)"> <input type="text"
+								id="popAddress2" name="address2"
+								class="form-control border-0 shadow-sm rounded-3 fw-medium text-dark px-3"
+								th:value="${user?.address2}"
+								placeholder="상세주소를 입력해주세요 (동, 호수 등)">
+						</div>
+					</div>
+
+					<div
+						class="modal-footer border-0 pb-4 px-4 justify-content-center gap-2">
+						<button type="submit"
+							class="btn btn-dark px-5 py-2 fw-bold rounded-pill shadow-sm">주소
+							저장하기</button>
+						<button type="button"
+							class="btn btn-light px-4 py-2 fw-bold rounded-pill"
+							data-bs-dismiss="modal">취소하기</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script
+		src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+	<script>
+        // ----------------------------------------------------
+        // 1. 정보 수정용 모달 및 이벤트 스크립트
+        // ----------------------------------------------------
+        let originalValue = '';
+        let currentField = '';
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const editModalEl = document.getElementById('editModal');
+            const inputField = document.getElementById('modalFieldValue');
+
+            if (editModalEl) {
+                editModalEl.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    currentField = button.getAttribute('data-field');
+                    const title = button.getAttribute('data-title');
+                    const value = button.getAttribute('data-value');
+                    
+                    editModalEl.querySelector('.modal-title').textContent = title + ' 변경';
+                    editModalEl.querySelector('#modalInputLabel').textContent = '새로운 ' + title;
+                    editModalEl.querySelector('#modalFieldName').value = currentField;
+                    
+                    originalValue = (value && value !== 'null') ? value.trim() : '';
+                    inputField.value = originalValue;
+                    
+                    const msgEl = document.getElementById('validationMsg');
+                    msgEl.style.display = 'none';
+                    msgEl.textContent = '';
+                    
+                    if(currentField === 'phone') {
+                        inputField.setAttribute('maxlength', '13');
+                    } else {
+                        inputField.removeAttribute('maxlength');
+                    }
+                });
+            }
+
+            if (inputField) {
+                inputField.addEventListener('input', function(e) {
+                    if (currentField === 'phone') {
+                        let val = this.value.replace(/[^0-9]/g, '');
+                        let res = '';
+                        if (val.length < 4) { res = val; } 
+                        else if (val.length < 8) { res = val.substring(0, 3) + '-' + val.substring(3); } 
+                        else { res = val.substring(0, 3) + '-' + val.substring(3, 7) + '-' + val.substring(7, 11); }
+                        this.value = res;
+                    }
+                });
+            }
+        });
+
+        function saveEditField() {
+            const newValue = document.getElementById('modalFieldValue').value.trim();
+            const msgEl = document.getElementById('validationMsg');
+            const form = document.getElementById('editSingleForm');
+
+            if (!newValue) {
+                msgEl.textContent = '값을 입력해주세요.';
+                msgEl.style.display = 'block';
+                return;
+            }
+
+            if (newValue === originalValue) {
+                msgEl.textContent = '기존과 동일한 값입니다. 변경할 내용을 입력해 주세요.';
+                msgEl.style.display = 'block';
+                return;
+            }
+
+            if (currentField === 'phone') {
+                const phoneRegex = /^01[0-9]-\d{3,4}-\d{4}$/;
+                if (!phoneRegex.test(newValue)) {
+                    msgEl.textContent = '올바른 연락처 형식이 아닙니다. (예: 010-1234-5678)';
+                    msgEl.style.display = 'block';
+                    return; 
+                }
+            }
+
+            if (currentField === 'email') {
+                const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/i;
+                if (!emailRegex.test(newValue)) {
+                    msgEl.textContent = '올바른 이메일 형식을 입력해 주세요.';
+                    msgEl.style.display = 'block';
+                    return; 
+                }
+            }
+
+            if (currentField === 'nickname' || currentField === 'email' || currentField === 'phone') {
+                $.ajax({
+                    url: '/member/user/check-duplicate',
+                    type: 'GET',
+                    data: { field: currentField, value: newValue },
+                    success: function(isDuplicate) {
+                        if (isDuplicate === true || isDuplicate === "true") {
+                            let fieldNameKr = currentField === 'nickname' ? '닉네임' : (currentField === 'email' ? '이메일' : '연락처');
+                            msgEl.textContent = '이미 사용 중인 ' + fieldNameKr + '입니다.';
+                            msgEl.style.display = 'block';
+                        } else {
+                            form.submit();
+                        }
+                    },
+                    error: function() {
+                        alert('중복 확인 중 오류가 발생했습니다.');
+                    }
+                });
+            } else {
+                form.submit();
+            }
+        }
+
+        function execDaumPostcodePop() {
+            new daum.Postcode({
+                oncomplete: function(data) {
+                    document.getElementById('popZipcode').value = data.zonecode;
+                    document.getElementById("popAddress").value = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress;
+                    document.getElementById("popAddress2").focus();
+                }
+            }).open();
+        }
+
+        // ----------------------------------------------------
+        // 2. 탭 제어 및 관심/리뷰/문의 관련 스크립트
+        // ----------------------------------------------------
+        
+        function loadMyPosts(page) {
+        const keyword = document.getElementById('postSearchKeyword').value;
+        fetch(`/mypage/posts/fragment?page=${page}&keyword=${encodeURIComponent(keyword)}`)
+            .then(response => {
+                if (!response.ok) throw new Error('네트워크 응답 오류');
+                return response.text(); 
+            })
+            .then(html => {
+                document.getElementById('posts-fragment-container').innerHTML = html;
+                document.getElementById('my-posts').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(error => console.error('페이지 로드 오류:', error));
+    }
+ 	
+    function loadMyReplies(page) {
+        const keyword = document.getElementById('replySearchKeyword').value;
+        fetch(`/mypage/replies/fragment?page=${page}&keyword=${encodeURIComponent(keyword)}`)
+            .then(response => {
+                if (!response.ok) throw new Error('네트워크 응답 오류');
+                return response.text();
+            })
+            .then(html => {
+                document.getElementById('replies-fragment-container').innerHTML = html;
+                document.getElementById('my-comments').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(error => console.error('댓글 로드 오류:', error));
+    }
+ 	
+    function loadMyLikedPosts(page) {
+        const keyword = document.getElementById('likeSearchKeyword').value;
+        fetch(`/mypage/likes/fragment?page=${page}&keyword=${encodeURIComponent(keyword)}`)
+            .then(response => {
+                if (!response.ok) throw new Error('네트워크 응답 오류');
+                return response.text();
+            })
+            .then(html => {
+                document.getElementById('likes-fragment-container').innerHTML = html;
+                document.getElementById('my-likes').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(error => console.error('좋아요 로드 오류:', error));
+    }
+    
+    function loadMyBookmarks(page) {
+        const keyword = document.getElementById('bookmarkSearchKeyword').value;
+        fetch(`/mypage/bookmarks/fragment?page=${page}&keyword=${encodeURIComponent(keyword)}`)
+            .then(response => {
+                if (!response.ok) throw new Error('네트워크 응답 오류');
+                return response.text();
+            })
+            .then(html => {
+                document.getElementById('bookmarks-fragment-container').innerHTML = html;
+                document.getElementById('my-bookmarks').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(error => console.error('즐겨찾기 로드 오류:', error));
+    }
+    
+    function loadMyReviews(page) {
+        const keyword = document.getElementById('reviewSearchKeyword').value;
+        fetch(`/mypage/reviews/fragment?page=${page}&keyword=${encodeURIComponent(keyword)}`)
+            .then(response => {
+                if (!response.ok) throw new Error('네트워크 응답 오류');
+                return response.text();
+            })
+            .then(html => {
+                document.getElementById('reviews-fragment-container').innerHTML = html;
+                document.getElementById('section-reviews').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(error => console.error('리뷰 로드 오류:', error));
+    }
+
+    function deleteReview(reviewId) {
+        if (!confirm('이 리뷰를 정말 삭제하시겠습니까?')) return;
+        $.ajax({
+            url: '/mypage/reviews/delete',
+            type: 'POST',
+            data: { reviewId: reviewId },
+            success: function(response) {
+                if (response === 'success') {
+                    alert('리뷰가 성공적으로 삭제되었습니다.');
+                    const currentPage = document.querySelector('#reviews-fragment-container .pagination .active a')?.innerText || 1;
+                    loadMyReviews(currentPage);
+                } else {
+                    alert('리뷰 삭제에 실패했습니다.');
+                }
+            },
+            error: function() {
+                alert('서버 통신 중 오류가 발생했습니다.');
+            }
+        });
+    }
+    
+    function deleteActivity(targetId, targetType) {
+        let confirmMsg = '정말 삭제하시겠습니까?';
+        if (targetType === 'like') {
+            confirmMsg = '좋아요를 취소하시겠습니까?';
+        } else if (targetType === 'bookmark') {
+            confirmMsg = '즐겨찾기를 해제하시겠습니까?';
+        }
+        if (!confirm(confirmMsg)) return;
+
+        $.ajax({
+            url: '/mypage/activity/delete',
+            type: 'POST',
+            data: { id: targetId, type: targetType },
+            success: function(response) {
+                if (response === 'success') {
+                    alert('정상적으로 처리되었습니다.');
+                    
+                    if (targetType === 'post') loadMyPosts(1);
+                    else if (targetType === 'reply') loadMyReplies(1);
+                    else if (targetType === 'like') loadMyLikedPosts(1);
+                    else if (targetType === 'bookmark') loadMyBookmarks(1); // 👈 즐겨찾기 다시 그리기!
+                    
+                } else {
+                    alert('처리에 실패했습니다.');
+                }
+            },
+            error: function(xhr, status, err) {
+                alert('서버 통신 실패! 에러 코드: ' + xhr.status);
+            }
+        });
+    }
+
+        
+        function filterConsult(status, btn) {
+            const links = btn.closest('.nav-pills').querySelectorAll('.nav-link');
+            links.forEach(link => {
+                link.classList.remove('active');
+                link.classList.add('bg-white', 'text-secondary');
+            });
+            btn.classList.add('active');
+            btn.classList.remove('bg-white', 'text-secondary');
+            
+            const container = btn.closest('.expert-tab-content') || btn.closest('.tab-pane');
+            const items = container.querySelectorAll('.consult-card-item');
+            
+            items.forEach(item => {
+                const itemStatus = item.getAttribute('data-consult-status');
+                if (status === 'all' || itemStatus === status) {
+                    item.style.display = ''; 
+                } else {
+                    item.style.display = 'none'; 
+                }
+            });
+        }
+        
+        function loadMyCenters(page) {
+            const keyword = document.getElementById('centerSearchKeyword')?.value || '';
+            fetch(`/mypage/centers/fragment?page=${page}&keyword=${encodeURIComponent(keyword)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('네트워크 응답 오류');
+                    return response.text();
+                })
+                .then(html => {
+                    const container = document.getElementById('center-fragment-container');
+                    
+                    // 🌟 1. 데이터 교체 순간의 덜컥거림을 막기 위해 0.1초간 투명하게 만듦
+                    container.style.opacity = '0'; 
+                    container.innerHTML = html;
+                    
+                    // 🌟 2. HTML이 들어가고 나면 0.3초 동안 스르륵~ 자연스럽게 나타나게 애니메이션 적용!
+                    setTimeout(() => {
+                        container.style.transition = 'opacity 0.3s ease-in-out';
+                        container.style.opacity = '1';
+                    }, 50);
+
+                    // 🌟 3. (선택사항) 만약 탭을 누를 때나 페이징할 때 화면을 해당 구역으로 끌어올리고 싶다면 아래 코드 유지!
+                    // 화면 끌어올리기가 싫으시다면 이 if문 블록 전체를 지워주시면 됩니다.
+                    if(page > 1) {
+                        document.getElementById('center-pick').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                })
+                .catch(error => console.error('센터 로드 오류:', error));
+        }
+
+        function deleteCenterBookmark(centerNo) {
+            if(!confirm('관심 센터에서 삭제하시겠습니까?')) return;
+
+            $.ajax({
+                // 🌟 1. URL을 만능 컨트롤러 주소로 변경!
+                url: '/mypage/activity/delete', 
+                type: 'POST',
+                // 🌟 2. 파라미터 이름도 만능 컨트롤러에 맞게 id 와 type 으로 맞춰줌!
+                data: { id: centerNo, type: 'center' }, 
+                success: function(response) {
+                    if(response === 'success') {
+                        alert('관심 목록에서 삭제되었습니다.');
+                        const currentPage = document.querySelector('#center-fragment-container .pagination .active a')?.innerText || 1;
+                        loadMyCenters(currentPage);
+                    } else {
+                        alert('삭제 처리에 실패했습니다.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('삭제 중 오류가 발생했습니다.');
+                }
+            });
+        }
+        
+        
+    </script>
+</div>
+</html>
